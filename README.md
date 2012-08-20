@@ -6,17 +6,17 @@ Adds the method `.serializeJSON()` to jQuery, that serializes a form into a Java
 Install
 -------
 
-[Download jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery, for example:
+Download the [jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery, for example:
 
 ```html
-  <script type="text/javascript" src="jquery.min.js"></script>
-  <script type="text/javascript" src="jquery.serializeJSON.min.js"></script>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery.serializeJSON.min.js"></script>
 ```
 
 Usage Example
 -------------
 
-HTML form (using text inputs, but all other input types, textareas and select tags are also supported):
+HTML form (input, textarea and select tags supported):
 
 ```html
 
@@ -48,7 +48,13 @@ JavaScript:
 
 var user = $('#user-form').serializeJSON();
 
-// user is an object with this data:
+```
+
+Returned value:
+
+```javascript
+
+// user =>
 {
   fullName: "Mario Izquierdo",
 
@@ -70,22 +76,22 @@ var user = $('#user-form').serializeJSON();
 
 ```
 
-Why serialize a form as JSON?
------------------------------
+Why serialize a form?
+---------------------
 
-You want to serialize a form to submit with AJAX, or to handle the user input in your JavaScript application.
+Probably to submit via AJAX, or to handle user input in your JavaScript application.
 
-If you just want to submit a form using AJAX, then jQuery `.serialize()` will work just fine for you. Most of back end frameworks will understand the form attributes and convert them to accessible values that can be easily asigned to your backend models.
+To submit a form using AJAX, then jQuery `.serialize()` will work just fine. Most backend frameworks will understand the form attribute names and convert them to accessible values that can be easily assigned to your backend models.
 
-Actually, the input name format used by `.serializeJSON()` is borrowed from *Rails*: http://guides.rubyonrails.org/form_helpers.html#understanding-parameter-naming-conventions
+Actually, the input name format used by `.serializeJSON()` is borrowed from [Rails Parameter Naming Conventions](http://guides.rubyonrails.org/form_helpers.html#understanding-parameter-naming-conventions).
 
-But if you want to save the form values to your front end JavaScript application, then `.serialize()` is not very useful. You can do one of the following:
+Anyway, if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful (because it just creates a params string). To copy the right value into the right model, you can do one of the following:
 
   * Use jQuery `.serializeArray()`: if you don't have nested resources or arrays, then [serializeArray](http://api.jquery.com/serializeArray/) is good enough. But it only works for simple plain attributes.
   * Read the form values one by one using jQuery: If the form is very simple, you can add some noise to your code and read the values with sentences like `var user = {}; user.fullName = $('#user-form').find('input[name=fullName]').val();` (Not recommendable, but definitelly agile if needed).
   * Use declarative bindings: Frameworks like [knockout.js](http://knockoutjs.com/) or [ember.js](http://emberjs.com/) will assign the values to the model automatically using model-view bindings.
 
-Or, if you are using something like `Backbone.js`, and you want to assign a form to a Backbone Model, a good easy solution is to use `.serializeJSON()` to get the values from the form in the exact same format as you want to create (or modify) the model, for example:
+Or, if you are using something like [backbone.js](http://backbonejs.org/) or [spine.js](http://spinejs.com/), and you want to assign a form to a Model, a good easy solution is to use `.serializeJSON()` to get the values from the form in the exact same format as you want to create (or modify) the model, for example:
 
 ```javascript
 
@@ -116,7 +122,7 @@ Please take a look at [serializeArray documentation](http://api.jquery.com/seria
 
 ### Gotcha ###
 
-In my opinion, the most confusing detail when serializing a form is the input type **checkbox**, that will submit the value if checked, and nothing if unchecked.
+In my opinion, the most confusing detail when serializing a form is the input type **checkbox**, that will include the value if checked, and nothing if unchecked.
 
 If you want to add a boolean attribute that can submit true and false values, you have to add a hidden field with the false value *before* the checkbox:
 
@@ -125,7 +131,7 @@ If you want to add a boolean attribute that can submit true and false values, yo
 <input type="checkbox" name="booleanAttr" value="true" />
 ```
 
-This way, the client either sends only the hidden field (representing the check box is unchecked), or both fields. Since the HTML specification says key/value pairs have to be sent in the same order they appear in the form, and parameters extraction gets the last occurrence of any repeated key in the query string, that works for ordinary forms.
+This way, the client either sends only the hidden field (representing the check box is unchecked), or both fields. It works because the HTML specification (and the serialize implementation) says key/value pairs have to be sent in the same order they appear in the form, and parameters extraction gets the last occurrence of any repeated key in the query string.
 
 Unfortunately that workaround does not work when the check box goes within an array-like parameter, as in
 
@@ -146,6 +152,7 @@ because the serialization will try to add both values as separate elements. For 
 <input type="hidden"   name="booleanAttr[1]" value="false" />
 <input type="checkbox" name="booleanAttr[1]" value="true" />
 ```
+
 
 Contributions
 -------------
