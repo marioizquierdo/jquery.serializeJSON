@@ -1,7 +1,7 @@
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 1.0.0 (Aug 20, 2012)
+  version 1.0.1 (Aug 20, 2012)
 
   Copyright (c) 2012 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -84,7 +84,7 @@
         }
       }
       if (obj[key] === undefined) { // obj[key] ||= defaultIfNotDefined
-        defaultIfNotDefined = (next === '' || !isNaN(parseInt('4', 10))) ? [] : {}; // Array or Object depending on next key
+        defaultIfNotDefined = (next === '' || !isNaN(parseInt(next, 10))) ? [] : {}; // Array or Object depending on next key
         obj[key] = defaultIfNotDefined;
       }
       $.deepSet(obj[key], tail, value); // Recursive access the inner Object

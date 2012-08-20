@@ -159,6 +159,12 @@ Contributions
 
 Contributions are awesome. Feature branch *pull requests* are the preferred method. Just make sure to add tests for it. To run the jasmine specs, open `spec/SpecRunner.html` in your browser.
 
+Changelog
+---------
+
+ * *1.0.1* (Aug 20, 2012): Bugfix: generated arrays were not being displayed when parsed with JSON.stringify
+ * *1.0.0* (Aug 20, 2012): Initial release
+
 Author
 -------
 
