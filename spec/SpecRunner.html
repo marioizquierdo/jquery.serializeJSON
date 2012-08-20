@@ -6,18 +6,24 @@
   <link rel="stylesheet" type="text/css" href="lib/jasmine-1.2.0/jasmine.css">
 
   <div id="fixture-markup" style="display: none">
-    <form id="myform">
-      <input type="text" name="foo" value="foo"/> <br>
-      <input type="text" name="has[key]" value="has[key]"/> <br>
-      <input type="text" name="has[haz][key]" value="has[haz][key]"/> <br>
-      <input type="text" name="has[haz][arr][0]" value="has[haz][arr][]"/> <br>
-      <input type="text" name="has[haz][arr][1]" value="has[haz][arr][]"/> <br>
-      <input type="text" name="[has][arr][0][foo]" value="[has][arr][][foo]"/> <br>
-      <input type="text" name="has[arr][0][bar]" value="[has][arr][][foo]"/> <br>
-      <select name="sel">
-        <option value="fail">fail</option>
-        <option value="bar" selected="selected">sel</option>
-      </select> <br>
+    <form id="user-form">
+      <!-- simple attribute -->
+      <input type="text" name="fullName"              value="Mario Izquierdo" />
+
+      <!-- object -->
+      <input type="text" name="address[city]"         value="San Francisco" />
+      <input type="text" name="address[state][name]"  value="California" />
+      <input type="text" name="address[state][abbr]"  value="CA" />
+
+      <!-- array -->
+      <input type="text" name="jobbies[]"             value="code" />
+      <input type="text" name="jobbies[]"             value="climbing" />
+
+      <!-- array of objects -->
+      <input type="text" name="projects[0][name]"     value="serializeJSON" />
+      <input type="text" name="projects[0][language]" value="javascript" />
+      <input type="text" name="projects[1][name]"     value="bettertabs" />
+      <input type="text" name="projects[1][language]" value="ruby" />
     </form>
   </div>
 
