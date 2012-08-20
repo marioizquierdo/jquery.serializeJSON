@@ -1,3 +1,12 @@
+/*!
+  SerializeJSON jQuery plugin.
+  https://github.com/marioizquierdo/jquery.serializeJSON
+  version 1.0 (Aug 20, 2012)
+
+  Copyright (c) 2012 Mario Izquierdo
+  Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
+  and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
+*/
 (function($) {
 
   $.fn.serializeJSON = function() {
