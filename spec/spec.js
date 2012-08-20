@@ -28,9 +28,9 @@ describe("$.serializeJSON", function () {
   });
 });
 
-// $._deepSet is used to assign complex keys like "address[state][abbr]" to an object
+// $.deepSet is used to assign complex keys like "address[state][abbr]" to an object
 describe("deepSet", function () {
-  var deepSet = $._deepSet;
+  var deepSet = $.deepSet;
   var arr, obj, v, v2;
 
   beforeEach(function () {

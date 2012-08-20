@@ -7,16 +7,18 @@
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
   and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
 */
-(function($) {
+(function ($) {
+  "use strict";
 
-  $.fn.serializeJSON = function() {
+  $.fn.serializeJSON = function () {
+    var obj, formAsArray;
+    obj = {};
+    formAsArray = this.serializeArray();
 
-    var obj = {};
-    var formAsArray = this.serializeArray();
-
-    $.each(formAsArray, function(i, input) {
-      var name = input.name;
-      var value = input.value;
+    $.each(formAsArray, function (i, input) {
+      var name, value, keys;
+      name = input.name;
+      value = input.value;
 
       // Split the input name in programatically readable keys
       // name = "foo"              => keys = ['foo']
@@ -24,16 +26,22 @@
       // name = "foo[inn][bar]"    => keys = ['foo', 'inn', 'bar']
       // name = "foo[inn][arr][0]" => keys = ['foo', 'inn', 'arr', '0']
       // name = "arr[][val]"       => keys = ['arr', '', 'val']
-      var keys = $.map(name.split('['), function(key) {
-        var last = key[key.length - 1];
-        return last == ']' ? key.substring(0, key.length - 1) : key;
+      keys = $.map(name.split('['), function (key) {
+        var last;
+        last = key[key.length - 1];
+        return last === ']' ? key.substring(0, key.length - 1) : key;
       });
-      if (keys[0] === '') keys.shift(); // "[foo][inn]" should be same as "foo[inn]"
+      if (keys[0] === '') { keys.shift(); } // "[foo][inn]" should be same as "foo[inn]"
 
       // Set value in the object using the keys
-      $._deepSet(obj, keys, value);
+      $.deepSet(obj, keys, value);
     });
     return obj;
+  };
+
+  // Auxiliar function to check if a variable is an Object
+  var isObject = function (obj) {
+    return obj === Object(obj);
   };
 
   /**
@@ -58,26 +66,28 @@
   deepSet(arr, ['', 'bar'], v)            //=> arr === [v, {foo: v, bar: v}]
   deepSet(arr, ['', 'bar'], v)            //=> arr === [v, {foo: v, bar: v}, {bar: v}]
   */
-  $._deepSet = function(obj, keys, value) {
-    if (!keys || keys.length === 0) throw new Error("ArgumentError: keys param expected to be an array with least one key");
-
-    var key = keys[0];
-    var next = keys[1];
-    if (typeof next !== "undefined" && next !== null) {
-      var tail = keys.slice(1);
-      var defaultIfNotDefined = (next === '' || !isNaN(parseInt('4', 10))) ? [] : {}; // Array or Object depending on next key
+  $.deepSet = function (obj, keys, value) {
+    if (!keys || keys.length === 0) { throw new Error("ArgumentError: keys param expected to be an array with least one key"); }
+    var key, next, tail, defaultIfNotDefined, lastKey, lastElement;
+    key = keys[0];
+    next = keys[1];
+    if (next !== undefined && next !== null) {
+      tail = keys.slice(1);
       if (key === '') { // Empty key with => merge keys in the object element
-        var lastKey = obj.length - 1;
-        var lastElement = obj[obj.length - 1];
-        if (isObject(lastElement) && !lastElement[next] ) { // if next key is a new attribute in the last object element then set the new value in there
+        lastKey = obj.length - 1;
+        lastElement = obj[obj.length - 1];
+        if (isObject(lastElement) && !lastElement[next]) { // if next key is a new attribute in the last object element then set the new value in there
           key = lastKey;
         } else { // if the array does not have an object as last element, create one
           obj.push({});
           key = lastKey + 1;
         }
       }
-      obj[key] || (obj[key] = defaultIfNotDefined); // obj[key] ||= defaultIfNotDefined
-      $._deepSet(obj[key], tail, value); // Recursive access the inner Object
+      if (obj[key] === undefined) { // obj[key] ||= defaultIfNotDefined
+        defaultIfNotDefined = (next === '' || !isNaN(parseInt('4', 10))) ? [] : {}; // Array or Object depending on next key
+        obj[key] = defaultIfNotDefined;
+      }
+      $.deepSet(obj[key], tail, value); // Recursive access the inner Object
     } else {
       if (key === '') {
         obj.push(value);
@@ -87,9 +97,4 @@
     }
   };
 
-  // Auxiliar function to check if a variable is an Object
-  var isObject = function(obj) {
-    return obj === Object(obj);
-  };
-
-})(jQuery);
+}(jQuery));
