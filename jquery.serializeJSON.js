@@ -91,6 +91,11 @@
     } else {
       if (key === '') {
         obj.push(value);
+      } else if(obj[key]) {  // check if entry already exists (i.e. select multiple)
+        if(typeof obj[key] == "string") {  //if only one entry we need to cast as array from a string
+          obj[key] = [obj[key]];
+        }
+        obj[key].push(value); //add additional values to array
       } else {
         obj[key] = value;
       }
