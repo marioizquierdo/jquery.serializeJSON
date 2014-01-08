@@ -3,15 +3,6 @@ jquery.serializeJSON
 
 Adds the method `.serializeJSON()` to jQuery, that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
 
-Install
--------
-
-Download the [jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery, for example:
-
-```html
-<script type="text/javascript" src="jquery.min.js"></script>
-<script type="text/javascript" src="jquery.serializeJSON.min.js"></script>
-```
 
 Usage Example
 -------------
@@ -76,8 +67,28 @@ Returned value:
 
 ```
 
-Other similar libraries
------------------------
+The `serializeJSON` function does not return JSON, but an object instead. I should call the plugin `serializeObject` but that name was already taken.
+
+
+If you really need to serialize into JSON, use the `JSON.strigify` method, that is available on all major [new browsers](http://caniuse.com/json).
+If you need to support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
+
+```javascript
+  var json = JSON.stringify(user);
+```
+
+Install
+-------
+
+Download the [jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery, for example:
+
+```html
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery.serializeJSON.min.js"></script>
+```
+
+Alternatives
+------------
 
 I found others solving the same problem:
 
