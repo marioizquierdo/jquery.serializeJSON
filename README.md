@@ -76,6 +76,26 @@ Returned value:
 
 ```
 
+Other similar libraries
+-----------------------
+
+I found others solving the same problem:
+
+ * https://github.com/macek/jquery-serialize-object
+ * https://github.com/hongymagic/jQuery.serializeObject
+ * https://github.com/danheberden/jquery-serializeForm
+ * https://github.com/maxatwork/form2js (plain js, no jQuery)
+ * https://github.com/serbanghita/formToObject.js (plain js, no jQuery)
+ * https://gist.github.com/shiawuen/2634143 (simpler but small)
+
+But I still think this one is better because:
+
+ * It is built on top of jQuery `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes in account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard, stable and crossbrowser as it can be.
+ * The format suggested for the form field names is the same used by Rails, that is standard and well tested.
+ * The spec suite makes sure we don't break functionality on future versions.
+ * Compatible with [bower](https://github.com/bower/bower).
+ * The source code is as small as it can be. The minified version is 1Kb.
+
 Why serialize a form?
 ---------------------
 
@@ -153,12 +173,6 @@ because the serialization will try to add both values as separate elements. For 
 <input type="checkbox" name="booleanAttr[1]" value="true" />
 ```
 
-### Look mom, no jQuery! ###
-
-Someone else implemented a very similar function without using jQuery: https://github.com/maxatwork/form2js
-
-I find it less stable and less robust than `serializeJSON`, but if you really don't want to use jQuery, form2js is a good option.
-
 Contributions
 -------------
 
@@ -167,7 +181,8 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
- * *1.0.1* (Aug 20, 2012): Bugfix: generated arrays were not being displayed when parsed with JSON.stringify
+ * *1.0.2* (Jan 07, 2014): Tag to be on the jQuery plugin registry
+ * *1.0.1* (Aug 20, 2012): Bugfix: ensure that generated arrays are being displayed when parsed with JSON.stringify
  * *1.0.0* (Aug 20, 2012): Initial release
 
 Author

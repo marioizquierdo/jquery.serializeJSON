@@ -1,7 +1,7 @@
 {
   "name": "jquery.serializeJSON",
   "main": "jquery.serializeJSON.js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "https://github.com/marioizquierdo/jquery.serializeJSON",
   "authors": ["Mario Izquierdo <tothemario@gmail.com>"],
   "description": "jQuery plugin that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash",
