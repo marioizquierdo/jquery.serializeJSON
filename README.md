@@ -153,6 +153,11 @@ because the serialization will try to add both values as separate elements. For 
 <input type="checkbox" name="booleanAttr[1]" value="true" />
 ```
 
+### Look mom, no jQuery! ###
+
+Someone else implemented a very similar function without using jQuery: https://github.com/maxatwork/form2js
+
+I find it less stable and less robust than `serializeJSON`, but if you really don't want to use jQuery form2js should worl for you.
 
 Contributions
 -------------
