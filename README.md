@@ -157,7 +157,7 @@ because the serialization will try to add both values as separate elements. For 
 
 Someone else implemented a very similar function without using jQuery: https://github.com/maxatwork/form2js
 
-I find it less stable and less robust than `serializeJSON`, but if you really don't want to use jQuery form2js should worl for you.
+I find it less stable and less robust than `serializeJSON`, but if you really don't want to use jQuery, form2js is a good option.
 
 Contributions
 -------------
