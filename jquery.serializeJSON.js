@@ -44,8 +44,9 @@
     return obj === Object(obj);
   };
 
+  //function to check if a variable is an integer
   var isInt = function(val){
-      return !isNaN(parseInt(val, 10));
+      return !isNaN(parseInt(val, 10)) && isFinite(val); //without the isFinite, the value '1st' would be regarded as an int
   }
 
   /**
