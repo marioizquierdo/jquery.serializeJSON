@@ -18,6 +18,11 @@ describe("$.serializeJSON", function () {
         }
       },
 
+      drinks: {
+        "1st": "coffee",
+        "2nd": "beer"
+      },
+
       jobbies: ["code", "climbing"],
 
       projects: [
@@ -25,6 +30,9 @@ describe("$.serializeJSON", function () {
         { name: "bettertabs",    language: "ruby" }
       ]
     });
+  });
+  it("drinks should be an object", function(){
+    expect(Object.prototype.toString.call( obj.drinks )).toBe('[object Object]');
   });
 });
 
