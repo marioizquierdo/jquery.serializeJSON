@@ -44,6 +44,10 @@
     return obj === Object(obj);
   };
 
+  var isInt = function(val){
+      return !isNaN(parseInt(val, 10));
+  }
+
   /**
   Access the object in a deep key and assigns the value:
 
@@ -84,7 +88,7 @@
         }
       }
       if (obj[key] === undefined) { // obj[key] ||= defaultIfNotDefined
-        defaultIfNotDefined = (next === '' || !isNaN(parseInt(next, 10))) ? [] : {}; // Array or Object depending on next key
+        defaultIfNotDefined = (next === '' || isInt(next)) ? [] : {}; // Array or Object depending on next key
         obj[key] = defaultIfNotDefined;
       }
       $.deepSet(obj[key], tail, value); // Recursive access the inner Object
