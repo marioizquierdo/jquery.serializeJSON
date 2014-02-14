@@ -15,6 +15,10 @@
       <input type="text" name="address[state][name]"  value="California" />
       <input type="text" name="address[state][abbr]"  value="CA" />
 
+      <!-- object with parseInt(key) !== NaN, while the key isn't an int -->
+      <input type="text" name="drinks[1st]"           value="coffee" />
+      <input type="text" name="drinks[2nd]"           value="beer" />
+
       <!-- array -->
       <input type="text" name="jobbies[]"             value="code" />
       <input type="text" name="jobbies[]"             value="climbing" />
