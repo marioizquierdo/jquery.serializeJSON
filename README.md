@@ -112,44 +112,20 @@ Why serialize a form?
 
 Probably to submit via AJAX, or to handle user input in your JavaScript application.
 
-To submit a form using AJAX, then jQuery `.serialize()` will work just fine. Most backend frameworks will understand the form attribute names and convert them to accessible values that can be easily assigned to your backend models.
+To submit a form using AJAX, the jQuery [.serialize()](https://api.jquery.com/serialize/) function should work just fine. Most backend frameworks will understand the form attribute names and convert them to accessible values that can be easily assigned to your backend models.
 
 Actually, the input name format used by `.serializeJSON()` is borrowed from [Rails Parameter Naming Conventions](http://guides.rubyonrails.org/form_helpers.html#understanding-parameter-naming-conventions).
 
-Anyway, if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful (because it just creates a params string). To copy the right value into the right model, you can do one of the following:
+But if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful because it just creates a params string. Other jQuery function is `.serializeArray`, but it doesn't handle nested objects.
 
-  * Use jQuery `.serializeArray()`: if you don't have nested resources or arrays, then [serializeArray](http://api.jquery.com/serializeArray/) is good enough. But it only works for simple plain attributes.
-  * Read the form values one by one using jQuery: If the form is very simple, you can add some noise to your code and read the values with sentences like `var user = {}; user.fullName = $('#user-form').find('input[name=fullName]').val();` (Not recommendable, but definitelly agile if needed).
-  * Use declarative bindings: Frameworks like [knockout.js](http://knockoutjs.com/) or [ember.js](http://emberjs.com/) will assign the values to the model automatically using model-view bindings.
-
-Or, if you are using something like [backbone.js](http://backbonejs.org/) or [spine.js](http://spinejs.com/), and you want to assign a form to a Model, a good easy solution is to use `.serializeJSON()` to get the values from the form in the exact same format as you want to create (or modify) the model, for example:
-
-```javascript
-
-var UserView = Backbone.View.extend({
-  el: "form#user-form",
-
-  events: {
-    "submit": "saveUser"
-  },
-
-  saveUser: function(event) {
-    var form = $(event.currentTarget);
-    var userData = form.serializeJSON();
-    this.model.save(this.model.parse(userData));
-  }
-});
-
-```
 
 Usage details
 -------------
 
-Current implementation of `.serializeJSON()` relies in jQuery `.serializeArray()` to grab the form attributes and then create the object using the names.
+Current implementation of `.serializeJSON()` relies in jQuery [.serializeArray()](https://api.jquery.com/serializeArray/) to grab the form attributes and then create the object using the names.
 
 It means, it will serialize the inputs that are supported by `.serializeArray()`, that uses the standard W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2) to determine which elements it should include; in particular the element cannot be disabled and must contain a name attribute. No submit button value is serialized since the form was not submitted using a button. Data from file select elements is not serialized.
 
-Please take a look at [serializeArray documentation](http://api.jquery.com/serializeArray/) to see more details.
 
 ### Gotcha ###
 
@@ -192,6 +168,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *1.1.0* (Feb 16, 2014): Only unsigned integers are used to create arrays. Alphanumeric keys are always for objects.
  * *1.0.2* (Jan 07, 2014): Tag to be on the jQuery plugin registry
  * *1.0.1* (Aug 20, 2012): Bugfix: ensure that generated arrays are being displayed when parsed with JSON.stringify
  * *1.0.0* (Aug 20, 2012): Initial release
