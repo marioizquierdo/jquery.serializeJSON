@@ -10,12 +10,12 @@
       <!-- simple attribute -->
       <input type="text" name="fullName"              value="Mario Izquierdo" />
 
-      <!-- object -->
+      <!-- object with nested attributes -->
       <input type="text" name="address[city]"         value="San Francisco" />
       <input type="text" name="address[state][name]"  value="California" />
       <input type="text" name="address[state][abbr]"  value="CA" />
 
-      <!-- object with parseInt(key) !== NaN, while the key isn't an int -->
+      <!-- object, only integers are mapped to an array -->
       <input type="text" name="drinks[1st]"           value="coffee" />
       <input type="text" name="drinks[2nd]"           value="beer" />
 
@@ -23,11 +23,16 @@
       <input type="text" name="jobbies[]"             value="code" />
       <input type="text" name="jobbies[]"             value="climbing" />
 
-      <!-- array of objects -->
+      <!-- complext array of objects -->
       <input type="text" name="projects[0][name]"     value="serializeJSON" />
       <input type="text" name="projects[0][language]" value="javascript" />
+
       <input type="text" name="projects[1][name]"     value="bettertabs" />
       <input type="text" name="projects[1][language]" value="ruby" />
+
+      <input type="text" name="projects[2][name]"     value="formwell" />
+      <input type="text" name="projects[2][languages][]" value="coffeescript" />
+      <input type="text" name="projects[2][languages][]" value="javascript" />
     </form>
   </div>
 

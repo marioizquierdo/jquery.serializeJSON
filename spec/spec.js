@@ -18,7 +18,7 @@ describe("$.serializeJSON", function () {
         }
       },
 
-      drinks: {
+      drinks: { // it should not be an arary
         "1st": "coffee",
         "2nd": "beer"
       },
@@ -27,17 +27,15 @@ describe("$.serializeJSON", function () {
 
       projects: [
         { name: "serializeJSON", language: "javascript" },
-        { name: "bettertabs",    language: "ruby" }
+        { name: "bettertabs",    language: "ruby" },
+        { name: "formwell",      languages: ["coffeescript", "javascript"] },
       ]
     });
-  });
-  it("drinks should be an object", function(){
-    expect(Object.prototype.toString.call( obj.drinks )).toBe('[object Object]');
   });
 });
 
 // $.deepSet is used to assign complex keys like "address[state][abbr]" to an object
-describe("deepSet", function () {
+describe("$.deepSet", function () {
   var deepSet = $.deepSet;
   var arr, obj, v, v2;
 

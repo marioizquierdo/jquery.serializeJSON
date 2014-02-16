@@ -44,9 +44,9 @@
     return obj === Object(obj);
   };
 
-  //function to check if a variable is an integer
-  var isInt = function(val){
-      return !isNaN(parseInt(val, 10)) && isFinite(val); //without the isFinite, the value '1st' would be regarded as an int
+  // Auxiliar function to check if a variable is a valid Array index
+  var isValidArrayIndex = function(val){
+      return /^[0-9]+$/.test(String(val));
   };
 
   /**
@@ -72,34 +72,48 @@
   deepSet(arr, ['', 'bar'], v)            //=> arr === [v, {foo: v, bar: v}, {bar: v}]
   */
   $.deepSet = function (obj, keys, value) {
+    var key, nextKey, tail, objectOrArray, lastKey, lastElement;
+
     if (!keys || keys.length === 0) { throw new Error("ArgumentError: keys param expected to be an array with least one key"); }
-    var key, next, tail, defaultIfNotDefined, lastKey, lastElement;
     key = keys[0];
-    next = keys[1];
-    if (next !== undefined && next !== null) {
-      tail = keys.slice(1);
-      if (key === '') { // Empty key with => merge keys in the object element
+
+    if (keys.length == 1) { // only one key, then it's not a deepSet, just assign the value.
+      if (key === '') {
+        obj.push(value); // empty key is used to add values to the array
+      } else {
+        obj[key] = value; // other keys can be used as array indexes or object keys
+      }
+
+    } else { // more keys menas a deepSet. Apply recursively
+
+      nextKey = keys[1];
+
+      // Empty key is used to add values to the array => merge next keys in the object element.
+      if (key === '') {
         lastKey = obj.length - 1;
         lastElement = obj[obj.length - 1];
-        if (isObject(lastElement) && !lastElement[next]) { // if next key is a new attribute in the last object element then set the new value in there
+        if (isObject(lastElement) && !lastElement[nextKey]) { // if nextKey is a new attribute in the last object element then set the new value in there.
           key = lastKey;
-        } else { // if the array does not have an object as last element, create one
+        } else { // if the array does not have an object as last element, create one.
           obj.push({});
           key = lastKey + 1;
         }
       }
-      if (obj[key] === undefined) { // obj[key] ||= defaultIfNotDefined
-        defaultIfNotDefined = (next === '' || isInt(next)) ? [] : {}; // Array or Object depending on next key
-        obj[key] = defaultIfNotDefined;
+
+      // obj[key] defaults to Object or Array, depending on the next key
+      if (obj[key] === undefined) {
+        if (nextKey === '' || isValidArrayIndex(nextKey)) { // if is '', 1, 2, 3 ... then use an Array
+          obj[key] = [];
+        } else { // if is something else, use an Object
+          obj[key] = {};
+        }
       }
-      $.deepSet(obj[key], tail, value); // Recursive access the inner Object
-    } else {
-      if (key === '') {
-        obj.push(value);
-      } else {
-        obj[key] = value;
-      }
+
+      // Recursively access the inner Object
+      tail = keys.slice(1);
+      $.deepSet(obj[key], tail, value);
     }
+
   };
 
 }(jQuery));
