@@ -92,7 +92,7 @@
       if (key === '') {
         lastKey = obj.length - 1;
         lastElement = obj[obj.length - 1];
-        if (isObject(lastElement) && !lastElement[nextKey]) { // if nextKey is a new attribute in the last object element then set the new value in there.
+        if (isObject(lastElement) && typeof lastElement[nextKey] === 'undefined') { // if nextKey is a new attribute in the last object element then set the new value in there.
           key = lastKey;
         } else { // if the array does not have an object as last element, create one.
           obj.push({});
