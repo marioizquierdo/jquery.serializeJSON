@@ -130,10 +130,12 @@ describe("$.deepSet", function () {
     expect(arr).toEqual([v, {foo: v, bar: v}, {bar: v}]);
   });
 
-  it("array push with empty index and empty value, not overwriting an existing element", function () {
+  it("array push with empty index and empty value, also creates a new element", function () {
     deepSet(arr, ['', 'foo'], ''); //=> arr === [{foo: ''}]
-    deepSet(arr, ['', 'foo'], v);  //=> arr === [{foo: ''}, {foo: v}]
-    expect(arr).toEqual([{foo: ''}, {foo: v}]);
+    deepSet(arr, ['', 'foo'], ''); //=> arr === [{foo: ''}, {foo: ''}, {foo: v}]
+    deepSet(arr, ['', 'foo'], v);  //=> arr === [{foo: ''}, {foo: ''}, {foo: v}]
+    deepSet(arr, ['', 'foo'], ''); //=> arr === [{foo: ''}, {foo: ''}, {foo: v}, {foo: ''}]
+    expect(arr).toEqual([{foo: ''}, {foo: ''}, {foo: v}, {foo: ''}]);
   });
 
   it("should set all different nested values", function () {

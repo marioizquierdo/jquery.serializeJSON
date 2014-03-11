@@ -39,13 +39,16 @@
     return obj;
   };
 
-  // Auxiliar function to check if a variable is an Object
   var isObject = function (obj) {
     return obj === Object(obj);
   };
 
+  var isUndefined = function (obj) {
+    return obj === void 0;
+  };
+
   // Auxiliar function to check if a variable is a valid Array index
-  var isValidArrayIndex = function(val){
+  var isValidArrayIndex = function (val) {
       return /^[0-9]+$/.test(String(val));
   };
 
@@ -92,7 +95,7 @@
       if (key === '') {
         lastKey = obj.length - 1;
         lastElement = obj[obj.length - 1];
-        if (isObject(lastElement) && typeof lastElement[nextKey] === 'undefined') { // if nextKey is a new attribute in the last object element then set the new value in there.
+        if (isObject(lastElement) && isUndefined(lastElement[nextKey])) { // if nextKey is a new attribute in the last object element then set the new value in there.
           key = lastKey;
         } else { // if the array does not have an object as last element, create one.
           obj.push({});
@@ -101,10 +104,10 @@
       }
 
       // obj[key] defaults to Object or Array, depending on the next key
-      if (obj[key] === undefined) {
-        if (nextKey === '' || isValidArrayIndex(nextKey)) { // if is '', 1, 2, 3 ... then use an Array
+      if (isUndefined(obj[key])) {
+        if (nextKey === '' || isValidArrayIndex(nextKey)) { // if is '', 1, 2, 3 ... then use an Array, where nextKey is the index
           obj[key] = [];
-        } else { // if is something else, use an Object
+        } else { // if is something else, use an Object, where nextKey is the key
           obj[key] = {};
         }
       }
