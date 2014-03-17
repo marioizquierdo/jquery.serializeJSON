@@ -1,41 +1,123 @@
 describe("$.serializeJSON", function () {
-  var obj;
+  var obj, $form;
 
-  beforeEach(function () {
-    obj = $('#user-form').serializeJSON();
+  describe('with simple one-level attributes', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="firstName" value="Mario"/>'));
+      $form.append($('<input type="text"  name="lastName"  value="Izquierdo"/>'));
+    });
+
+    it("serializes into plain attributes", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        firstName: "Mario",
+        lastName: "Izquierdo"
+      });
+    });
   });
 
-  it("should serialize the form inputs", function () {
-    expect(obj).not.toBeNull();
-    expect(obj).toEqual({
-      fullName: "Mario Izquierdo",
+  describe('with nested object attributes', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="address[city]"         value="San Francisco"/>'));
+      $form.append($('<input type="text"  name="address[state][name]"  value="California"/>'));
+      $form.append($('<input type="text"  name="address[state][abbr]"  value="CA"/>'));
+    });
 
-      address: {
-        city: "San Francisco",
-        state: {
-          name: "California",
-          abbr: "CA"
+    it("serializes into nested object attributes", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        address: {
+          city: "San Francisco",
+          state: {
+            name: "California",
+            abbr: "CA"
+          }
         }
-      },
+      });
+    });
+  });
 
-      drinks: { // it should not be an arary
-        "1st": "coffee",
-        "2nd": "beer"
-      },
+  describe('with attribute names that are integers', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="arr[0]"    value="zero"/>'));
+      $form.append($('<input type="text"  name="arr[1]"    value="one"/>'));
+      $form.append($('<input type="text"  name="arr[2][0]" value="two-zero"/>'));
+      $form.append($('<input type="text"  name="arr[2][1]" value="two-one"/>'));
+    });
 
-      jobbies: ["code", "climbing"],
+    it("serializes into arrays", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        arr: ['zero', 'one', ['two-zero', 'two-one']]
+      });
+    });
+  });
 
-      projects: [
-        { name: "serializeJSON", language: "javascript" },
-        { name: "bettertabs",    language: "ruby" },
-        { name: "formwell",      languages: ["coffeescript", "javascript"] },
-      ]
+  describe('with empty brackets', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="jobbies[]" value="code"/>'));
+      $form.append($('<input type="text"  name="jobbies[]" value="climbing"/>'));
+    });
+
+    it("pushes elements into an array", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        jobbies: ['code', 'climbing']
+      });
+    });
+  });
+
+  describe('with attribute names that are similar to integers, but not valid array indexes', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="drinks[1st]" value="coffee"/>'));
+      $form.append($('<input type="text"  name="drinks[2nd]" value="beer"/>'));
+    });
+
+    it("serializes into object attributes", function() { // only integers are mapped to an array
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        drinks: {
+          '1st': "coffee",
+          '2nd': "beer"
+        }
+      });
+    });
+  });
+
+  describe('with complext array of objects', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="projects[0][name]"        value="serializeJSON" />'));
+      $form.append($('<input type="text"  name="projects[0][language]"    value="javascript" />'));
+
+      $form.append($('<input type="text"  name="projects[1][name]"        value="bettertabs" />'));
+      $form.append($('<input type="text"  name="projects[1][language]"    value="ruby" />'));
+
+      $form.append($('<input type="text"  name="projects[2][name]"        value="formwell" />'));
+      $form.append($('<input type="text"  name="projects[2][languages][]" value="coffeescript" />'));
+      $form.append($('<input type="text"  name="projects[2][languages][]" value="javascript" />'));
+    });
+
+    it("serializes into array of objects", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        projects: [
+          { name: "serializeJSON", language: "javascript" },
+          { name: "bettertabs",    language: "ruby" },
+          { name: "formwell",      languages: ["coffeescript", "javascript"] },
+        ]
+      });
     });
   });
 });
 
-// $.deepSet is used to assign complex keys like "address[state][abbr]" to an object
-describe("$.deepSet", function () {
+// deepSet aux function is used to assign nested keys like "address[state][abbr]" to an object
+describe("$.serializeJSON.deepSet", function () {
   var deepSet = $.serializeJSON.deepSet;
   var arr, obj, v, v2;
 
@@ -43,7 +125,7 @@ describe("$.deepSet", function () {
     obj = {};
     arr = [];
     v = 'val';
-    v2 = 'newval'
+    v2 = 'newval';
   });
 
   it("simple attr ['foo']", function () {
