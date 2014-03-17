@@ -36,7 +36,7 @@ describe("$.serializeJSON", function () {
 
 // $.deepSet is used to assign complex keys like "address[state][abbr]" to an object
 describe("$.deepSet", function () {
-  var deepSet = $.deepSet;
+  var deepSet = $.serializeJSON.deepSet;
   var arr, obj, v, v2;
 
   beforeEach(function () {
