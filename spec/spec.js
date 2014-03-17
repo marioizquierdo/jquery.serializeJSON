@@ -238,6 +238,33 @@ describe("$.serializeJSON.deepSet", function () {
     expect(obj).toEqual({arr: [1,2,3]});
   });
 
+  it("nested arrays with indexes should create a matrix", function () {
+    deepSet(arr, ['0', '0', '0'], 1);
+    deepSet(arr, ['0', '0', '1'], 2);
+    deepSet(arr, ['0', '1', '0'], 3);
+    deepSet(arr, ['0', '1', '1'], 4);
+    deepSet(arr, ['1', '0', '0'], 5);
+    deepSet(arr, ['1', '0', '1'], 6);
+    deepSet(arr, ['1', '1', '0'], 7);
+    deepSet(arr, ['1', '1', '1'], 8);
+    expect(arr).toEqual([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
+  });
+
+  it("nested arrays with empty indexes should push the elements to the most deep array", function () {
+    deepSet(arr, ['', '', ''], 1);
+    deepSet(arr, ['', '', ''], 2);
+    deepSet(arr, ['', '', ''], 3);
+    expect(arr).toEqual([[[1, 2, 3]]]);
+  });
+
+  it("nested arrays mixing empty indexes with numeric indexes should push when using empty but assign when using numeric", function () {
+    deepSet(arr, ['', '0', ''], 1);
+    deepSet(arr, ['', '1', ''], 2);
+    deepSet(arr, ['', '0', ''], 3);
+    deepSet(arr, ['', '1', ''], 4);
+    expect(arr).toEqual([[[1], [2]], [[3], [4]]]);
+  });
+
   it("nested object as array element ['arr', '0', 'foo']", function () {
     deepSet(obj, ['arr', '0', 'foo'], v);
     expect(obj).toEqual({arr: [{foo: v}]});
