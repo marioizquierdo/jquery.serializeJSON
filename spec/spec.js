@@ -135,6 +135,34 @@ describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
   })
 });
 
+describe("$.serializeJSON.isValidArrayIndex", function() {
+  var validIndex = $.serializeJSON.isValidArrayIndex;
+  it("accepts empty strings", function(){ // empty string is used to push elements into the array
+    expect(validIndex('')).toBeTruthy();
+  });
+  it("accepts positive integers", function() {
+    expect(validIndex(0)).toBeTruthy();
+    expect(validIndex(1)).toBeTruthy();
+    expect(validIndex(222)).toBeTruthy();
+    expect(validIndex('0')).toBeTruthy();
+    expect(validIndex('1')).toBeTruthy();
+    expect(validIndex('222')).toBeTruthy();
+  });
+  it("rejects negative integers", function() {
+    expect(validIndex(-1)).toBeFalsy();
+    expect(validIndex(-22)).toBeFalsy();
+  });
+  it("rejects strings", function() {
+    expect(validIndex('foo')).toBeFalsy();
+  });
+  it("rejects objects", function() {
+    expect(validIndex({'foo': 'var'})).toBeFalsy();
+  });
+  it("rejects arrays", function() {
+    expect(validIndex([0,1,2])).toBeFalsy();
+  });
+});
+
 // deepSet aux function is used to assign nested keys like "address[state][abbr]" to an object
 describe("$.serializeJSON.deepSet", function () {
   var deepSet = $.serializeJSON.deepSet;
