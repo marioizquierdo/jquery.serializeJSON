@@ -12,11 +12,13 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function () {
-    var serializedObject = {};
-    var formAsArray = this.serializeArray(); // array of objects {name, value}
+    var serializedObject, formAsArray, keys;
+
+    serializedObject = {};
+    formAsArray = this.serializeArray(); // array of objects {name, value}
 
     $.each(formAsArray, function (i, input) {
-      var keys = $.serializeJSON.splitInputNameIntoKeysArray(input.name);
+      keys = $.serializeJSON.splitInputNameIntoKeysArray(input.name);
       $.serializeJSON.deepSet(serializedObject, keys, input.value); // Set value in the object using the keys
     });
 
@@ -45,9 +47,11 @@
     // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0']
     // "arr[][val]"       => ['arr', '', 'val']
     splitInputNameIntoKeysArray: function (name) {
+      var keys, last;
+
       if ($.serializeJSON.isUndefined(name)) { throw new Error("ArgumentError: param 'name' expected to be a string, found undefined"); }
-      var keys = $.map(name.split('['), function (key) {
-        var last = key[key.length - 1];
+      keys = $.map(name.split('['), function (key) {
+        last = key[key.length - 1];
         return last === ']' ? key.substring(0, key.length - 1) : key;
       });
       if (keys[0] === '') { keys.shift(); } // "[foo][inn]" should be same as "foo[inn]"
@@ -73,14 +77,14 @@
     // deepSet(arr, ['', 'bar'], v)         //=> arr === [v, {foo: v, bar: v}, {bar: v}]
     //
     deepSet: function (o, keys, value) {
-      var key, nextKey, tail, objectOrArray, lastIdx, lastVal;
+      var key, nextKey, tail, lastIdx, lastVal;
       if ($.serializeJSON.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
       if (!keys || keys.length === 0) { throw new Error("ArgumentError: param 'keys' expected to be an array with least one element"); }
 
       key = keys[0];
 
       // Only one key, then it's not a deepSet, just assign the value.
-      if (keys.length == 1) {
+      if (keys.length === 1) {
         if (key === '') {
           o.push(value); // '' is used to push values into the array (assume o is an array)
         } else {
