@@ -168,6 +168,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *1.2.1* (Mar 17, 2014): Refactor, cleanup, lint code and improve test coverage.
  * *1.2.0* (Mar 11, 2014): Arrays with empty index and objects with empty values are added and not overriden. Thanks to [kotas](https://github.com/kotas).
  * *1.1.1* (Feb 16, 2014): Only unsigned integers are used to create arrays. Alphanumeric keys are always for objects. Thanks to [Nicocin](https://github.com/Nicocin).
  * *1.0.2* (Jan 07, 2014): Tag to be on the jQuery plugin registry.
