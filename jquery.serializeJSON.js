@@ -126,4 +126,4 @@
 
   };
 
-}(jQuery));
+}(window.jQuery || window.Zepto || window.$));
