@@ -1,7 +1,7 @@
 jquery.serializeJSON
 ====================
 
-Adds the method `.serializeJSON()` to jQuery, that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
+Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)), that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
 
 
 Usage Example
@@ -101,10 +101,11 @@ I found others solving the same problem:
 
 But I still think this one is better because:
 
- * It is built on top of jQuery `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes in account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard, stable and crossbrowser as it can be.
+ * It is built on top of jQuery (or Zepto) `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes in account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard, stable and crossbrowser as it can be.
  * The format suggested for the form field names is the same used by Rails, that is standard and well tested.
  * The spec suite makes sure we don't break functionality on future versions.
  * Compatible with [bower](https://github.com/bower/bower).
+ * Compatible with [zepto.js](http://zeptojs.com/).
  * The source code is as small as it can be. The minified version is 1Kb.
 
 Why serialize a form?
@@ -168,6 +169,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *1.2.2* (Apr 03, 2014): Now also works with [Zepto.js](http://zeptojs.com/)
  * *1.2.1* (Mar 17, 2014): Refactor, cleanup, lint code and improve test coverage.
  * *1.2.0* (Mar 11, 2014): Arrays with empty index and objects with empty values are added and not overriden. Thanks to [kotas](https://github.com/kotas).
  * *1.1.1* (Feb 16, 2014): Only unsigned integers are used to create arrays. Alphanumeric keys are always for objects. Thanks to [Nicocin](https://github.com/Nicocin).
