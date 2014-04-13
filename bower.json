@@ -1,6 +1,6 @@
 {
   "name": "jquery.serializeJSON",
-  "main": "jquery.serializeJSON.js",
+  "main": "jquery.serializejson.js",
   "version": "1.2.2",
   "homepage": "https://github.com/marioizquierdo/jquery.serializeJSON",
   "authors": ["Mario Izquierdo <tothemario@gmail.com>"],
