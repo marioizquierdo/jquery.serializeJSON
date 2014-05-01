@@ -88,7 +88,16 @@
         if (key === '') {
           o.push(value); // '' is used to push values into the array (assume o is an array)
         } else {
-          o[key] = value; // other keys can be used as object keys or array indexes
+          if ($.serializeJSON.isUndefined(o[key])) {
+            o[key] = value; // other keys can be used as object keys or array indexes
+          } else {
+            // If the key already exists, it might be a multiple checkboxes input.
+            if ($.isArray(o[key])) {
+              o[key].push(value);
+            } else {
+              o[key] = [ o[key], value ];
+            }
+          }
         }
 
       // More keys is a deepSet. Apply recursively
