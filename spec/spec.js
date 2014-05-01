@@ -114,6 +114,24 @@ describe("$.serializeJSON", function () {
       });
     });
   });
+
+  describe('with boolean as string attributes', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="hidden"  name="truthyAttribute" value="false"/>'));
+      $form.append($('<input type="checkbox"  name="truthyAttribute" value="true" checked="checked"/>'));
+      $form.append($('<input type="hidden"  name="falsyAttribute"  value="false"/>'));
+      $form.append($('<input type="checkbox"  name="falsyAttribute"  value="true"/>'));
+    });
+
+    it("serializes into Boolean type attributes", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        truthyAttribute: true,
+        falsyAttribute: false
+      });
+    });
+  });
 });
 
 describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
