@@ -12,14 +12,20 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function () {
-    var serializedObject, formAsArray, keys;
+    var serializedObject, formAsArray, keys, value;
 
     serializedObject = {};
     formAsArray = this.serializeArray(); // array of objects {name, value}
 
     $.each(formAsArray, function (i, input) {
       keys = $.serializeJSON.splitInputNameIntoKeysArray(input.name);
-      $.serializeJSON.deepSet(serializedObject, keys, input.value); // Set value in the object using the keys
+      value = input.value;
+
+      if (value === 'true' || value === 'false') { // Convert string bool values to Boolean
+        value = value === 'true';
+      }
+
+      $.serializeJSON.deepSet(serializedObject, keys, value); // Set value in the object using the keys
     });
 
     return serializedObject;
@@ -88,16 +94,7 @@
         if (key === '') {
           o.push(value); // '' is used to push values into the array (assume o is an array)
         } else {
-          if ($.serializeJSON.isUndefined(o[key])) {
-            o[key] = value; // other keys can be used as object keys or array indexes
-          } else {
-            // If the key already exists, it might be a multiple checkboxes input.
-            if ($.isArray(o[key])) {
-              o[key].push(value);
-            } else {
-              o[key] = [ o[key], value ];
-            }
-          }
+          o[key] = value; // other keys can be used as object keys or array indexes
         }
 
       // More keys is a deepSet. Apply recursively
