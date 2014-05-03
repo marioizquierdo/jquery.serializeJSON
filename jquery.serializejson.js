@@ -12,14 +12,20 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function () {
-    var serializedObject, formAsArray, keys;
+    var serializedObject, formAsArray, keys, value;
 
     serializedObject = {};
     formAsArray = this.serializeArray(); // array of objects {name, value}
 
     $.each(formAsArray, function (i, input) {
       keys = $.serializeJSON.splitInputNameIntoKeysArray(input.name);
-      $.serializeJSON.deepSet(serializedObject, keys, input.value); // Set value in the object using the keys
+      value = input.value;
+
+      if (value === 'true' || value === 'false') { // Convert string bool values to Boolean
+        value = value === 'true';
+      }
+
+      $.serializeJSON.deepSet(serializedObject, keys, value); // Set value in the object using the keys
     });
 
     return serializedObject;
