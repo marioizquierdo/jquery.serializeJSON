@@ -63,10 +63,10 @@ Returned value:
 
   jobbies: ["code", "climbing"],
 
-  projects: [
-    { name: "serializeJSON", language: "javascript", popular: "1" },
-    { name: "tinytest.js",   language: "javascript", popular: "0" }
-  ]
+  projects: {
+    '0': { name: "serializeJSON", language: "javascript", popular: "1" },
+    '1': { name: "tinytest.js",   language: "javascript", popular: "0" }
+  }
 }
 
 ```
@@ -81,8 +81,11 @@ If you need to support old browsers, just include the [json2.js](https://github.
   var json = JSON.stringify(user);
 ```
 
-Parsed Values
--------------
+
+Options
+-------
+
+## Parse Values ##
 
 What happens if the values look like booleans, numbers or nulls?
 
@@ -148,11 +151,46 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 }
 ```
 
+## Use integer keys as array indexes ##
+
+The option `{useIntKeysAsArrayIndex: true}` allows to define arrays by the index.
+
+For example:
+
+```hrml
+<form>
+  <input type="text" name="arr[0]" value="foo"/>
+  <input type="text" name="arr[1]" value="var"/>
+  <input type="text" name="arr[5]" value="inn"/>
+</form>
+```
+
+Will serialize by default like this:
+
+```javascript
+$('form').serializeJSON();
+// returns => {'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
+```
+
+Which is how the Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) method behaves (remember that serializeJSON input name format is inspired by Rails parameters, that use that Rack method).
+
+But if you feel like you want to interpret integers as array indexes, use the option `useIntKeysAsArrayIndex`:
+
+```javascript
+$('form').serializeJSON({useIntKeysAsArrayIndex: true});
+// returns => {'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
+```
+
+**Note**: that this was the default behavior of serializeJSON before version `1.4.0`. Use this option for backwards compatibility.
+
+## Defaults ##
+
 This options can be set as defaults using `$.serializeJSON.defaultOptions`, so they don't need to be specified with every call to `serializeJSON`:
 
 ```javascript
 $.serializeJSON.defaultOptions = {parseAll: true};
-$('form').serializeJSON();
+
+$('form').serializeJSON(); // with no options, will use $.serializeJSON.defaultOptions
 // returns =>
 {
   "bool": {
@@ -169,6 +207,7 @@ $('form').serializeJSON();
   "string: "text is always string"
 }
 ```
+
 
 Install
 -------
