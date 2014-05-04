@@ -1,3 +1,4 @@
+// serializeJSON
 describe("$.serializeJSON", function () {
   var obj, $form;
 
@@ -39,7 +40,7 @@ describe("$.serializeJSON", function () {
     });
   });
 
-  describe('with empty brackets', function() {
+  describe('with empty brackets (arrays)', function() {
     beforeEach(function() {
       $form = $('<form>');
       $form.append($('<input type="text"  name="jobbies[]" value="code"/>'));
@@ -115,25 +116,27 @@ describe("$.serializeJSON", function () {
     });
   });
 
-  describe('with "true" and "false" values', function() {
+  describe('checkboxes with hidden fields for falsy values', function() {
     beforeEach(function() {
       $form = $('<form>');
-      $form.append($('<input type="hidden"    name="truthyAttribute" value="false"/>'));
-      $form.append($('<input type="checkbox"  name="truthyAttribute" value="true" checked="checked"/>'));
-      $form.append($('<input type="hidden"    name="falsyAttribute"  value="false"/>'));
-      $form.append($('<input type="checkbox"  name="falsyAttribute"  value="true"/>'));
+      $form.append($('<input type="hidden"    name="truthy" value="0"/>'));
+      $form.append($('<input type="checkbox"  name="truthy" value="1" checked="checked"/>')); // should keep "1"
+      $form.append($('<input type="hidden"    name="falsy"  value="0"/>'));
+      $form.append($('<input type="checkbox"  name="falsy"  value="1"/>')); // should keep "0"
     });
 
-    it("serializes into strings", function() {
+    it("uses the checkbox value if checked, otherwise uses the hidden value", function() {
       obj = $form.serializeJSON();
       expect(obj).toEqual({
-        truthyAttribute: 'true',
-        falsyAttribute: 'false'
+        truthy: '1',
+        falsy: '0'
       });
     });
+
   });
 });
 
+// splitInputNameIntoKeysArray
 describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
   var split = $.serializeJSON.splitInputNameIntoKeysArray;
   it("returns an array with one element from a simple name", function() {
@@ -181,7 +184,8 @@ describe("$.serializeJSON.isValidArrayIndex", function() {
   });
 });
 
-// deepSet aux function is used to assign nested keys like "address[state][abbr]" to an object
+// deepSet
+// used to assign nested keys like "address[state][abbr]" to an object
 describe("$.serializeJSON.deepSet", function () {
   var deepSet = $.serializeJSON.deepSet;
   var arr, obj, v, v2;
