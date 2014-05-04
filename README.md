@@ -199,7 +199,7 @@ But I still think this one is better because:
  * The format suggested for the form field names is the same used by Rails, that is standard and well tested.
  * The spec suite makes sure we don't break functionality on future versions.
  * Compatible with [bower](https://github.com/bower/bower).
- * Compatible with [zepto.js](http://zeptojs.com/).
+ * Compatible with [zepto.js](http://zeptojs.com/) and pretty much every version of jQuery.
  * The source code is as small as it can be. The minified version is 1Kb.
 
 Why serialize a form?
@@ -263,6 +263,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *1.3.0* (May 03, 2014): Accept options {parseBooleans, parseNumbers, parseNulls, parseAll} to modify what type to values are interpreted from the strings
  * *1.2.3* (Apr 12, 2014): Lowercase filenames.
  * *1.2.2* (Apr 03, 2014): Now also works with [Zepto.js](http://zeptojs.com/).
  * *1.2.1* (Mar 17, 2014): Refactor, cleanup, lint code and improve test coverage.
