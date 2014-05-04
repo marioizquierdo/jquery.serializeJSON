@@ -21,7 +21,7 @@
     $.each(formAsArray, function (i, input) {
       keys = f.splitInputNameIntoKeysArray(input.name); // "some[deep][key]" => ['some', 'deep', 'key']
       value = f.parseValue(input.value, opts); // string, number, boolean or null
-      f.deepSet(serializedObject, keys, value);
+      f.deepSet(serializedObject, keys, value, opts);
     });
     return serializedObject;
   };
@@ -31,10 +31,11 @@
   $.serializeJSON = {
 
     defaultOptions: {
-      parseNumbers: false,
-      parseBooleans: false,
-      parseNulls: false,
-      parseAll: false
+      parseNumbers: false, // convert values like "1", "-2.33" to 1, -2.33
+      parseBooleans: false, // convert "true", "false" to true, false
+      parseNulls: false, // convert "null" to null
+      parseAll: false, // all of the above
+      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: {"2": "v"}}
     },
 
     // Merge options with defaults to get {parseNumbers, parseBoolens, parseNulls}
@@ -46,7 +47,8 @@
       return {
         parseNumbers:  parseAll || f.optWithDefaults('parseNumbers',  options),
         parseBooleans: parseAll || f.optWithDefaults('parseBooleans', options),
-        parseNulls:    parseAll || f.optWithDefaults('parseNulls',    options)
+        parseNulls:    parseAll || f.optWithDefaults('parseNulls',    options),
+        useIntKeysAsArrayIndex: f.optWithDefaults('useIntKeysAsArrayIndex', options)
       }
     },
 
@@ -66,7 +68,7 @@
 
     isObject: function (obj) { return obj === Object(obj); },
     isUndefined: function (obj) { return obj === void 0; },
-    isValidArrayIndex: function (val) { return val === '' || /^[0-9]+$/.test(String(val)); },
+    isValidArrayIndex: function (val) { return /^[0-9]+$/.test(String(val)); },
 
     // Split the input name in programatically readable keys
     // "foo"              => ['foo']
@@ -88,24 +90,24 @@
 
     // Set a value in an object or array, using multiple keys to set in a nested object or array:
     //
-    // obj = {}
-    // deepSet(obj, ['foo'], v)             //=> obj['foo'] = v
-    // deepSet(obj, ['foo', 'inn'], v)      //=> obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
-    // deepSet(obj, ['0'], v)               //=> obj[0] = v // obj may be an array
-    // deepSet(obj, [''], v)                //=> obj.push(v) // assume obj as array, and add a new value to the end
-    // deepSet(obj, ['arr', '0'], v)        //=> obj['arr']['0'] = v // obj['arr'] is created as array if needed
-    // deepSet(obj, ['arr', ''], v)         //=> obj['arr'].push(v)
-    // deepSet(obj, ['foo', 'arr', '0'], v) //=> obj['foo']['arr'][0] = v // obj['foo'] is created as object and obj['foo']['arr'] as array, if needed
-    // deepSet(obj, ['arr', '0', 'foo'], v) //=> obj['arr']['0']['foo'] = v // obj['foo'] is created as object and obj['foo']['arr'] as array and obj['foo']['arr'][0] as object, if needed
+    // deepSet(obj, ['foo'], v)               //=> obj['foo'] = v
+    // deepSet(obj, ['foo', 'inn'], v)        //=> obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
+    // deepSet(obj, ['foo', 'inn', '123'], v) //=> obj['foo']['arr']['123'] = v //
     //
-    // arr = []
-    // deepSet(arr, [''], v)                //=> arr === [v]
-    // deepSet(arr, ['', 'foo'], v)         //=> arr === [v, {foo: v}]
-    // deepSet(arr, ['', 'bar'], v)         //=> arr === [v, {foo: v, bar: v}]
-    // deepSet(arr, ['', 'bar'], v)         //=> arr === [v, {foo: v, bar: v}, {bar: v}]
+    // deepSet(obj, ['0'], v)                                       //=> obj['0'] = v
+    // deepSet(arr, ['0'], v, {useIntKeysAsArrayIndex: true})   //=> obj[0] = v // obj['arr'] and array
+    // deepSet(arr, [''], v)                                        //=> arr.push(v)
+    // deepSet(obj, ['arr', ''], v)                                 //=> obj['arr'].push(v)
     //
-    deepSet: function (o, keys, value) {
+    // arr = [];
+    // deepSet(arr, ['', v]          //=> arr === [v]
+    // deepSet(arr, ['', 'foo'], v)  //=> arr === [v, {foo: v}]
+    // deepSet(arr, ['', 'bar'], v)  //=> arr === [v, {foo: v, bar: v}]
+    // deepSet(arr, ['', 'bar'], v)  //=> arr === [v, {foo: v, bar: v}, {bar: v}]
+    //
+    deepSet: function (o, keys, value, opts) {
       var key, nextKey, tail, lastIdx, lastVal, f;
+      if (opts == null) opts = {};
       f = $.serializeJSON;
       if (f.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
       if (!keys || keys.length === 0) { throw new Error("ArgumentError: param 'keys' expected to be an array with least one element"); }
@@ -120,18 +122,18 @@
           o[key] = value; // other keys can be used as object keys or array indexes
         }
 
-      // More keys is a deepSet. Apply recursively
+      // With more keys is a deepSet. Apply recursively.
       } else {
 
         nextKey = keys[1];
 
         // '' is used to push values into the array,
-        // with nextKey, set the value in nextKey into the same object or array.
+        // with nextKey, set the value into the same object, in object[nextKey].
         // Covers the case of ['', 'foo'] and ['', 'var'] to push the object {foo, var}, and the case of nested arrays.
         if (key === '') {
-          lastIdx = o.length - 1;
-          lastVal = o[o.length - 1];
-          if (f.isObject(lastVal) && f.isUndefined(lastVal[nextKey])) { // if nextKey is not present in the last object element
+          lastIdx = o.length - 1; // asume o is array
+          lastVal = o[lastIdx];
+          if (f.isObject(lastVal) && (f.isUndefined(lastVal[nextKey]) || keys.length > 2)) { // if nextKey is not present in the last object element, or there are more keys to deep set
             key = lastIdx; // then set the new value in the same object element
           } else {
             key = lastIdx + 1; // otherwise, point to set the next index in the array
@@ -140,16 +142,18 @@
 
         // o[key] defaults to object or array, depending if nextKey is an array index (int or '') or an object key (string)
         if (f.isUndefined(o[key])) {
-          if (f.isValidArrayIndex(nextKey)) { // if is '', 1, 2, 3 ... then use an array, where nextKey is the index
+          if (nextKey === '') { // '' is used to push values into the array.
             o[key] = [];
-          } else { // if is something else, use an object, where nextKey is the key
+          } else if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
+            o[key] = [];
+          } else { // for anything else, use an object, where nextKey is going to be the attribute name
             o[key] = {};
           }
         }
 
         // Recursively set the inner object
         tail = keys.slice(1);
-        f.deepSet(o[key], tail, value);
+        f.deepSet(o[key], tail, value, opts);
       }
     }
 
