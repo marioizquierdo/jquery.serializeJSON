@@ -39,6 +39,21 @@ describe("$.serializeJSON", function () {
     });
   });
 
+  describe('with empty brackets', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"  name="jobbies[]" value="code"/>'));
+      $form.append($('<input type="text"  name="jobbies[]" value="climbing"/>'));
+    });
+
+    it("pushes elements into an array", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        jobbies: ['code', 'climbing']
+      });
+    });
+  });
+
   describe('with attribute names that are integers', function() {
     beforeEach(function() {
       $form = $('<form>');
@@ -52,21 +67,6 @@ describe("$.serializeJSON", function () {
       obj = $form.serializeJSON();
       expect(obj).toEqual({
         arr: ['zero', 'one', ['two-zero', 'two-one']]
-      });
-    });
-  });
-
-  describe('with empty brackets', function() {
-    beforeEach(function() {
-      $form = $('<form>');
-      $form.append($('<input type="text"  name="jobbies[]" value="code"/>'));
-      $form.append($('<input type="text"  name="jobbies[]" value="climbing"/>'));
-    });
-
-    it("pushes elements into an array", function() {
-      obj = $form.serializeJSON();
-      expect(obj).toEqual({
-        jobbies: ['code', 'climbing']
       });
     });
   });
@@ -115,20 +115,20 @@ describe("$.serializeJSON", function () {
     });
   });
 
-  describe('with boolean as string attributes', function() {
+  describe('with "true" and "false" values', function() {
     beforeEach(function() {
       $form = $('<form>');
-      $form.append($('<input type="hidden"  name="truthyAttribute" value="false"/>'));
+      $form.append($('<input type="hidden"    name="truthyAttribute" value="false"/>'));
       $form.append($('<input type="checkbox"  name="truthyAttribute" value="true" checked="checked"/>'));
-      $form.append($('<input type="hidden"  name="falsyAttribute"  value="false"/>'));
+      $form.append($('<input type="hidden"    name="falsyAttribute"  value="false"/>'));
       $form.append($('<input type="checkbox"  name="falsyAttribute"  value="true"/>'));
     });
 
-    it("serializes into Boolean type attributes", function() {
+    it("serializes into strings", function() {
       obj = $form.serializeJSON();
       expect(obj).toEqual({
-        truthyAttribute: true,
-        falsyAttribute: false
+        truthyAttribute: 'true',
+        falsyAttribute: 'false'
       });
     });
   });
