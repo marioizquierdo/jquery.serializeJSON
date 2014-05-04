@@ -134,6 +134,178 @@ describe("$.serializeJSON", function () {
     });
 
   });
+
+  // options
+  describe('parsed values', function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text" name="Numeric 0"     value="0"/>'));
+      $form.append($('<input type="text" name="Numeric 1"     value="1"/>'));
+      $form.append($('<input type="text" name="Numeric 2.2"   value="2.2"/>'));
+      $form.append($('<input type="text" name="Numeric -2.25" value="-2.25"/>'));
+      $form.append($('<input type="text" name="Bool true"     value="true"/>'));
+      $form.append($('<input type="text" name="Bool false"    value="false"/>'));
+      $form.append($('<input type="text" name="Null"          value="null"/>'));
+      $form.append($('<input type="text" name="String"        value="text is always string"/>'));
+    });
+
+    describe('with defaultOptions', function() {
+      it("returns strings", function() {
+        obj = $form.serializeJSON({}); // empty object should be translated to default options
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+      });
+    });
+
+    describe('with parseNumbers true', function() {
+      it("returns numbers for the numeric string values", function() {
+        obj = $form.serializeJSON({parseNumbers: true});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+      });
+    });
+
+    describe('with parseBooleans true', function() {
+      it("returns booleans for the 'true'/'false' values", function() {
+        obj = $form.serializeJSON({parseBooleans: true});
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     true,
+          "Bool false":    false,
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+      });
+    });
+
+    describe('with parseNulls', function() {
+      it("returns null for the 'null' values", function() {
+        obj = $form.serializeJSON({parseNulls: true}); // empty object should be translated to default options
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          null,
+          "String":        "text is always string"
+        });
+      });
+    });
+
+    describe('with parseAll true', function() {
+      it("parses all possible values", function() {
+        obj = $form.serializeJSON({parseAll: true});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     true,
+          "Bool false":    false,
+          "Null":          null,
+          "String":        "text is always string"
+        });
+      });
+    });
+
+    describe('with modified defaults', function() {
+      var defaults = $.serializeJSON.defaultOptions;
+      afterEach(function() {
+        $.serializeJSON.defaultOptions = defaults; // restore defaults
+      });
+
+      it('uses those options by default', function() {
+        $.serializeJSON.defaultOptions = {parseBooleans: true, parseNulls: true};
+        obj = $form.serializeJSON({});
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     true,
+          "Bool false":    false,
+          "Null":          null,
+          "String":        "text is always string"
+        });
+
+        $.serializeJSON.defaultOptions = {parseNumbers: true, parseNulls: true};
+        obj = $form.serializeJSON({});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          null,
+          "String":        "text is always string"
+        });
+      });
+
+      it('can be overriden with different options', function() {
+        $.serializeJSON.defaultOptions = {parseBooleans: true, parseNulls: true};
+        obj = $form.serializeJSON({parseBooleans: false}); // override default parseBooleans: true
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          null,
+          "String":        "text is always string"
+        });
+      });
+
+      it('parseAll will override all other parse options', function() {
+        $.serializeJSON.defaultOptions = {parseNumbers: true, parseBooleans: false, parseNulls: false, parseAll: true};
+        obj = $form.serializeJSON({parseNumbers: false}); // but default parseAll is true
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     true,
+          "Bool false":    false,
+          "Null":          null,
+          "String":        "text is always string"
+        });
+
+        obj = $form.serializeJSON({parseAll: false}); // but default parseNumbers is true
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+      });
+    });
+  });
 });
 
 // splitInputNameIntoKeysArray
