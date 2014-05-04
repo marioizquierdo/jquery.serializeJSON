@@ -24,13 +24,14 @@ HTML form (input, textarea and select tags supported):
   <input type="text" name="jobbies[]"             value="code" />
   <input type="text" name="jobbies[]"             value="climbing" />
 
-  <!-- all form inputs supported -->
-  <textarea name="projects[0][name]">serializeJSON</textarea>
-  <textarea name="projects[0][language]">javascript</textarea>
+  <!-- more complex stuff -->
+  <textarea              name="projects[0][name]">serializeJSON</textarea>
+  <textarea              name="projects[0][language]">javascript</textarea>
   <input type="hidden"   name="projects[0][popular]" value="0" />
   <input type="checkbox" name="projects[0][popular]" value="1" checked="checked"/>
-  <textarea name="projects[1][name]">tinytest.js</textarea>
-  <textarea name="projects[1][language]">javascript</textarea>
+
+  <textarea              name="projects[1][name]">tinytest.js</textarea>
+  <textarea              name="projects[1][language]">javascript</textarea>
   <input type="hidden"   name="projects[1][popular]" value="0" />
   <input type="checkbox" name="projects[1][popular]" value="1"/>
 </form>
@@ -181,7 +182,8 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 // returns => {'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
 ```
 
-**Note**: that this was the default behavior of serializeJSON before version `1.4.0`. Use this option for backwards compatibility.
+**Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
+
 
 ## Defaults ##
 
@@ -302,7 +304,8 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
- * *1.3.0* (May 03, 2014): Accept options {parseBooleans, parseNumbers, parseNulls, parseAll} to modify what type to values are interpreted from the strings
+ * *2.0.0* (May 04, 2014): Nested keys are always object attributes by default (discussed on issue #12). Set option `$.serializeJSON.defaultOptions.useIntKeysAsArrayIndex = true;` for backwards compatibility (see **Options** section). Thanks to [joshuajabbour](https://github.com/joshuajabbour) for finding the issue.
+ * *1.3.0* (May 03, 2014): Accept options {parseBooleans, parseNumbers, parseNulls, parseAll} to modify what type to values are interpreted from the strings. Thanks to [diaswrd](https://github.com/diaswrd) for finding the issue.
  * *1.2.3* (Apr 12, 2014): Lowercase filenames.
  * *1.2.2* (Apr 03, 2014): Now also works with [Zepto.js](http://zeptojs.com/).
  * *1.2.1* (Mar 17, 2014): Refactor, cleanup, lint code and improve test coverage.
