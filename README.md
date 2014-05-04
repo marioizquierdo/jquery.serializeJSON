@@ -15,7 +15,7 @@ HTML form (input, textarea and select tags supported):
   <!-- simple attribute -->
   <input type="text" name="fullName"              value="Mario Izquierdo" />
 
-  <!-- object -->
+  <!-- object with nested objects -->
   <input type="text" name="address[city]"         value="San Francisco" />
   <input type="text" name="address[state][name]"  value="California" />
   <input type="text" name="address[state][abbr]"  value="CA" />
@@ -24,11 +24,15 @@ HTML form (input, textarea and select tags supported):
   <input type="text" name="jobbies[]"             value="code" />
   <input type="text" name="jobbies[]"             value="climbing" />
 
-  <!-- array of objects -->
-  <input type="text" name="projects[0][name]"     value="serializeJSON" />
-  <input type="text" name="projects[0][language]" value="javascript" />
-  <input type="text" name="projects[1][name]"     value="bettertabs" />
-  <input type="text" name="projects[1][language]" value="ruby" />
+  <!-- all form inputs supported -->
+  <textarea name="projects[0][name]">serializeJSON</textarea>
+  <textarea name="projects[0][language]">javascript</textarea>
+  <input type="hidden"   name="projects[0][popular]" value="0" />
+  <input type="checkbox" name="projects[0][popular]" value="1" checked="checked"/>
+  <textarea name="projects[1][name]">tinytest.js</textarea>
+  <textarea name="projects[1][language]">javascript</textarea>
+  <input type="hidden"   name="projects[1][popular]" value="0" />
+  <input type="checkbox" name="projects[1][popular]" value="1"/>
 </form>
 
 ```
@@ -60,14 +64,14 @@ Returned value:
   jobbies: ["code", "climbing"],
 
   projects: [
-    { name: "serializeJSON", language: "javascript" },
-    { name: "bettertabs",    language: "ruby" }
+    { name: "serializeJSON", language: "javascript", popular: "1" },
+    { name: "tinytest.js",   language: "javascript", popular: "0" }
   ]
 }
 
 ```
 
-The `serializeJSON` function does not return JSON, but an object instead. I should call the plugin `serializeObject` but that name was already taken.
+The `serializeJSON` function does not return JSON, but an object instead. I should have called it `serializeObject` instead, but that name is already taken ;)
 
 
 If you really need to serialize into JSON, use the `JSON.strigify` method, that is available on all major [new browsers](http://caniuse.com/json).
@@ -77,10 +81,100 @@ If you need to support old browsers, just include the [json2.js](https://github.
   var json = JSON.stringify(user);
 ```
 
+Parsed Values
+-------------
+
+What happens if the values look like booleans, numbers or nulls?
+
+```html
+<form>
+  <input type="text" name="bool[true]"    value="true"/>
+  <input type="text" name="bool[false]"   value="false"/>
+  <input type="text" name="number[0]"     value="0"/>
+  <input type="text" name="number[1]"     value="1"/>
+  <input type="text" name="number[2.2]"   value="2.2"/>
+  <input type="text" name="number[-2.25]" value="-2.25"/>
+  <input type="text" name="null"          value="null"/>
+  <input type="text" name="string"        value="text is always string"/>
+</form>
+```
+
+By default, all values are parsed as **strings** in the returned json object:
+
+```javascript
+$('form').serializeJSON();
+// returns =>
+{
+  "bool": {
+    "true": "true",
+    "false": "false",
+  }
+  "number": {
+    "0": "0",
+    "1": "1",
+    "2.2": "2.2",
+    "-2.25": "-2.25",
+  }
+  "null": "null",
+  "string: "text is always string"
+}
+```
+
+But the default behavior can be changed using options:
+
+  * `parseBooleans: true` => convert "true" and "false" to true and false
+  * `parseNumbers: true` => conver numbers like "1", "33.33", "-44" to 1, 33.33, -44
+  * `parseNulls: true` => convert "null" to null
+  * `parseAll: true` => all of the above
+
+For example, to parse nulls and numbers:
+
+```javascript
+$('form').serializeJSON({parseNulls: true, parseNumbers: true});
+// returns =>
+{
+  "bool": {
+    "true": "true",
+    "false": "false",
+  }
+  "number": {
+    "0": 0,
+    "1": 1,
+    "2.2": 2.2,
+    "-2.25": -2.25,
+  }
+  "null": null,
+  "string: "text is always string"
+}
+```
+
+This options can be set as defaults using `$.serializeJSON.defaultOptions`, so they don't need to be specified with every call to `serializeJSON`:
+
+```javascript
+$.serializeJSON.defaultOptions = {parseAll: true};
+$('form').serializeJSON();
+// returns =>
+{
+  "bool": {
+    "true": true,
+    "false": false,
+  }
+  "number": {
+    "0": 0,
+    "1": 1,
+    "2.2": 2.2,
+    "-2.25": -2.25,
+  }
+  "null": null,
+  "string: "text is always string"
+}
+```
+
 Install
 -------
 
-Download the [jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery, for example:
+Install it like any other jQuery plugin.
+For example, download the [jquery.serializeJSON.min.js](https://raw.github.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializeJSON.min.js) script and include in your page after jQuery:
 
 ```html
 <script type="text/javascript" src="jquery.min.js"></script>
@@ -151,7 +245,7 @@ Unfortunately that workaround does not work when the check box goes within an ar
 <input type="checkbox" name="booleanAttrs[]" value="true" />
 ```
 
-because the serialization will try to add both values as separate elements. For this case, you need to include the array index:
+because the serialization will try to add both values as separate elements. For this case, you need to use a key:
 
 ```html
 <input type="hidden"   name="booleanAttr[0]" value="false" />
