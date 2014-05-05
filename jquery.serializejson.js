@@ -35,10 +35,10 @@
       parseBooleans: false, // convert "true", "false" to true, false
       parseNulls: false, // convert "null" to null
       parseAll: false, // all of the above
-      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: {"2": "v"}}
+      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
     },
 
-    // Merge options with defaults to get {parseNumbers, parseBoolens, parseNulls}
+    // Merge options with defaults to get {parseNumbers, parseBoolens, parseNulls, useIntKeysAsArrayIndex}
     optsWithDefaults: function(options) {
       var f, parseAll;
       if (options == null) options = {}; // arg default value = {}
@@ -56,7 +56,7 @@
       return (options[key] !== false) && (options[key] || $.serializeJSON.defaultOptions[key]);
     },
 
-    // Convert the string to a number, boolean or null, depending
+    // Convert the string to a number, boolean or null, depending on the enable option and the string format.
     parseValue: function(str, opts) {
       var value, f;
       f = $.serializeJSON;
@@ -66,9 +66,9 @@
       return str; // otherwise, keep same string
     },
 
-    isObject: function (obj) { return obj === Object(obj); },
-    isUndefined: function (obj) { return obj === void 0; },
-    isValidArrayIndex: function (val) { return /^[0-9]+$/.test(String(val)); },
+    isObject: function (obj) { return obj === Object(obj); }, // is this variable an object?
+    isUndefined: function (obj) { return obj === void 0; }, // safe check for undefined values
+    isValidArrayIndex: function (val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
 
     // Split the input name in programatically readable keys
     // "foo"              => ['foo']
@@ -90,20 +90,20 @@
 
     // Set a value in an object or array, using multiple keys to set in a nested object or array:
     //
-    // deepSet(obj, ['foo'], v)               //=> obj['foo'] = v
-    // deepSet(obj, ['foo', 'inn'], v)        //=> obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
-    // deepSet(obj, ['foo', 'inn', '123'], v) //=> obj['foo']['arr']['123'] = v //
+    // deepSet(obj, ['foo'], v)               // obj['foo'] = v
+    // deepSet(obj, ['foo', 'inn'], v)        // obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
+    // deepSet(obj, ['foo', 'inn', '123'], v) // obj['foo']['arr']['123'] = v //
     //
-    // deepSet(obj, ['0'], v)                                       //=> obj['0'] = v
-    // deepSet(arr, ['0'], v, {useIntKeysAsArrayIndex: true})   //=> obj[0] = v // obj['arr'] and array
-    // deepSet(arr, [''], v)                                        //=> arr.push(v)
-    // deepSet(obj, ['arr', ''], v)                                 //=> obj['arr'].push(v)
+    // deepSet(obj, ['0'], v)                                   // obj['0'] = v
+    // deepSet(arr, ['0'], v, {useIntKeysAsArrayIndex: true})   // arr[0] = v
+    // deepSet(arr, [''], v)                                    // arr.push(v)
+    // deepSet(obj, ['arr', ''], v)                             // obj['arr'].push(v)
     //
     // arr = [];
-    // deepSet(arr, ['', v]          //=> arr === [v]
-    // deepSet(arr, ['', 'foo'], v)  //=> arr === [v, {foo: v}]
-    // deepSet(arr, ['', 'bar'], v)  //=> arr === [v, {foo: v, bar: v}]
-    // deepSet(arr, ['', 'bar'], v)  //=> arr === [v, {foo: v, bar: v}, {bar: v}]
+    // deepSet(arr, ['', v]          // arr => [v]
+    // deepSet(arr, ['', 'foo'], v)  // arr => [v, {foo: v}]
+    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}]
+    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}, {bar: v}]
     //
     deepSet: function (o, keys, value, opts) {
       var key, nextKey, tail, lastIdx, lastVal, f;

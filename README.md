@@ -44,12 +44,6 @@ JavaScript:
 
 var user = $('#user-form').serializeJSON();
 
-```
-
-Returned value:
-
-```javascript
-
 // user =>
 {
   fullName: "Mario Izquierdo",
@@ -88,6 +82,13 @@ Options
 
 ## Parse Values ##
 
+Options:
+
+  * `parseBooleans: true` => convert `"true"` and `"false"` to `true` and `false`
+  * `parseNumbers: true` => conver strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`
+  * `parseNulls: true` => convert `"null"` to `null`
+  * `parseAll: true` => all of the above
+
 What happens if the values look like booleans, numbers or nulls?
 
 ```html
@@ -124,14 +125,7 @@ $('form').serializeJSON();
 }
 ```
 
-But the default behavior can be changed using options:
-
-  * `parseBooleans: true` => convert "true" and "false" to true and false
-  * `parseNumbers: true` => conver numbers like "1", "33.33", "-44" to 1, 33.33, -44
-  * `parseNulls: true` => convert "null" to null
-  * `parseAll: true` => all of the above
-
-For example, to parse nulls and numbers:
+To change this, use the parse options. For example, to parse nulls and numbers:
 
 ```javascript
 $('form').serializeJSON({parseNulls: true, parseNumbers: true});
@@ -154,11 +148,13 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 
 ## Use integer keys as array indexes ##
 
-The option `{useIntKeysAsArrayIndex: true}` allows to define arrays by the index.
+Option:
+
+  * `useIntKeysAsArrayIndex: true` => when using integer keys, assume array assignment.
 
 For example:
 
-```hrml
+```html
 <form>
   <input type="text" name="arr[0]" value="foo"/>
   <input type="text" name="arr[1]" value="var"/>
@@ -166,16 +162,16 @@ For example:
 </form>
 ```
 
-Will serialize by default like this:
+Serializes like this by default:
 
 ```javascript
 $('form').serializeJSON();
 // returns => {'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
 ```
 
-Which is how the Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) method behaves (remember that serializeJSON input name format is inspired by Rails parameters, that use that Rack method).
+Which is how the Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) method behaves (remember that serializeJSON input name format is inspired by Rails parameters, that are parsed using this Rack method).
 
-But if you feel like you want to interpret integers as array indexes, use the option `useIntKeysAsArrayIndex`:
+But to interpret integers as array indexes, use the option `useIntKeysAsArrayIndex`:
 
 ```javascript
 $('form').serializeJSON({useIntKeysAsArrayIndex: true});
@@ -187,7 +183,9 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 ## Defaults ##
 
-This options can be set as defaults using `$.serializeJSON.defaultOptions`, so they don't need to be specified with every call to `serializeJSON`:
+All options can be set as defaults using `$.serializeJSON.defaultOptions`, so they don't need to be specified with every call to `serializeJSON`:
+
+For example:
 
 ```javascript
 $.serializeJSON.defaultOptions = {parseAll: true};
