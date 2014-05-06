@@ -121,7 +121,7 @@ $('form').serializeJSON();
     "-2.25": "-2.25",
   }
   "null": "null",
-  "string: "text is always string"
+  "string": "text is always string"
 }
 ```
 
@@ -142,7 +142,7 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
     "-2.25": -2.25,
   }
   "null": null,
-  "string: "text is always string"
+  "string": "text is always string"
 }
 ```
 
@@ -204,7 +204,7 @@ $('form').serializeJSON(); // with no options, will use $.serializeJSON.defaultO
     "-2.25": -2.25,
   }
   "null": null,
-  "string: "text is always string"
+  "string": "text is always string"
 }
 ```
 
@@ -268,6 +268,7 @@ In my opinion, the most confusing detail when serializing a form is the input ty
 If you want to add a boolean attribute that can submit true and false values, you have to add a hidden field with the false value *before* the checkbox:
 
 ```html
+<!-- Only one booleanAttr will be added, being "true" or "false" depending if the checkbox is selected or not -->
 <input type="hidden"   name="booleanAttr" value="false" />
 <input type="checkbox" name="booleanAttr" value="true" />
 ```
@@ -277,6 +278,7 @@ This way, the client either sends only the hidden field (representing the check 
 Unfortunately that workaround does not work when the check box goes within an array-like parameter, as in
 
 ```html
+<!-- This doesn't work as expected. It will add the hidden inputs and the selected checkboxes to the booleanAttrs array. -->
 <input type="hidden"   name="booleanAttrs[]" value="false" />
 <input type="checkbox" name="booleanAttrs[]" value="true" />
 
