@@ -11,7 +11,7 @@ HTML form (input, textarea and select tags supported):
 
 ```html
 
-<form id="user-form">
+<form id="my-profile">
   <!-- simple attribute -->
   <input type="text" name="fullName"              value="Mario Izquierdo" />
 
@@ -42,9 +42,8 @@ JavaScript:
 
 ```javascript
 
-var user = $('#user-form').serializeJSON();
-
-// user =>
+$('#my-profile').serializeJSON();
+// returns =>
 {
   fullName: "Mario Izquierdo",
 
