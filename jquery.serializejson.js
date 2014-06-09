@@ -1,7 +1,7 @@
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 2.0.0 (May, 2014)
+  version 2.1.0 (May, 2014)
 
   Copyright (c) 2014 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -21,6 +21,7 @@
     $.each(formAsArray, function (i, input) {
       keys = f.splitInputNameIntoKeysArray(input.name); // "some[deep][key]" => ['some', 'deep', 'key']
       value = f.parseValue(input.value, opts); // string, number, boolean or null
+      if (opts.parseWithFunction) value = opts.parseWithFunction(value); // allow for custom parsing
       f.deepSet(serializedObject, keys, value, opts);
     });
     return serializedObject;
@@ -48,7 +49,8 @@
         parseNumbers:  parseAll || f.optWithDefaults('parseNumbers',  options),
         parseBooleans: parseAll || f.optWithDefaults('parseBooleans', options),
         parseNulls:    parseAll || f.optWithDefaults('parseNulls',    options),
-        useIntKeysAsArrayIndex: f.optWithDefaults('useIntKeysAsArrayIndex', options)
+        useIntKeysAsArrayIndex:    f.optWithDefaults('useIntKeysAsArrayIndex', options),
+        parseWithFunction:         f.optWithDefaults('parseWithFunction', options)
       }
     },
 

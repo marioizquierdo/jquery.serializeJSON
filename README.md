@@ -87,6 +87,7 @@ Options:
   * `parseNumbers: true` => conver strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`
   * `parseNulls: true` => convert `"null"` to `null`
   * `parseAll: true` => all of the above
+  * `parseWithFunction`: function(val) => if you really need something else, you can define your own parse function
 
 What happens if the values look like booleans, numbers or nulls?
 
@@ -100,6 +101,7 @@ What happens if the values look like booleans, numbers or nulls?
   <input type="text" name="number[-2.25]" value="-2.25"/>
   <input type="text" name="null"          value="null"/>
   <input type="text" name="string"        value="text is always string"/>
+  <input type="text" name="empty"         value=""/>
 </form>
 ```
 
@@ -120,7 +122,8 @@ $('form').serializeJSON();
     "-2.25": "-2.25",
   }
   "null": "null",
-  "string": "text is always string"
+  "string": "text is always string",
+  "empty": ""
 }
 ```
 
@@ -141,8 +144,36 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
     "-2.25": -2.25,
   }
   "null": null,
-  "string": "text is always string"
+  "string": "text is always string",
+  "empty": ""
 }
+```
+
+For rare cases, a custom parser can be defined with a function, for example:
+
+```javascript
+var emptyStringsToNulls = function(val) {
+  return val === "" ? null : val;
+}
+
+$('form').serializeJSON({parseNulls: true, parseNumbers: true, parseWithFunction: emptyStringsToNulls});
+// returns =>
+{
+  "bool": {
+    "true": "true",
+    "false": "false",
+  }
+  "number": {
+    "0": 0,
+    "1": 1,
+    "2.2": 2.2,
+    "-2.25": -2.25,
+  }
+  "null": null,
+  "string": "text is always string",
+  "empty": null // <<-- parsed with custom function
+}
+
 ```
 
 ## Use integer keys as array indexes ##
@@ -303,6 +334,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *2.1.0* (Jun 08, 2014): Fix a bug where empty strings were parsed as a zero (0) when `parseNumbers` option was true. Fixing issue [#14](https://github.com/marioizquierdo/jquery.serializeJSON/issues/14)
  * *2.0.0* (May 04, 2014): Nested keys are always object attributes by default (discussed on issue #12). Set option `$.serializeJSON.defaultOptions.useIntKeysAsArrayIndex = true;` for backwards compatibility (see **Options** section). Thanks to [joshuajabbour](https://github.com/joshuajabbour) for finding the issue.
  * *1.3.0* (May 03, 2014): Accept options {parseBooleans, parseNumbers, parseNulls, parseAll} to modify what type to values are interpreted from the strings. Thanks to [diaswrd](https://github.com/diaswrd) for finding the issue.
  * *1.2.3* (Apr 12, 2014): Lowercase filenames.

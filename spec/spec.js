@@ -242,6 +242,40 @@ describe("$.serializeJSON", function () {
       });
     });
 
+    describe('with parseWithFunction custom parser', function() {
+      it("uses the passed in function to parse values", function() {
+        var myParser = function(val) { return val === "true" ? 1 : 0};
+        obj = $form.serializeJSON({parseWithFunction: myParser});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     0,
+          "Numeric 2.2":   0,
+          "Numeric -2.25": 0,
+          "Bool true":     1,
+          "Bool false":    0,
+          "Null":          0,
+          "String":        0,
+          "Empty":         0
+        });
+      });
+
+      it("can be combined with other parse options", function() {
+        var myParser = function(val) { return typeof(val) === "number" ? 1 : 0};
+        obj = $form.serializeJSON({parseNumbers: true, parseWithFunction: myParser});
+        expect(obj).toEqual({
+          "Numeric 0":     1,
+          "Numeric 1":     1,
+          "Numeric 2.2":   1,
+          "Numeric -2.25": 1,
+          "Bool true":     0,
+          "Bool false":    0,
+          "Null":          0,
+          "String":        0,
+          "Empty":         0
+        });
+      });
+    });
+
     describe('with useIntKeysAsArrayIndex true', function() {
       it("uses int keys as array indexes instead of object properties", function() {
         $form = $('<form>');
@@ -293,6 +327,23 @@ describe("$.serializeJSON", function () {
           "Null":          null,
           "String":        "text is always string",
           "Empty":         ""
+        });
+      });
+
+      it('merges options with defaults', function() {
+        var myParser = function(val) { return typeof(val) === "number" ? 1 : 0};
+        $.serializeJSON.defaultOptions = {parseWithFunction: myParser};
+        obj = $form.serializeJSON({parseNumbers: true});
+        expect(obj).toEqual({
+          "Numeric 0":     1,
+          "Numeric 1":     1,
+          "Numeric 2.2":   1,
+          "Numeric -2.25": 1,
+          "Bool true":     0,
+          "Bool false":    0,
+          "Null":          0,
+          "String":        0,
+          "Empty":         0
         });
       });
 
