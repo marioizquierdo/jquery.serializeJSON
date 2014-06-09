@@ -36,6 +36,7 @@
       parseBooleans: false, // convert "true", "false" to true, false
       parseNulls: false, // convert "null" to null
       parseAll: false, // all of the above
+      parseWithFunction: null, // to use custom parser, use a function like: function (val) => parsed_val
       useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
     },
 
@@ -49,8 +50,8 @@
         parseNumbers:  parseAll || f.optWithDefaults('parseNumbers',  options),
         parseBooleans: parseAll || f.optWithDefaults('parseBooleans', options),
         parseNulls:    parseAll || f.optWithDefaults('parseNulls',    options),
-        useIntKeysAsArrayIndex:    f.optWithDefaults('useIntKeysAsArrayIndex', options),
-        parseWithFunction:         f.optWithDefaults('parseWithFunction', options)
+        parseWithFunction:         f.optWithDefaults('parseWithFunction', options),
+        useIntKeysAsArrayIndex:    f.optWithDefaults('useIntKeysAsArrayIndex', options)
       }
     },
 
