@@ -60,15 +60,16 @@
     parseValue: function(str, opts) {
       var value, f;
       f = $.serializeJSON;
-      if (opts.parseNumbers  && !isNaN(str)) return Number(str); // number
+      if (opts.parseNumbers  && f.isNumeric(str)) return Number(str); // number
       if (opts.parseBooleans && (str === "true" || str === "false")) return str === "true"; // boolean
       if (opts.parseNulls    && str == "null") return null; // null
       return str; // otherwise, keep same string
     },
 
-    isObject: function (obj) { return obj === Object(obj); }, // is this variable an object?
-    isUndefined: function (obj) { return obj === void 0; }, // safe check for undefined values
-    isValidArrayIndex: function (val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
+    isObject:          function(obj) { return obj === Object(obj); }, // is this variable an object?
+    isUndefined:       function(obj) { return obj === void 0; }, // safe check for undefined values
+    isValidArrayIndex: function(val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
+    isNumeric:         function(obj) { return obj - parseFloat(obj) >= 0; }, // taken from jQuery.isNumeric implementation. Not using jQuery.isNumeric to support old jQuery and Zepto versions
 
     // Split the input name in programatically readable keys
     // "foo"              => ['foo']

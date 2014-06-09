@@ -154,6 +154,7 @@ describe("$.serializeJSON", function () {
       $form.append($('<input type="text" name="Bool false"    value="false"/>'));
       $form.append($('<input type="text" name="Null"          value="null"/>'));
       $form.append($('<input type="text" name="String"        value="text is always string"/>'));
+      $form.append($('<input type="text" name="Empty"         value=""/>'));
     });
 
     describe('with defaultOptions', function() {
@@ -167,7 +168,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          "null",
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
@@ -183,7 +185,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          "null",
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
@@ -199,7 +202,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     true,
           "Bool false":    false,
           "Null":          "null",
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
@@ -215,7 +219,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
@@ -231,7 +236,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     true,
           "Bool false":    false,
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
@@ -271,7 +277,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     true,
           "Bool false":    false,
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
 
         $.serializeJSON.defaultOptions = {parseNumbers: true, parseNulls: true};
@@ -284,7 +291,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
 
@@ -299,7 +307,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
 
@@ -314,7 +323,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     true,
           "Bool false":    false,
           "Null":          null,
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
 
         obj = $form.serializeJSON({parseAll: false}); // but default parseNumbers is true
@@ -326,7 +336,8 @@ describe("$.serializeJSON", function () {
           "Bool true":     "true",
           "Bool false":    "false",
           "Null":          "null",
-          "String":        "text is always string"
+          "String":        "text is always string",
+          "Empty":         ""
         });
       });
     });
