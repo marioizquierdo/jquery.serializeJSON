@@ -132,16 +132,16 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 // returns =>
 {
   "bool": {
-    "true": "true", // booleans are still strings, because no parseBooleans option was not set
+    "true": "true", // booleans are still strings, because parseBooleans was not set
     "false": "false",
   }
   "number": {
-    "0": 0, // numbers are now parsed
+    "0": 0, // numbers are parsed because parseNumbers: true
     "1": 1,
     "2.2": 2.2,
     "-2.25": -2.25,
   }
-  "null": null, // "null" strings are converted to null
+  "null": null, // "null" strings are converted to null becase parseNulls: true
   "string": "text is always string",
   "empty": ""
 }
@@ -150,11 +150,13 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 For rare cases, a custom parser can be defined with a function, for example:
 
 ```javascript
-var emptyStringsToNulls = function(val) {
-  return val === "" ? null : val;
+var emptyStringsAndZerosToNulls = function(val) {
+  if (val === "") return null; // parse empty strings as nulls
+  if (val === 0) return null;  // parse 0 as null
+  return val;
 }
 
-$('form').serializeJSON({parseNulls: true, parseNumbers: true, parseWithFunction: emptyStringsToNulls});
+$('form').serializeJSON({parseWithFunction: emptyStringsAndZerosToNulls, parseNumbers: true});
 // returns =>
 {
   "bool": {
@@ -162,12 +164,12 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true, parseWithFunction
     "false": "false",
   }
   "number": {
-    "0": 0,
+    "0": null, // <<-- parsed with custom function
     "1": 1,
     "2.2": 2.2,
     "-2.25": -2.25,
   }
-  "null": null,
+  "null": "null",
   "string": "text is always string",
   "empty": null // <<-- parsed with custom function
 }
@@ -216,7 +218,7 @@ All options can be set as defaults using `$.serializeJSON.defaultOptions`, so th
 For example:
 
 ```javascript
-$.serializeJSON.defaultOptions = {parseAll: true};
+$.serializeJSON.defaultOptions = {parseAll: true}; // parse booleans, numbers and nulls by default
 
 $('form').serializeJSON(); // with no options, will use $.serializeJSON.defaultOptions
 // returns =>
@@ -232,7 +234,8 @@ $('form').serializeJSON(); // with no options, will use $.serializeJSON.defaultO
     "-2.25": -2.25,
   }
   "null": null,
-  "string": "text is always string"
+  "string": "text is always string",
+  "empty": ""
 }
 ```
 
