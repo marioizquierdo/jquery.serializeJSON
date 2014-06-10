@@ -15,7 +15,7 @@ HTML form (input, textarea and select tags supported):
   <!-- simple attribute -->
   <input type="text" name="fullName"              value="Mario Izquierdo" />
 
-  <!-- object with nested objects -->
+  <!-- nested attributes -->
   <input type="text" name="address[city]"         value="San Francisco" />
   <input type="text" name="address[state][name]"  value="California" />
   <input type="text" name="address[state][abbr]"  value="CA" />
@@ -24,7 +24,7 @@ HTML form (input, textarea and select tags supported):
   <input type="text" name="jobbies[]"             value="code" />
   <input type="text" name="jobbies[]"             value="climbing" />
 
-  <!-- more complex stuff -->
+  <!-- and more ... -->
   <textarea              name="projects[0][name]">serializeJSON</textarea>
   <textarea              name="projects[0][language]">javascript</textarea>
   <input type="hidden"   name="projects[0][popular]" value="0" />
@@ -83,13 +83,13 @@ Options
 
 Options:
 
-  * `parseBooleans: true` => convert `"true"` and `"false"` to `true` and `false`
+  * `parseBooleans: true` => convert strings `"true"` and `"false"` to booleans `true` and `false`
   * `parseNumbers: true` => conver strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`
   * `parseNulls: true` => convert `"null"` to `null`
   * `parseAll: true` => all of the above
-  * `parseWithFunction`: function(val) => if you really need something else, you can define your own parse function
+  * `parseWithFunction: function(val)` => if you really need something else, you can define your own parse function
 
-What happens if the values look like booleans, numbers or nulls?
+By default, values are always **strings**, even if they look like booleans, numbers of nulls:
 
 ```html
 <form>
@@ -104,8 +104,6 @@ What happens if the values look like booleans, numbers or nulls?
   <input type="text" name="empty"         value=""/>
 </form>
 ```
-
-By default, all values are parsed as **strings** in the returned json object:
 
 ```javascript
 $('form').serializeJSON();
@@ -127,23 +125,23 @@ $('form').serializeJSON();
 }
 ```
 
-To change this, use the parse options. For example, to parse nulls and numbers:
+Note that all values are **strings**. To change this, use the parse options. For example, to parse nulls and numbers:
 
 ```javascript
 $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 // returns =>
 {
   "bool": {
-    "true": "true",
+    "true": "true", // booleans are still strings, because no parseBooleans option was not set
     "false": "false",
   }
   "number": {
-    "0": 0,
+    "0": 0, // numbers are now parsed
     "1": 1,
     "2.2": 2.2,
     "-2.25": -2.25,
   }
-  "null": null,
+  "null": null, // "null" strings are converted to null
   "string": "text is always string",
   "empty": ""
 }
