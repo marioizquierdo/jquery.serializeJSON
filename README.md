@@ -1,7 +1,7 @@
 jquery.serializeJSON
 ====================
 
-Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)), that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
+Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)) that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
 
 
 Usage Example
@@ -281,13 +281,13 @@ To submit a form using AJAX, the jQuery [.serialize()](https://api.jquery.com/se
 
 Actually, the input name format used by `.serializeJSON()` is borrowed from [Rails Parameter Naming Conventions](http://guides.rubyonrails.org/form_helpers.html#understanding-parameter-naming-conventions).
 
-But if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful because it just creates a params string. Other jQuery function is `.serializeArray`, but it doesn't handle nested objects.
+But if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful because it just creates a params string. Another jQuery function is `.serializeArray`, but it doesn't handle nested objects.
 
 
 Usage details
 -------------
 
-Current implementation of `.serializeJSON()` relies in jQuery [.serializeArray()](https://api.jquery.com/serializeArray/) to grab the form attributes and then create the object using the names.
+The current implementation of `.serializeJSON()` relies on jQuery's [.serializeArray()](https://api.jquery.com/serializeArray/) to grab the form attributes and then create the object using the names.
 
 It means, it will serialize the inputs that are supported by `.serializeArray()`, that uses the standard W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2) to determine which elements it should include; in particular the element cannot be disabled and must contain a name attribute. No submit button value is serialized since the form was not submitted using a button. Data from file select elements is not serialized.
 
