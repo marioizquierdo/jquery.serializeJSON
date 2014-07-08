@@ -68,7 +68,7 @@ $('#my-profile').serializeJSON();
 The `serializeJSON` function does not return JSON, but an object instead. I should have called it `serializeObject` instead, but that name is already taken ;)
 
 
-If you really need to serialize into JSON, use the `JSON.strigify` method, that is available on all major [new browsers](http://caniuse.com/json).
+If you really need to serialize into JSON, use the `JSON.stringify` method, that is available on all major [new browsers](http://caniuse.com/json).
 If you need to support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
 
 ```javascript
