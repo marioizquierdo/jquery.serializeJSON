@@ -244,11 +244,11 @@ Install
 -------
 
 Install it like any other jQuery plugin.
-For example, download the [jquery.serializeJSON.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script and include in your page after jQuery:
+For example, download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script and include it in your page after jQuery:
 
 ```html
 <script type="text/javascript" src="jquery.min.js"></script>
-<script type="text/javascript" src="jquery.serializeJSON.min.js"></script>
+<script type="text/javascript" src="jquery.serializejson.min.js"></script>
 ```
 
 Alternatives
