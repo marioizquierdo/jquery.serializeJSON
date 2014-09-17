@@ -65,10 +65,9 @@ $('#my-profile').serializeJSON();
 
 ```
 
-The `serializeJSON` function returns a JavaScript object, not a JSON String. The function should probably have been called `serializeObject` instead, or something like that, but those names were already taken ;)
+The `serializeJSON` function returns a JavaScript object, not a JSON String. It should probably have been called `serializeObject`, or something like that, but those names were already taken.
 
-
-If you really need to serialize into JSON, use the `JSON.stringify` method, that is available on all major [new browsers](http://caniuse.com/json).
+To serialize into JSON, use the `JSON.stringify` method, that is available on all major [new browsers](http://caniuse.com/json).
 To support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
 
 ```javascript
@@ -191,6 +190,20 @@ $('form').serializeJSON({parseWithFunction: emptyStringsAndZerosToNulls, parseNu
 
 ## Include unchecked checkboxes ##
 
+In my opinion, the most confusing detail when serializing a form is the input type checkbox, that will include the value if checked, and nothing if unchecked.
+
+To deal with this, it is a common practice to use hidden fields for the "unchecked" values:
+
+```html
+<!-- Only one booleanAttr will be serialized, being "true" or "false" depending if the checkbox is selected or not -->
+<input type="hidden"   name="booleanAttr" value="false" />
+<input type="checkbox" name="booleanAttr" value="true" />
+```
+
+This solution is somehow verbose, but it is unobtrusive and ensures progressive enhancement, because it works without JavaScript as well.
+
+But, to make things easier, `serializeJSON` includes the option `checkboxUncheckedValue` and the possibility to add the attribute `data-unckecked-value` to the checkboxes.
+
 Option:
 
   * `checkboxUncheckedValue: value` => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
@@ -220,18 +233,17 @@ $('form').serializeJSON({checkboxUncheckedValue: "false"});
 // returns => {'check1': 'true', check2: 'false', check3: 'false'}
 ```
 
-As alternative to the option, the "unchecked" value can also be specified in the HTML by using the `data-unckecked-value` attribute:
+The "unchecked" value can also be specified via the HTML attribute `data-unckecked-value` (Note this attribute is only recognized by the plugin):
 
 ```html
 <form id="checkboxes">
-  <input type="checkbox" name="checkBool1" value="true" data-unckecked-value="false" checked/>
-  <input type="checkbox" name="checkBool2" value="true" data-unckecked-value="false" />
+  <input type="checkbox" name="checked[bool]"  value="true" data-unckecked-value="false" checked/>
+  <input type="checkbox" name="checked[bin]"   value="1"    data-unckecked-value="0"     checked/>
+  <input type="checkbox" name="checked[cool]"  value="YUP"                               checked/>
 
-  <input type="checkbox" name="checkNumb1" value="1"    data-unckecked-value="0" checked/>
-  <input type="checkbox" name="checkNumb2" value="1"    data-unckecked-value="0" />
-
-  <input type="checkbox" name="checkCool1" value="YUP"  checked/>
-  <input type="checkbox" name="checkCool2" value="YUP" />
+  <input type="checkbox" name="unchecked[bool]"  value="true" data-unckecked-value="false" />
+  <input type="checkbox" name="unchecked[bin]"   value="1"    data-unckecked-value="0" />
+  <input type="checkbox" name="unchecked[cool]"  value="YUP" /> <!-- No unchecked value specified -->
 </form>
 ```
 
@@ -240,36 +252,37 @@ Serializes like this by default:
 $('form#checkboxes').serializeJSON(); // Note no option is used
 // returns =>
 {
-  'checkBool1': 'true',
-  'checkBool2': 'false',
-  'checkNumb1': '1',
-  'checkNumb2': '0',
-  'checkCool1': 'YUP' // Note that checkCool2 is not included because it has no data-unckecked-value attribute
+  'checked': {
+    'bool':  'true',
+    'bin':   '1',
+    'cool':  'YUP'
+  },
+  'unchecked': {
+    'bool': 'false',
+    'bin':  '0'
+    // Note that unchecked cool does not appear, because it doesn't use data-unchecked-value
+  }
 }
 ```
 
 You can use both the option `checkboxUncheckedValue` and the attribute `data-unckecked-value` at the same time, in which case the attribute has precedence over the option.
-And remember that you can combine options to parse values as well.
+And remember that you can combine it with other options to parse values as well.
 
 ```javascript
 $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBooleans: true, parseNumbers: true});
 // returns =>
 {
-  'checkBool1': true,
-  'checkBool2': false,  // value from data-unckecked-value attribute, and parsed with parseBooleans
-  'checkNumb1': 1,
-  'checkNumb2': 0,      // value from data-unckecked-value attribute, and parsed with parseNumbers
-  'checkCool1': 'YUP',
-  'checkCool2': 'NOPE', // value from checkboxUncheckedValue option
+  'checked': {
+    'bool':  true,
+    'bin':   1,
+    'cool':  'YUP'
+  },
+  'unchecked': {
+    'bool': false, // value from data-unckecked-value attribute, and parsed with parseBooleans
+    'bin':  0,     // value from data-unckecked-value attribute, and parsed with parseNumbers
+    'cool': 'NOPE' // value from checkboxUncheckedValue option
+  }
 }
-```
-
-And last but not least, another (totally unobtrusive) alternative is to use a hidden input for each checkbox, which is the same technique used on regular HTML form submissions that works withour JavaScript:
-
-```html
-<!-- Only one booleanAttr will be added, being "true" or "false" depending if the checkbox is selected or not -->
-<input type="hidden"   name="check" value="false" />
-<input type="checkbox" name="check" value="true" />
 ```
 
 
