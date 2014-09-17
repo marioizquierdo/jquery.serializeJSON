@@ -173,7 +173,7 @@
       if (opts == null) opts = {};
       f = $.serializeJSON;
 
-      selector = 'input:checkbox:not(:checked)';
+      selector = 'input[type=checkbox]:not(:checked)';
       $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
       $uncheckedCheckboxes.each(function (i, el) {
         $el = $(el);

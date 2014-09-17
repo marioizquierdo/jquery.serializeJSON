@@ -2,7 +2,7 @@
 describe("$.serializeJSON", function () {
   var obj, $form;
 
-  it('accepts a jQuery object with a form', function() {
+  it('accepts a jQuery or Zepto object with a form', function() {
     $form = $('<form>');
     $form.append($('<input type="text" name="1" value="1"/>'));
     $form.append($('<input type="text" name="2" value="2"/>'));
@@ -10,24 +10,28 @@ describe("$.serializeJSON", function () {
     expect(obj).toEqual({"1": "1", "2": "2"});
   });
 
-  it('accepts a jQuery object with inputs', function() {
-    $inputs = $('<input type="text" name="1" value="1"/>').add($('<input type="text" name="2" value="2"/>'));
-    obj = $inputs.serializeJSON();
-    expect(obj).toEqual({"1": "1", "2": "2"});
-  });
+  if ($.fn.jquery) { // not supported on Zepto
 
-  it('accepts a jQuery object with forms and inputs', function() {
-    $form1 = $('<form>');
-    $form1.append($('<input type="text" name="1" value="1"/>'));
-    $form1.append($('<input type="text" name="2" value="2"/>'));
-    $form2 = $('<form>');
-    $form2.append($('<input type="text" name="3" value="3"/>'));
-    $form2.append($('<input type="text" name="4" value="4"/>'));
-    $inputs = $('<input type="text" name="5" value="5"/>').add($('<input type="text" name="6" value="6"/>'));
-    $els = $form1.add($form2).add($inputs);
-    obj = $els.serializeJSON();
-    expect(obj).toEqual({"1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6"});
-  });
+    it('accepts a jQuery object with inputs', function() {
+      $inputs = $('<input type="text" name="1" value="1"/>').add($('<input type="text" name="2" value="2"/>'));
+      obj = $inputs.serializeJSON();
+      expect(obj).toEqual({"1": "1", "2": "2"});
+    });
+
+    it('accepts a jQuery object with forms and inputs', function() {
+      var $form1, $form2, $els;
+      $form1 = $('<form>');
+      $form1.append($('<input type="text" name="1" value="1"/>'));
+      $form1.append($('<input type="text" name="2" value="2"/>'));
+      $form2 = $('<form>');
+      $form2.append($('<input type="text" name="3" value="3"/>'));
+      $form2.append($('<input type="text" name="4" value="4"/>'));
+      $inputs = $('<input type="text" name="5" value="5"/>').add($('<input type="text" name="6" value="6"/>'));
+      $els = $form1.add($form2).add($inputs);
+      obj = $els.serializeJSON();
+      expect(obj).toEqual({"1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6"});
+    });
+  }
 
   describe('with simple one-level attributes', function() {
     beforeEach(function() {
@@ -365,42 +369,46 @@ describe("$.serializeJSON", function () {
         expect(obj).toEqual({check1: false, check2: false, check3: true});
       });
 
-      it('works on multiple forms and inputs', function() {
-        $form1 = $('<form>');
-        $form1.append($('<input type="text"     name="form1[title]"  value="form1"/>'));
-        $form1.append($('<input type="checkbox" name="form1[check1]" value="true"/>'));
-        $form1.append($('<input type="checkbox" name="form1[check2]" value="true" data-unckecked-value="NOPE"/>'));
-        $form2 = $('<form>');
-        $form1.append($('<input type="text"     name="form2[title]"  value="form2"/>'));
-        $form2.append($('<input type="checkbox" name="form2[check1]" value="true" checked="checked"/>'));
-        $form2.append($('<input type="checkbox" name="form2[check2]" value="true" />'));
-        $inputs = $()
-                .add($('<input type="text"      name="inputs[title]"  value="inputs"/>'))
-                .add($('<input type="checkbox"  name="inputs[check1]" value="true" checked="checked"/>'))
-                .add($('<input type="checkbox"  name="inputs[check2]" value="true"/>'))
-                .add($('<input type="checkbox"  name="inputs[check3]" value="true" data-unckecked-value="NOPE"/>'));
-        $els = $form1.add($form2).add($inputs);
+      if ($.fn.jquery) { // not supported on Zepto
 
-        obj = $els.serializeJSON({checkboxUncheckedValue: 'false'});
-        expect(obj).toEqual({
-          form1: {
-            title: 'form1',
-            check1: 'false',
-            check2: 'NOPE',
-          },
-          form2: {
-            title: 'form2',
-            check1: 'true',
-            check2: 'false'
-          },
-          inputs: {
-            title: 'inputs',
-            check1: 'true',
-            check2: 'false',
-            check3: 'NOPE'
-          }
-        })
-      });
+        it('works on multiple forms and inputs', function() {
+          var $form1, $form2, $els;
+          $form1 = $('<form>');
+          $form1.append($('<input type="text"     name="form1[title]"  value="form1"/>'));
+          $form1.append($('<input type="checkbox" name="form1[check1]" value="true"/>'));
+          $form1.append($('<input type="checkbox" name="form1[check2]" value="true" data-unckecked-value="NOPE"/>'));
+          $form2 = $('<form>');
+          $form1.append($('<input type="text"     name="form2[title]"  value="form2"/>'));
+          $form2.append($('<input type="checkbox" name="form2[check1]" value="true" checked="checked"/>'));
+          $form2.append($('<input type="checkbox" name="form2[check2]" value="true" />'));
+          $inputs = $()
+                  .add($('<input type="text"      name="inputs[title]"  value="inputs"/>'))
+                  .add($('<input type="checkbox"  name="inputs[check1]" value="true" checked="checked"/>'))
+                  .add($('<input type="checkbox"  name="inputs[check2]" value="true"/>'))
+                  .add($('<input type="checkbox"  name="inputs[check3]" value="true" data-unckecked-value="NOPE"/>'));
+          $els = $form1.add($form2).add($inputs);
+
+          obj = $els.serializeJSON({checkboxUncheckedValue: 'false'});
+          expect(obj).toEqual({
+            form1: {
+              title: 'form1',
+              check1: 'false',
+              check2: 'NOPE',
+            },
+            form2: {
+              title: 'form2',
+              check1: 'true',
+              check2: 'false'
+            },
+            inputs: {
+              title: 'inputs',
+              check1: 'true',
+              check2: 'false',
+              check3: 'NOPE'
+            }
+          })
+        });
+      }
 
       it('works on a list of checkboxes', function() {
         $form = $('<form>');
