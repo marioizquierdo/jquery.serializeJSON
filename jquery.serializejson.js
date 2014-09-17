@@ -14,8 +14,9 @@
   $.fn.serializeJSON = function (options) {
     var serializedObject, formAsArray, keys, value, f, opts;
     f = $.serializeJSON;
-    formAsArray = this.serializeArray(); // array of objects {name, value}
     opts = f.optsWithDefaults(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
+    formAsArray = this.serializeArray(); // array of objects {name, value}
+    f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
 
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
@@ -36,7 +37,8 @@
       parseBooleans: false, // convert "true", "false" to true, false
       parseNulls: false, // convert "null" to null
       parseAll: false, // all of the above
-      parseWithFunction: null, // to use custom parser, use a function like: function (val) => parsed_val
+      parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
+      checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
       useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
     },
 
@@ -51,12 +53,13 @@
         parseBooleans: parseAll || f.optWithDefaults('parseBooleans', options),
         parseNulls:    parseAll || f.optWithDefaults('parseNulls',    options),
         parseWithFunction:         f.optWithDefaults('parseWithFunction', options),
+        checkboxUncheckedValue:    f.optWithDefaults('checkboxUncheckedValue', options),
         useIntKeysAsArrayIndex:    f.optWithDefaults('useIntKeysAsArrayIndex', options)
       }
     },
 
     optWithDefaults: function(key, options) {
-      return (options[key] !== false) && (options[key] || $.serializeJSON.defaultOptions[key]);
+      return (options[key] !== false) && (options[key] !== '') && (options[key] || $.serializeJSON.defaultOptions[key]);
     },
 
     // Convert the string to a number, boolean or null, depending on the enable option and the string format.
@@ -159,6 +162,30 @@
         tail = keys.slice(1);
         f.deepSet(o[key], tail, value, opts);
       }
+    },
+
+    // Fill the formAsArray object with values for the unchecked checkbox inputs,
+    // using the same format as the jquery.serializeArray function.
+    // The value of the uncheked values is determined from the opts.checkboxUncheckedValue
+    // and/or the data-unchecked-value attribute of the inputs.
+    readCheckboxUncheckedValues: function (formAsArray, $form, opts) {
+      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
+      if (opts == null) opts = {};
+      f = $.serializeJSON;
+
+      selector = 'input:checkbox:not(:checked)';
+      $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
+      $uncheckedCheckboxes.each(function (i, el) {
+        $el = $(el);
+        dataUncheckedValue = $el.attr('data-unckecked-value');
+        if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
+          formAsArray.push({name: el.name, value: dataUncheckedValue});
+        } else {
+          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
+            formAsArray.push({name: el.name, value: opts.checkboxUncheckedValue});
+          }
+        }
+      });
     }
 
   };
