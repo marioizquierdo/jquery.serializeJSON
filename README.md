@@ -65,19 +65,32 @@ $('#my-profile').serializeJSON();
 
 ```
 
-The `serializeJSON` function does not return JSON, but an object instead. I should have called it `serializeObject` instead, but that name is already taken ;)
+The `serializeJSON` function returns a JavaScript object, not a JSON String. The function should probably have been called `serializeObject` instead, or something like that, but those names were already taken ;)
 
 
 If you really need to serialize into JSON, use the `JSON.stringify` method, that is available on all major [new browsers](http://caniuse.com/json).
-If you need to support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
+To support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
 
 ```javascript
-  var json = JSON.stringify(user);
+  var json = JSON.stringify(object);
 ```
 
 
 Options
 -------
+
+To ensure a standard behavior (regular HTML form submission and same serialized Rack/Rails params format), this is what `.serializeJSON` does by default:
+
+  * Values are always **strings** (no auto boolean/numbers/null detection by default)
+  * Keys (names) are always strings (no auto-array detection by default)
+  * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
+  * Disabled elements are ignored (W3C rules)
+
+To change the default behavior use options, for example:
+
+```javascript
+$('#my-profile').serializeJSON({checkboxUncheckedValue: 'false', parseBooleans: true, parseNumbers: true, parseNulls: true});
+```
 
 ## Parse Values ##
 
@@ -176,6 +189,90 @@ $('form').serializeJSON({parseWithFunction: emptyStringsAndZerosToNulls, parseNu
 
 ```
 
+## Include unchecked checkboxes ##
+
+Option:
+
+  * `checkboxUncheckedValue: value` => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
+
+For example:
+
+```html
+<form>
+  <input type="checkbox" name="check1" value="true" checked/>
+  <input type="checkbox" name="check2" value="true"/>
+  <input type="checkbox" name="check3" value="true"/>
+</form>
+```
+
+Serializes like this by default:
+
+```javascript
+$('form').serializeJSON();
+// returns => {'check1': 'true'} // Note that check2 and check3 are not included because they are not checked
+```
+
+Which ignores any unchecked checkboxes.
+To include all checkboxes, use the `checkboxUncheckedValue` option like this:
+
+```javascript
+$('form').serializeJSON({checkboxUncheckedValue: "false"});
+// returns => {'check1': 'true', check2: 'false', check3: 'false'}
+```
+
+As alternative to the option, the "unchecked" value can also be specified in the HTML by using the `data-unckecked-value` attribute:
+
+```html
+<form id="checkboxes">
+  <input type="checkbox" name="checkBool1" value="true" data-unckecked-value="false" checked/>
+  <input type="checkbox" name="checkBool2" value="true" data-unckecked-value="false" />
+
+  <input type="checkbox" name="checkNumb1" value="1"    data-unckecked-value="0" checked/>
+  <input type="checkbox" name="checkNumb2" value="1"    data-unckecked-value="0" />
+
+  <input type="checkbox" name="checkCool1" value="YUP"  checked/>
+  <input type="checkbox" name="checkCool2" value="YUP" />
+</form>
+```
+
+Serializes like this by default:
+```javascript
+$('form#checkboxes').serializeJSON(); // Note no option is used
+// returns =>
+{
+  'checkBool1': 'true',
+  'checkBool2': 'false',
+  'checkNumb1': '1',
+  'checkNumb2': '0',
+  'checkCool1': 'YUP' // Note that checkCool2 is not included because it has no data-unckecked-value attribute
+}
+```
+
+You can use both the option `checkboxUncheckedValue` and the attribute `data-unckecked-value` at the same time, in which case the attribute has precedence over the option.
+And remember that you can combine options to parse values as well.
+
+```javascript
+$('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBooleans: true, parseNumbers: true});
+// returns =>
+{
+  'checkBool1': true,
+  'checkBool2': false,  // value from data-unckecked-value attribute, and parsed with parseBooleans
+  'checkNumb1': 1,
+  'checkNumb2': 0,      // value from data-unckecked-value attribute, and parsed with parseNumbers
+  'checkCool1': 'YUP',
+  'checkCool2': 'NOPE', // value from checkboxUncheckedValue option
+}
+```
+
+And last but not least, another (totally unobtrusive) alternative is to use a hidden input for each checkbox, which is the same technique used on regular HTML form submissions that works withour JavaScript:
+
+```html
+<!-- Only one booleanAttr will be added, being "true" or "false" depending if the checkbox is selected or not -->
+<input type="hidden"   name="check" value="false" />
+<input type="checkbox" name="check" value="true" />
+```
+
+
 ## Use integer keys as array indexes ##
 
 Option:
@@ -213,14 +310,14 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 ## Defaults ##
 
-All options can be set as defaults using `$.serializeJSON.defaultOptions`, so they don't need to be specified with every call to `serializeJSON`:
+All options defaults are defined in `$.serializeJSON.defaultOptions`. You can just modify it to avoid setting the option on every call to `serializeJSON`.
 
 For example:
 
 ```javascript
-$.serializeJSON.defaultOptions = {parseAll: true}; // parse booleans, numbers and nulls by default
+$.serializeJSON.defaultOptions.parseAll = true; // parse booleans, numbers and nulls by default
 
-$('form').serializeJSON(); // with no options, will use $.serializeJSON.defaultOptions
+$('form').serializeJSON(); // No options => then use $.serializeJSON.defaultOptions
 // returns =>
 {
   "bool": {
@@ -291,41 +388,6 @@ The current implementation of `.serializeJSON()` relies on jQuery's [.serializeA
 
 It means, it will serialize the inputs that are supported by `.serializeArray()`, that uses the standard W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2) to determine which elements it should include; in particular the element cannot be disabled and must contain a name attribute. No submit button value is serialized since the form was not submitted using a button. Data from file select elements is not serialized.
 
-
-### Gotcha ###
-
-In my opinion, the most confusing detail when serializing a form is the input type **checkbox**, that will include the value if checked, and nothing if unchecked.
-
-If you want to add a boolean attribute that can submit true and false values, you have to add a hidden field with the false value *before* the checkbox:
-
-```html
-<!-- Only one booleanAttr will be added, being "true" or "false" depending if the checkbox is selected or not -->
-<input type="hidden"   name="booleanAttr" value="false" />
-<input type="checkbox" name="booleanAttr" value="true" />
-```
-
-This way, the client either sends only the hidden field (representing the check box is unchecked), or both fields. It works because the HTML specification (and the serialize implementation) says key/value pairs have to be sent in the same order they appear in the form, and parameters extraction gets the last occurrence of any repeated key in the query string.
-
-Unfortunately that workaround does not work when the check box goes within an array-like parameter, as in
-
-```html
-<!-- This doesn't work as expected. It will add the hidden inputs and the selected checkboxes to the booleanAttrs array. -->
-<input type="hidden"   name="booleanAttrs[]" value="false" />
-<input type="checkbox" name="booleanAttrs[]" value="true" />
-
-<input type="hidden"   name="booleanAttrs[]" value="false" />
-<input type="checkbox" name="booleanAttrs[]" value="true" />
-```
-
-because the serialization will try to add both values as separate elements. For this case, you need to use a key:
-
-```html
-<input type="hidden"   name="booleanAttr[0]" value="false" />
-<input type="checkbox" name="booleanAttr[0]" value="true" />
-
-<input type="hidden"   name="booleanAttr[1]" value="false" />
-<input type="checkbox" name="booleanAttr[1]" value="true" />
-```
 
 Contributions
 -------------
