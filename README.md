@@ -94,8 +94,8 @@ To change the default behavior you have the following options:
   * **parseNulls: true**, convert the string `"null"` to the null value `null`.
   * **parseAll: true**, all of the above.
   * **parseWithFunction: function**, define your own parse function.
-  * **checkboxUncheckedValue: val** => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
-  * **useIntKeysAsArrayIndex: true** => when using integer keys, serialize as an array.
+  * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
+  * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
 
 More details about options usage in the sections below.
 
