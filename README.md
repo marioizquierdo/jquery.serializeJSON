@@ -78,28 +78,45 @@ To support old browsers, just include the [json2.js](https://github.com/douglasc
 Options
 -------
 
-To ensure a standard behavior (regular HTML form submission and same serialized Rack/Rails params format), this is what `.serializeJSON` does by default:
+
+
+By default:
 
   * Values are always **strings** (no auto boolean/numbers/null detection by default)
   * Keys (names) are always strings (no auto-array detection by default)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
 
-To change the default behavior use options, for example:
+This is because `serializeJSON` is designed to return exactly the same as a regular HTML form submission when serialized as Rack/Rails params.
+
+But to change the default behavior you can use this options:
+
+  * **parseBooleans: true** => to convert strings `"true"` and `"false"` to booleans `true` and `false`.
+  * **parseNumbers: true** => to convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
+  * **parseNulls: true** => to convert the string `"null"` to the null value `null`.
+  * **parseAll: true** => all of the above.
+  * **parseWithFunction: function(val)* If you really need something else, you can define your own parse function. For example `function(val) { return val === 'myspecialnull' ? null : val }`.
+  * **checkboxUncheckedValue: val** => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`). See more info about this in the "Include unchecked checkboxes" section below.
+  * **useIntKeysAsArrayIndex: true** => when using integer keys, serialize as an array. See more info about this in the "Use integer keys as array indexes" section below.
+
+
+To use options, you can modify the defaults like this:
 
 ```javascript
-$('#my-profile').serializeJSON({checkboxUncheckedValue: 'false', parseBooleans: true, parseNumbers: true, parseNulls: true});
+$.serializeJSON.defaultOptions.checkboxUncheckedValue = 'false';
+$.serializeJSON.defaultOptions.parseBooleans = true;
 ```
 
+Or pass the new options directly to the serializeJSON method, like this:
+
+```javascript
+$('#my-profile').serializeJSON({checkboxUncheckedValue: 'false', parseBooleans: true});
+```
+
+The following sections will describe how to use options in more detail.
+
+
 ## Parse Values ##
-
-Options:
-
-  * `parseBooleans: true` => convert strings `"true"` and `"false"` to booleans `true` and `false`
-  * `parseNumbers: true` => conver strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`
-  * `parseNulls: true` => convert `"null"` to `null`
-  * `parseAll: true` => all of the above
-  * `parseWithFunction: function(val)` => if you really need something else, you can define your own parse function
 
 By default, values are always **strings**, even if they look like booleans, numbers of nulls:
 
@@ -204,10 +221,6 @@ This solution is somehow verbose, but it is unobtrusive and ensures progressive 
 
 But, to make things easier, `serializeJSON` includes the option `checkboxUncheckedValue` and the possibility to add the attribute `data-unchecked-value` to the checkboxes.
 
-Option:
-
-  * `checkboxUncheckedValue: value` => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
-
 For example:
 
 ```html
@@ -222,7 +235,8 @@ Serializes like this by default:
 
 ```javascript
 $('form').serializeJSON();
-// returns => {'check1': 'true'} // Note that check2 and check3 are not included because they are not checked
+// returns =>
+{'check1': 'true'} // Note that check2 and check3 are not included because they are not checked
 ```
 
 Which ignores any unchecked checkboxes.
@@ -230,7 +244,8 @@ To include all checkboxes, use the `checkboxUncheckedValue` option like this:
 
 ```javascript
 $('form').serializeJSON({checkboxUncheckedValue: "false"});
-// returns => {'check1': 'true', check2: 'false', check3: 'false'}
+// returns =>
+{'check1': 'true', check2: 'false', check3: 'false'}
 ```
 
 The "unchecked" value can also be specified via the HTML attribute `data-unchecked-value` (Note this attribute is only recognized by the plugin):
@@ -288,9 +303,7 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBoolean
 
 ## Use integer keys as array indexes ##
 
-Option:
-
-  * `useIntKeysAsArrayIndex: true` => when using integer keys, assume array assignment.
+Using the option `useIntKeysAsArrayIndex`.
 
 For example:
 
@@ -306,7 +319,8 @@ Serializes like this by default:
 
 ```javascript
 $('form').serializeJSON();
-// returns => {'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
+// returns =>
+{'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
 ```
 
 Which is how the Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) method behaves (remember that serializeJSON input name format is inspired by Rails parameters, that are parsed using this Rack method).
@@ -315,7 +329,8 @@ But to interpret integers as array indexes, use the option `useIntKeysAsArrayInd
 
 ```javascript
 $('form').serializeJSON({useIntKeysAsArrayIndex: true});
-// returns => {'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
+// returns =>
+{'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
 ```
 
 **Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
