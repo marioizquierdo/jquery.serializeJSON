@@ -78,8 +78,6 @@ To support old browsers, just include the [json2.js](https://github.com/douglasc
 Options
 -------
 
-
-
 By default:
 
   * Values are always **strings** (no auto boolean/numbers/null detection by default)
@@ -89,31 +87,17 @@ By default:
 
 This is because `serializeJSON` is designed to return exactly the same as a regular HTML form submission when serialized as Rack/Rails params.
 
-But to change the default behavior you can use this options:
+To change the default behavior you have the following options:
 
-  * **parseBooleans: true** => to convert strings `"true"` and `"false"` to booleans `true` and `false`.
-  * **parseNumbers: true** => to convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
-  * **parseNulls: true** => to convert the string `"null"` to the null value `null`.
-  * **parseAll: true** => all of the above.
-  * **parseWithFunction: function(val)* If you really need something else, you can define your own parse function. For example `function(val) { return val === 'myspecialnull' ? null : val }`.
-  * **checkboxUncheckedValue: val** => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`). See more info about this in the "Include unchecked checkboxes" section below.
-  * **useIntKeysAsArrayIndex: true** => when using integer keys, serialize as an array. See more info about this in the "Use integer keys as array indexes" section below.
+  * **parseBooleans: true**, convert strings `"true"` and `"false"` to booleans `true` and `false`.
+  * **parseNumbers: true**, convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
+  * **parseNulls: true**, convert the string `"null"` to the null value `null`.
+  * **parseAll: true**, all of the above.
+  * **parseWithFunction: function**, define your own parse function.
+  * **checkboxUncheckedValue: val** => value to use for unchecked checkboxes. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
+  * **useIntKeysAsArrayIndex: true** => when using integer keys, serialize as an array.
 
-
-To use options, you can modify the defaults like this:
-
-```javascript
-$.serializeJSON.defaultOptions.checkboxUncheckedValue = 'false';
-$.serializeJSON.defaultOptions.parseBooleans = true;
-```
-
-Or pass the new options directly to the serializeJSON method, like this:
-
-```javascript
-$('#my-profile').serializeJSON({checkboxUncheckedValue: 'false', parseBooleans: true});
-```
-
-The following sections will describe how to use options in more detail.
+More details about options usage in the sections below.
 
 
 ## Parse Values ##
