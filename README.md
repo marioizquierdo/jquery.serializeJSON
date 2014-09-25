@@ -202,7 +202,7 @@ To deal with this, it is a common practice to use hidden fields for the "uncheck
 
 This solution is somehow verbose, but it is unobtrusive and ensures progressive enhancement, because it works without JavaScript as well.
 
-But, to make things easier, `serializeJSON` includes the option `checkboxUncheckedValue` and the possibility to add the attribute `data-unckecked-value` to the checkboxes.
+But, to make things easier, `serializeJSON` includes the option `checkboxUncheckedValue` and the possibility to add the attribute `data-unchecked-value` to the checkboxes.
 
 Option:
 
@@ -233,16 +233,16 @@ $('form').serializeJSON({checkboxUncheckedValue: "false"});
 // returns => {'check1': 'true', check2: 'false', check3: 'false'}
 ```
 
-The "unchecked" value can also be specified via the HTML attribute `data-unckecked-value` (Note this attribute is only recognized by the plugin):
+The "unchecked" value can also be specified via the HTML attribute `data-unchecked-value` (Note this attribute is only recognized by the plugin):
 
 ```html
 <form id="checkboxes">
-  <input type="checkbox" name="checked[bool]"  value="true" data-unckecked-value="false" checked/>
-  <input type="checkbox" name="checked[bin]"   value="1"    data-unckecked-value="0"     checked/>
+  <input type="checkbox" name="checked[bool]"  value="true" data-unchecked-value="false" checked/>
+  <input type="checkbox" name="checked[bin]"   value="1"    data-unchecked-value="0"     checked/>
   <input type="checkbox" name="checked[cool]"  value="YUP"                               checked/>
 
-  <input type="checkbox" name="unchecked[bool]"  value="true" data-unckecked-value="false" />
-  <input type="checkbox" name="unchecked[bin]"   value="1"    data-unckecked-value="0" />
+  <input type="checkbox" name="unchecked[bool]"  value="true" data-unchecked-value="false" />
+  <input type="checkbox" name="unchecked[bin]"   value="1"    data-unchecked-value="0" />
   <input type="checkbox" name="unchecked[cool]"  value="YUP" /> <!-- No unchecked value specified -->
 </form>
 ```
@@ -265,7 +265,7 @@ $('form#checkboxes').serializeJSON(); // Note no option is used
 }
 ```
 
-You can use both the option `checkboxUncheckedValue` and the attribute `data-unckecked-value` at the same time, in which case the attribute has precedence over the option.
+You can use both the option `checkboxUncheckedValue` and the attribute `data-unchecked-value` at the same time, in which case the attribute has precedence over the option.
 And remember that you can combine it with other options to parse values as well.
 
 ```javascript
@@ -278,8 +278,8 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBoolean
     'cool':  'YUP'
   },
   'unchecked': {
-    'bool': false, // value from data-unckecked-value attribute, and parsed with parseBooleans
-    'bin':  0,     // value from data-unckecked-value attribute, and parsed with parseNumbers
+    'bool': false, // value from data-unchecked-value attribute, and parsed with parseBooleans
+    'bin':  0,     // value from data-unchecked-value attribute, and parsed with parseNumbers
     'cool': 'NOPE' // value from checkboxUncheckedValue option
   }
 }

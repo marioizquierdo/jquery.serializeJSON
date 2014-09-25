@@ -177,7 +177,7 @@
       $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
       $uncheckedCheckboxes.each(function (i, el) {
         $el = $(el);
-        dataUncheckedValue = $el.attr('data-unckecked-value');
+        dataUncheckedValue = $el.attr('data-unchecked-value');
         if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
           formAsArray.push({name: el.name, value: dataUncheckedValue});
         } else {

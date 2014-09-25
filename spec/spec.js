@@ -184,10 +184,10 @@ describe("$.serializeJSON", function () {
       expect(obj).toEqual({check1: 'NOPE', check2: 'NOPE'});
     });
 
-    it('use the HTML5 data-unckecked-value if defined', function() {
+    it('use the HTML5 data-unchecked-value if defined', function() {
       $form = $('<form>');
       $form.append($('<input type="checkbox" name="check1" value="yes"/>')); // ignored
-      $form.append($('<input type="checkbox" name="check2" value="yes" data-unckecked-value="NOPE"/>')); // with data-unckecked-value uses that value
+      $form.append($('<input type="checkbox" name="check2" value="yes" data-unchecked-value="NOPE"/>')); // with data-unchecked-value uses that value
       obj = $form.serializeJSON(); // NOTE: no checkboxUncheckedValue used
       expect(obj).toEqual({check2: 'NOPE'});
     });
@@ -338,10 +338,10 @@ describe("$.serializeJSON", function () {
         expect(obj).toEqual({check1: 'NOPE', check2: 'NOPE', check3: 'yes'});
       });
 
-      it('is overriden by data-unckecked-value attribute', function() {
+      it('is overriden by data-unchecked-value attribute', function() {
         $form = $('<form>');
         $form.append($('<input type="checkbox" name="check1" value="yes"/>'));
-        $form.append($('<input type="checkbox" name="check2" value="yes" data-unckecked-value="OVERRIDE"/>'));
+        $form.append($('<input type="checkbox" name="check2" value="yes" data-unchecked-value="OVERRIDE"/>'));
         $form.append($('<input type="checkbox" name="check3" value="yes" checked/>'));
 
         obj = $form.serializeJSON({checkboxUncheckedValue: 'NOPE'});
@@ -351,7 +351,7 @@ describe("$.serializeJSON", function () {
       it('is parsed by parse options', function() {
         $form = $('<form>');
         $form.append($('<input type="checkbox" name="check1" value="true"/>'));
-        $form.append($('<input type="checkbox" name="check2" value="true" data-unckecked-value="0"/>'));
+        $form.append($('<input type="checkbox" name="check2" value="true" data-unchecked-value="0"/>'));
         $form.append($('<input type="checkbox" name="check3" value="true" checked/>'));
 
         obj = $form.serializeJSON({checkboxUncheckedValue: 'false', parseBooleans: true, parseNumbers: true});
@@ -361,7 +361,7 @@ describe("$.serializeJSON", function () {
       it('is parsed by custom parseWithFunction', function() {
         $form = $('<form>');
         $form.append($('<input type="checkbox" name="check1" value="yes"/>'));
-        $form.append($('<input type="checkbox" name="check2" value="yes" data-unckecked-value="NOPE"/>'));
+        $form.append($('<input type="checkbox" name="check2" value="yes" data-unchecked-value="NOPE"/>'));
         $form.append($('<input type="checkbox" name="check3" value="yes" checked/>'));
 
         var parser = function(val) { return val == 'yes' };
@@ -376,7 +376,7 @@ describe("$.serializeJSON", function () {
           $form1 = $('<form>');
           $form1.append($('<input type="text"     name="form1[title]"  value="form1"/>'));
           $form1.append($('<input type="checkbox" name="form1[check1]" value="true"/>'));
-          $form1.append($('<input type="checkbox" name="form1[check2]" value="true" data-unckecked-value="NOPE"/>'));
+          $form1.append($('<input type="checkbox" name="form1[check2]" value="true" data-unchecked-value="NOPE"/>'));
           $form2 = $('<form>');
           $form1.append($('<input type="text"     name="form2[title]"  value="form2"/>'));
           $form2.append($('<input type="checkbox" name="form2[check1]" value="true" checked="checked"/>'));
@@ -385,7 +385,7 @@ describe("$.serializeJSON", function () {
                   .add($('<input type="text"      name="inputs[title]"  value="inputs"/>'))
                   .add($('<input type="checkbox"  name="inputs[check1]" value="true" checked="checked"/>'))
                   .add($('<input type="checkbox"  name="inputs[check2]" value="true"/>'))
-                  .add($('<input type="checkbox"  name="inputs[check3]" value="true" data-unckecked-value="NOPE"/>'));
+                  .add($('<input type="checkbox"  name="inputs[check3]" value="true" data-unchecked-value="NOPE"/>'));
           $els = $form1.add($form2).add($inputs);
 
           obj = $els.serializeJSON({checkboxUncheckedValue: 'false'});
@@ -415,7 +415,7 @@ describe("$.serializeJSON", function () {
         $form.append($('<input type="text"     name="form[title]"   value="list of checkboxes"/>'));
         $form.append($('<input type="checkbox" name="form[check][]" value="true" checked/>'));
         $form.append($('<input type="checkbox" name="form[check][]" value="true"/>'));
-        $form.append($('<input type="checkbox" name="form[check][]" value="true" data-unckecked-value="NOPE"/>'));
+        $form.append($('<input type="checkbox" name="form[check][]" value="true" data-unchecked-value="NOPE"/>'));
         obj = $form.serializeJSON({checkboxUncheckedValue: 'false'});
         expect(obj).toEqual({
           form: {
@@ -555,7 +555,7 @@ describe("$.serializeJSON", function () {
         var $checkForm = $('<form>');
         $checkForm.append($('<input type="checkbox" name="check1" value="true" checked/>'));
         $checkForm.append($('<input type="checkbox" name="check2" value="true"/>'));
-        $checkForm.append($('<input type="checkbox" name="check3" value="true" data-unckecked-value="unchecked_from_data_attr"/>'));
+        $checkForm.append($('<input type="checkbox" name="check3" value="true" data-unchecked-value="unchecked_from_data_attr"/>'));
 
         $.serializeJSON.defaultOptions = {checkboxUncheckedValue: 'unchecked_from_defaults'};
         obj = $checkForm.serializeJSON(); // with defaults
