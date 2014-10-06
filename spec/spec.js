@@ -191,6 +191,14 @@ describe("$.serializeJSON", function () {
       obj = $form.serializeJSON(); // NOTE: no checkboxUncheckedValue used
       expect(obj).toEqual({check2: 'NOPE'});
     });
+
+    it('should be ignored if they have no name', function() {
+      $form = $('<form>');
+      $form.append($('<input type="checkbox" value="yes"/>'));
+      $form.append($('<input type="checkbox" value="yes"/>'));
+      obj = $form.serializeJSON({checkboxUncheckedValue: 'NOPE'});
+      expect(obj).toEqual({});
+    });
   });
 
   // options
