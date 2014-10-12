@@ -110,24 +110,6 @@ describe("$.serializeJSON", function () {
     });
   });
 
-  describe('with attribute names that are similar to integers, but not valid array indexes', function() {
-    beforeEach(function() {
-      $form = $('<form>');
-      $form.append($('<input type="text"  name="drinks[1st]" value="coffee"/>'));
-      $form.append($('<input type="text"  name="drinks[2nd]" value="beer"/>'));
-    });
-
-    it("serializes into object attributes", function() { // only integers are mapped to an array
-      obj = $form.serializeJSON();
-      expect(obj).toEqual({
-        drinks: {
-          '1st': "coffee",
-          '2nd': "beer"
-        }
-      });
-    });
-  });
-
   describe('with complext array of objects', function() {
     beforeEach(function() {
       $form = $('<form>');
@@ -161,6 +143,27 @@ describe("$.serializeJSON", function () {
       $form.append($('<input type="checkbox" name="check2" value="yes"/>'));
       obj = $form.serializeJSON();
       expect(obj).toEqual({}); // empty because unchecked checkboxes are ignored
+    });
+
+    it('are ignored also in arrays', function() {
+      $form = $('<form>');
+      $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
+      $form.append($('<input type="checkbox" name="flags[]" value="red"/>'));
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({});
+    });
+
+    it('could use a hidden field to force an empty array in an array of unchecked checkboxes', function() {
+      $form = $('<form>');
+      $form.append($('<input type="hidden" name="flags" value="[]"/>'));
+      $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
+      $form.append($('<input type="checkbox" name="flags[]" value="red"/>'));
+      obj = $form.serializeJSON({parseWithFunction: function(val){ return val == '[]' ? [] : val }});
+      expect(obj).toEqual({'flags': []});
+
+      $form.find('input[value="red"]').prop('checked', true);
+      obj = $form.serializeJSON({parseWithFunction: function(val){ return val == '[]' ? [] : val }});
+      expect(obj).toEqual({'flags': ['red']});
     });
 
     it('can be combined with hidden fields to set the false value', function() {
@@ -419,6 +422,27 @@ describe("$.serializeJSON", function () {
       }
 
       it('works on a list of checkboxes', function() {
+        $form = $('<form>' +
+          '<label class="checkbox-inline">' +
+          '  <input type="checkbox" name="flags[]" value="input1"> Input 1' +
+          '</label>' +
+          '<label class="checkbox-inline">' +
+          '  <input type="checkbox" name="flags[]" value="input2"> Input 2' +
+          '</label>' +
+          '</form>');
+        obj = $form.serializeJSON({checkboxUncheckedValue: 'false'});
+        expect(obj).toEqual({
+          'flags': ['false', 'false']
+        });
+
+        $form.find('input[value="input1"]').prop('checked', true);
+        obj = $form.serializeJSON({checkboxUncheckedValue: 'false'});
+        expect(obj).toEqual({
+          'flags': ['input1', 'false']
+        });
+      });
+
+      it('works on a nested list of checkboxes', function() {
         $form = $('<form>');
         $form.append($('<input type="text"     name="form[title]"   value="list of checkboxes"/>'));
         $form.append($('<input type="checkbox" name="form[check][]" value="true" checked/>'));
@@ -458,7 +482,21 @@ describe("$.serializeJSON", function () {
 
         obj = $form.serializeJSON({useIntKeysAsArrayIndex: true, parseNumbers: true}); // same but also parsing numbers
         expect(obj).toEqual({"foo": [0, 1, undefined, undefined, undefined, 5]});
-      })
+      });
+
+      it("doesnt get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
+        $form = $('<form>');
+        $form.append($('<input type="text"  name="drinks[1st]" value="coffee"/>'));
+        $form.append($('<input type="text"  name="drinks[2nd]" value="beer"/>'));
+
+        obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
+        expect(obj).toEqual({
+          drinks: {
+            '1st': "coffee",
+            '2nd': "beer"
+          }
+        });
+      });
     });
 
     describe('with modified defaults', function() {

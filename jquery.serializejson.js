@@ -163,7 +163,7 @@
 
     // Fill the formAsArray object with values for the unchecked checkbox inputs,
     // using the same format as the jquery.serializeArray function.
-    // The value of the uncheked values is determined from the opts.checkboxUncheckedValue
+    // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
     // and/or the data-unchecked-value attribute of the inputs.
     readCheckboxUncheckedValues: function (formAsArray, $form, opts) {
       var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
