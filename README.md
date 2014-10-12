@@ -75,12 +75,76 @@ To support old browsers, just include the [json2.js](https://github.com/douglasc
 ```
 
 
+Parse values with :types
+------------------------
+
+Values are **strings** by default.
+But you can force values to be parsed with specific types by appending the type with a colon.
+
+```html
+<form>
+  <input type="text" name="default"          value="default type is :string"/>
+  <input type="text" name="force:string"     value="force :string to override parsing options"/>
+  <input type="text" name="out:skip"         value="Use :skip to not include this field in the result"/>
+
+  <input type="text" name="n[1]:number"      value="1"/>
+  <input type="text" name="n[2]:number"      value="1.1"/>
+  <input type="text" name="n[3]:number"      value="other stuff"/>
+
+  <input type="text" name="b[1]:boolean"     value="true"/>
+  <input type="text" name="b[2]:boolean"     value="false"/>
+  <input type="text" name="b[3]:boolean"     value="0"/>
+
+  <input type="text" name="null[1]:null"     value="null"/>
+  <input type="text" name="null[2]:null"     value="not null"/>
+
+  <input type="text" name="a[1]:array"       value="[]"/>
+  <input type="text" name="a[2]:array"       value="[1, 2, 3]"/>
+
+  <input type="text" name="o[1]:object"      value="{}"/>
+  <input type="text" name="o[2]:object"      value='{"my": "stuff"}'/>
+</form>
+```
+
+```javascript
+$('form').serializeJSON();
+// returns =>
+{
+  "default": "default type is :string",
+  "force": "force :string to override parsing options"
+  // type :skip removes the field
+  "n": {
+    "1": 1,
+    "2": 1.1,
+    "3": NaN, // <-- Other stuff parses as NaN (Not a Number)
+  },
+  "b": {
+    "1": true,
+    "2": false,
+    "3": false, // <-- "false", "null", "undefined", "", "0" parse as false
+  },
+  "null": {
+    "1": null, // <-- "false", "null", "undefined", "", "0" parse as null
+    "2": "not null"
+  },
+  "a": { // <-- Parsed with JSON.parse
+    "1": [],
+    "2": [1,2,3]
+  },
+  "o": { // <-- Parsed with JSON.parse
+    "1": {},
+    "2": {"my": "stuff"}
+  }
+}
+```
+
+
 Options
 -------
 
 By default:
 
-  * Values are always **strings** (no auto boolean/numbers/null detection by default)
+  * Values are always **strings** (unless using :types in the input names)
   * Keys (names) are always strings (no auto-array detection by default)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
@@ -100,9 +164,10 @@ To change the default behavior you have the following options:
 More details about options usage in the sections below.
 
 
-## Parse Values ##
 
-By default, values are always **strings**, even if they look like booleans, numbers of nulls:
+## Automatically Detect Types With Parse Options ##
+
+If no :types are specified in the name, the values are always parsed as strings:
 
 ```html
 <form>
@@ -138,7 +203,10 @@ $('form').serializeJSON();
 }
 ```
 
-Note that all values are **strings**. To change this, use the parse options. For example, to parse nulls and numbers:
+Note that all values are **strings**, even if they look like booleans, numbers or nulls.
+
+To auto-detect types, use the parse options. For example, to parse nulls and numbers:
+
 
 ```javascript
 $('form').serializeJSON({parseNulls: true, parseNumbers: true});
@@ -160,7 +228,7 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 }
 ```
 
-For rare cases, a custom parser can be defined with a function, for example:
+For rare cases, a custom parser can be defined with a function:
 
 ```javascript
 var emptyStringsAndZerosToNulls = function(val, inputName) {
@@ -177,17 +245,17 @@ $('form').serializeJSON({parseWithFunction: emptyStringsAndZerosToNulls, parseNu
     "false": "false",
   }
   "number": {
-    "0": null, // <<-- parsed with custom function
+    "0": null, // <-- parsed with custom function
     "1": 1,
     "2.2": 2.2,
     "-2.25": -2.25,
   }
   "null": "null",
   "string": "text is always string",
-  "empty": null // <<-- parsed with custom function
+  "empty": null // <-- parsed with custom function
 }
-
 ```
+
 
 ## Include unchecked checkboxes ##
 
@@ -409,6 +477,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *2.4.0* (Oct 12, 2014): Implement :types. Types allow to easily specify how to parse each input.
  * *2.3.2* (Oct 11, 2014): Bugfix #27 (parsing error on nested keys like name="foo[inn[bar]]"). Thanks to [danlo](https://github.com/danlo) for finding the issue.
  * *2.3.1* (Oct 06, 2014): Bugfix #22 (ignore checkboxes with no name when doing `checkboxUncheckedValue`). Thanks to [KATT](https://github.com/KATT) for finding and fixing the issue.
  * *2.3.0* (Sep 25, 2014): Properly spell "data-unckecked-value", change for "data-unchecked-value"

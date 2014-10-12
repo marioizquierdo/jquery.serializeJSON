@@ -204,6 +204,147 @@ describe("$.serializeJSON", function () {
     });
   });
 
+  describe('value types', function() {
+    describe(':number', function() {
+      it('parses numbers', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="i1:number" value="10"/>'));
+        $form.append($('<input type="text" name="i2:number" value="10.5"/>'));
+        $form.append($('<input type="text" name="un"        value="10"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({i1: 10, i2: 10.5, un: '10'});
+      });
+      it('parses non numbers to NaN', function(){
+        $form = $('<form>');
+        $form.append($('<input type="text" name="i1:number" value="text"/>'));
+        $form.append($('<input type="text" name="i2:number" value="null"/>'));
+        $form.append($('<input type="text" name="i3:number" value="false"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({i1: NaN, i2: NaN, i3: NaN});
+      });
+    });
+
+    describe(':boolean', function() {
+      it('parses anything that looks truthy to true', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:boolean" value="true"/>'));
+        $form.append($('<input type="text" name="b2:boolean" value="TRUE"/>'));
+        $form.append($('<input type="text" name="b3:boolean" value="yes"/>'));
+        $form.append($('<input type="text" name="b4:boolean" value="[1,2,3]"/>'));
+        $form.append($('<input type="text" name="b5:boolean" value="Bla bla bla bla ..."/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: true, b2: true, b3: true, b4: true, b5: true});
+      });
+      it('parses anything that looks falsy to false', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:boolean" value="false"/>'));
+        $form.append($('<input type="text" name="b2:boolean" value="null"/>'));
+        $form.append($('<input type="text" name="b3:boolean" value="undefined"/>'));
+        $form.append($('<input type="text" name="b4:boolean" value=""/>'));
+        $form.append($('<input type="text" name="b5:boolean" value="0"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: false, b2: false, b3: false, b4: false, b5: false});
+      });
+    });
+    describe(':null', function() {
+      it('parses anything that looks falsy to null', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:null" value="false"/>'));
+        $form.append($('<input type="text" name="b2:null" value="null"/>'));
+        $form.append($('<input type="text" name="b3:null" value="undefined"/>'));
+        $form.append($('<input type="text" name="b4:null" value=""/>'));
+        $form.append($('<input type="text" name="b5:null" value="0"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: null, b2: null, b3: null, b4: null, b5: null});
+      });
+      it('keeps anything that looks truthy as string', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:null" value="true"/>'));
+        $form.append($('<input type="text" name="b2:null" value="TRUE"/>'));
+        $form.append($('<input type="text" name="b3:null" value="yes"/>'));
+        $form.append($('<input type="text" name="b4:null" value="[1,2,3]"/>'));
+        $form.append($('<input type="text" name="b5:null" value="Bla bla bla bla ..."/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: 'true', b2: 'TRUE', b3: 'yes', b4: '[1,2,3]', b5: "Bla bla bla bla ..."});
+      });
+    });
+    describe(':string', function() {
+      it('keeps everything as string', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:string" value="true"/>'));
+        $form.append($('<input type="text" name="b2:string" value="TRUE"/>'));
+        $form.append($('<input type="text" name="b3:string" value="yes"/>'));
+        $form.append($('<input type="text" name="b4:string" value="[1,2,3]"/>'));
+        $form.append($('<input type="text" name="b5:string" value="Bla bla bla bla ..."/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: 'true', b2: 'TRUE', b3: 'yes', b4: '[1,2,3]', b5: "Bla bla bla bla ..."});
+      });
+      it('is useful to override other parse options', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:string" value="true"/>'));
+        $form.append($('<input type="text" name="b2:string" value="1"/>'));
+        $form.append($('<input type="text" name="b3:string" value="null"/>'));
+        $form.append($('<input type="text" name="b4:string" value=""/>'));
+        obj = $form.serializeJSON({parseAll: true, parseWithFunction: function(val){return val === '' ? null : val}});
+        expect(obj).toEqual({b1: 'true', b2: '1', b3: 'null', b4: ''});
+      });
+    });
+    describe(':array', function() {
+      it('parses arrays with JSON.parse', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:array" value="[]"/>'));
+        $form.append($('<input type="text" name="b2:array" value=\'["my", "stuff"]\'/>'));
+        $form.append($('<input type="text" name="b3:array" value="[1,2,3]"/>'));
+        $form.append($('<input type="text" name="b4:array" value="[1,[2,[3]]]"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: [], b2: ['my', 'stuff'], b3: [1,2,3], b4: [1,[2,[3]]]});
+      });
+      it('raises an error if the array can not be parsed', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:array" value="<NOT_AN_ARRAY>"/>'));
+        expect(function(){$form.serializeJSON()}).toThrow();
+      });
+    });
+    describe(':object', function() {
+      it('parses objects with JSON.parse', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:object" value="{}"/>'));
+        $form.append($('<input type="text" name="b2:object" value=\'{"my": "stuff"}\'/>'));
+        $form.append($('<input type="text" name="b3:object" value=\'{"my": {"nested": "stuff"}}\'/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: {}, b2: {"my": "stuff"}, b3: {"my": {"nested": "stuff"}}});
+      });
+      it('raises an error if the obejct can not be parsed', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:object" value="<NOT_AN_OBJECT>"/>'));
+        expect(function(){$form.serializeJSON()}).toThrow();
+      });
+    });
+    describe(':skip', function() {
+      it('removes the field from the parsed result', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1"           value="Im in"/>'));
+        $form.append($('<input type="text" name="b2:skip"      value="Im out"/>'));
+        $form.append($('<input type="text" name="b3[out]:skip" value="Im out"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({b1: 'Im in'});
+      });
+      it('raises an error if the obejct can not be parsed', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:object" value="<NOT_AN_OBJECT>"/>'));
+        expect(function(){$form.serializeJSON()}).toThrow();
+      });
+    });
+    describe('invalid types', function() {
+      it('raises an error if the type is not known', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="b1:kaka" value="not a valid type"/>'));
+        expect(function(){$form.serializeJSON()})
+          .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip"));
+      });
+    });
+  });
+
   // options
   describe('options', function() {
     beforeEach(function() {
@@ -626,26 +767,35 @@ describe("$.serializeJSON", function () {
 describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
   var split = $.serializeJSON.splitInputNameIntoKeysArray;
   it("accepts a simple name", function() {
-    expect(split('foo')).toEqual(['foo']);
+    expect(split('foo')).toEqual(['foo', '_']);
   });
   it("accepts a name wrapped in brackets", function() {
-    expect(split('[foo]')).toEqual(['foo']);
+    expect(split('[foo]')).toEqual(['foo', '_']);
   });
   it("accepts names separated by brackets", function() {
-    expect(split('foo[inn][bar]')).toEqual(['foo', 'inn', 'bar']);
-    expect(split('foo[inn][bar][0]')).toEqual(['foo', 'inn', 'bar', '0']);
+    expect(split('foo[inn][bar]')).toEqual(['foo', 'inn', 'bar', '_']);
+    expect(split('foo[inn][bar][0]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
   });
   it("accepts empty brakets as empty strings", function() {
-    expect(split('arr[][bar]')).toEqual(['arr', '', 'bar']);
-    expect(split('arr[][][bar]')).toEqual(['arr', '', '', 'bar']);
-    expect(split('arr[][bar][]')).toEqual(['arr', '', 'bar', '']);
+    expect(split('arr[][bar]')).toEqual(['arr', '', 'bar', '_']);
+    expect(split('arr[][][bar]')).toEqual(['arr', '', '', 'bar', '_']);
+    expect(split('arr[][bar][]')).toEqual(['arr', '', 'bar', '', '_']);
   });
   it("accepts nested brackets", function() {
-    expect(split('foo[inn[bar]]')).toEqual(['foo', 'inn', 'bar']);
-    expect(split('foo[inn[bar[0]]]')).toEqual(['foo', 'inn', 'bar', '0']);
-    expect(split('[foo[inn[bar[0]]]]')).toEqual(['foo', 'inn', 'bar', '0']);
-    expect(split('foo[arr[]]')).toEqual(['foo', 'arr', '']);
-    expect(split('foo[bar[arr[]]]')).toEqual(['foo', 'bar', 'arr', '']);
+    expect(split('foo[inn[bar]]')).toEqual(['foo', 'inn', 'bar', '_']);
+    expect(split('foo[inn[bar[0]]]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
+    expect(split('[foo[inn[bar[0]]]]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
+    expect(split('foo[arr[]]')).toEqual(['foo', 'arr', '', '_']);
+    expect(split('foo[bar[arr[]]]')).toEqual(['foo', 'bar', 'arr', '', '_']);
+  });
+  it("returns type as last element", function() {
+    expect(split('foo')).toEqual(['foo', '_']);
+    expect(split('foo:number')).toEqual(['foo', 'number']);
+    expect(split('foo[bar]:number')).toEqual(['foo', 'bar','number']);
+    expect(split('foo[bar]:boolean')).toEqual(['foo', 'bar','boolean']);
+    expect(split('foo[bar]:null')).toEqual(['foo', 'bar','null']);
+    expect(split('foo[bar]:string')).toEqual(['foo', 'bar','string']);
+
   });
 });
 

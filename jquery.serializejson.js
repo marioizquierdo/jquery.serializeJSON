@@ -1,7 +1,7 @@
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 2.3.2 (Oct, 2014)
+  version 2.4.0 (Oct, 2014)
 
   Copyright (c) 2014 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -12,18 +12,22 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
-    var serializedObject, formAsArray, keys, value, f, opts;
+    var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
     f = $.serializeJSON;
     opts = f.optsWithDefaults(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
+    f.validateOptions(opts);
     formAsArray = this.serializeArray(); // array of objects {name, value}
     f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
 
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name); // "some[deep][key]" => ['some', 'deep', 'key']
-      value = f.parseValue(input.value, opts); // string, number, boolean or null
-      if (opts.parseWithFunction) value = opts.parseWithFunction(value, input.name); // allow for custom parsing
-      f.deepSet(serializedObject, keys, value, opts);
+      keys = f.splitInputNameIntoKeysArray(input.name);
+      type = keys.pop(); // the last element is always the type ("string" by default)
+      if (type !== 'skip') { // easy way to skip a value
+        value = f.parseValue(input.value, type, opts); // string, number, boolean or null
+        if (opts.parseWithFunction && type === '_') value = opts.parseWithFunction(value, input.name); // allow for custom parsing
+        f.deepSet(serializedObject, keys, value, opts);
+      }
     });
     return serializedObject;
   };
@@ -62,13 +66,25 @@
       return (options[key] !== false) && (options[key] !== '') && (options[key] || $.serializeJSON.defaultOptions[key]);
     },
 
+    validateOptions: function(opts) {
+      var opt, validOpts;
+      validOpts = ['parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'checkboxUncheckedValue', 'useIntKeysAsArrayIndex']
+      for (opt in opts) {
+        if (validOpts.indexOf(opt) === -1) {
+          throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(','));
+        }
+      }
+    },
+
     // Convert the string to a number, boolean or null, depending on the enable option and the string format.
-    parseValue: function(str, opts) {
+    parseValue: function(str, type, opts) {
       var value, f;
       f = $.serializeJSON;
-      if (opts.parseNumbers  && f.isNumeric(str)) return Number(str); // number
-      if (opts.parseBooleans && (str === "true" || str === "false")) return str === "true"; // boolean
-      if (opts.parseNulls    && str == "null") return null; // null
+      if (type == 'string') return str; // force string
+      if (type == 'number'  || (opts.parseNumbers  && f.isNumeric(str))) return Number(str); // number
+      if (type == 'boolean' || (opts.parseBooleans && (str === "true" || str === "false"))) return (["false", "null", "undefined", "", "0"].indexOf(str) === -1); // boolean
+      if (type == 'null'    || (opts.parseNulls    && str == "null")) return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
+      if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
       return str; // otherwise, keep same string
     },
 
@@ -77,19 +93,46 @@
     isValidArrayIndex: function(val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
     isNumeric:         function(obj) { return obj - parseFloat(obj) >= 0; }, // taken from jQuery.isNumeric implementation. Not using jQuery.isNumeric to support old jQuery and Zepto versions
 
-    // Split the input name in programatically readable keys
-    // "foo"              => ['foo']
-    // "[foo]"            => ['foo']
-    // "foo[inn][bar]"    => ['foo', 'inn', 'bar']
-    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar']
-    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0']
-    // "arr[][val]"       => ['arr', '', 'val']
+    // Split the input name in programatically readable keys.
+    // The last element is always the type (default "_").
+    // Examples:
+    // "foo"              => ['foo', '_']
+    // "foo:string"       => ['foo', 'string']
+    // "foo:boolean"      => ['foo', 'boolean']
+    // "[foo]"            => ['foo', '_']
+    // "foo[inn][bar]"    => ['foo', 'inn', 'bar', '_']
+    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar', '_']
+    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
+    // "arr[][val]"       => ['arr', '', 'val', '_']
+    // "arr[][val]:null"  => ['arr', '', 'val', 'null']
     splitInputNameIntoKeysArray: function (name) {
-      var keys;
-      keys = name.split('['); // get array from string
+      var keys, nameWithoutType, type, _ref, f;
+      f = $.serializeJSON;
+      _ref = f.extractTypeFromInputName(name), nameWithoutType = _ref[0], type = _ref[1];
+      keys = nameWithoutType.split('['); // split string into array
       keys = $.map(keys, function (key) { return key.replace(/]/g, ''); }); // remove closing brackets
       if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
+      keys.push(type); // add type at the end
       return keys;
+    },
+
+    // Returns [name-without-type, type] from name.
+    // "foo"              =>  ["foo", "_"]
+    // "foo:boolean"      =>  ["foo", "boolean"]
+    // "foo[bar]:null"    =>  ["foo[bar]", "null"]
+    extractTypeFromInputName: function(name) {
+      var match, f;
+      f = $.serializeJSON;
+      if (match = name.match(/(.*):([^:]+)$/)){
+        var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip']; // validate type
+        if (validTypes.indexOf(match[2]) !== -1) {
+          return [match[1], match[2]];
+        } else {
+          throw new Error("serializeJSON ERROR: Invalid type " + match[2] + " found in input name '" + name + "', please use one of " + validTypes.join(', '))
+        }
+      } else {
+        return [name, '_']; // no defined type, then use parse options
+      }
     },
 
     // Set a value in an object or array, using multiple keys to set in a nested object or array:
