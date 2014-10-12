@@ -587,21 +587,28 @@ describe("$.serializeJSON", function () {
 // splitInputNameIntoKeysArray
 describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
   var split = $.serializeJSON.splitInputNameIntoKeysArray;
-  it("returns an array with one element from a simple name", function() {
+  it("accepts a simple name", function() {
     expect(split('foo')).toEqual(['foo']);
-  })
-  it("returns an array from a simpe name wrapped in brackets", function() {
+  });
+  it("accepts a name wrapped in brackets", function() {
     expect(split('[foo]')).toEqual(['foo']);
-  })
-  it("returns an array from names separated by brackets", function() {
+  });
+  it("accepts names separated by brackets", function() {
     expect(split('foo[inn][bar]')).toEqual(['foo', 'inn', 'bar']);
     expect(split('foo[inn][bar][0]')).toEqual(['foo', 'inn', 'bar', '0']);
-  })
-  it("returns an array where empty brakets are an empty string", function() {
+  });
+  it("accepts empty brakets as empty strings", function() {
     expect(split('arr[][bar]')).toEqual(['arr', '', 'bar']);
     expect(split('arr[][][bar]')).toEqual(['arr', '', '', 'bar']);
     expect(split('arr[][bar][]')).toEqual(['arr', '', 'bar', '']);
-  })
+  });
+  it("accepts nested brackets", function() {
+    expect(split('foo[inn[bar]]')).toEqual(['foo', 'inn', 'bar']);
+    expect(split('foo[inn[bar[0]]]')).toEqual(['foo', 'inn', 'bar', '0']);
+    expect(split('[foo[inn[bar[0]]]]')).toEqual(['foo', 'inn', 'bar', '0']);
+    expect(split('foo[arr[]]')).toEqual(['foo', 'arr', '']);
+    expect(split('foo[bar[arr[]]]')).toEqual(['foo', 'bar', 'arr', '']);
+  });
 });
 
 // isValidArrayIndex

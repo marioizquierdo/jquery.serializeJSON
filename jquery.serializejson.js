@@ -81,17 +81,14 @@
     // "foo"              => ['foo']
     // "[foo]"            => ['foo']
     // "foo[inn][bar]"    => ['foo', 'inn', 'bar']
+    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar']
     // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0']
     // "arr[][val]"       => ['arr', '', 'val']
     splitInputNameIntoKeysArray: function (name) {
-      var keys, last, f;
-      f = $.serializeJSON;
-      if (f.isUndefined(name)) { throw new Error("ArgumentError: param 'name' expected to be a string, found undefined"); }
-      keys = $.map(name.split('['), function (key) {
-        last = key[key.length - 1];
-        return last === ']' ? key.substring(0, key.length - 1) : key;
-      });
-      if (keys[0] === '') { keys.shift(); } // "[foo][inn]" should be same as "foo[inn]"
+      var keys;
+      keys = name.split('['); // get array from string
+      keys = $.map(keys, function (key) { return key.replace(/]/g, ''); }); // remove closing brackets
+      if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
       return keys;
     },
 
