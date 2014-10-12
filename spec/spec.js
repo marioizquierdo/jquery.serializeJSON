@@ -153,7 +153,7 @@ describe("$.serializeJSON", function () {
       expect(obj).toEqual({});
     });
 
-    it('could use a hidden field to force an empty array in an array of unchecked checkboxes', function() {
+    it('could use a hidden field and a custom parser to force an empty array in an array of unchecked checkboxes', function() {
       $form = $('<form>');
       $form.append($('<input type="hidden" name="flags" value="[]"/>'));
       $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
@@ -163,6 +163,19 @@ describe("$.serializeJSON", function () {
 
       $form.find('input[value="red"]').prop('checked', true);
       obj = $form.serializeJSON({parseWithFunction: function(val){ return val == '[]' ? [] : val }});
+      expect(obj).toEqual({'flags': ['red']});
+    });
+
+    it('could use a hidden field with type :array to force an empty array in an array of unchecked checkboxes', function() {
+      $form = $('<form>');
+      $form.append($('<input type="hidden" name="flags:array" value="[]"/>'));
+      $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
+      $form.append($('<input type="checkbox" name="flags[]" value="red"/>'));
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({'flags': []});
+
+      $form.find('input[value="red"]').prop('checked', true);
+      obj = $form.serializeJSON();
       expect(obj).toEqual({'flags': ['red']});
     });
 
