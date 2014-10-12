@@ -22,7 +22,7 @@
     $.each(formAsArray, function (i, input) {
       keys = f.splitInputNameIntoKeysArray(input.name); // "some[deep][key]" => ['some', 'deep', 'key']
       value = f.parseValue(input.value, opts); // string, number, boolean or null
-      if (opts.parseWithFunction) value = opts.parseWithFunction(value); // allow for custom parsing
+      if (opts.parseWithFunction) value = opts.parseWithFunction(value, input.name); // allow for custom parsing
       f.deepSet(serializedObject, keys, value, opts);
     });
     return serializedObject;

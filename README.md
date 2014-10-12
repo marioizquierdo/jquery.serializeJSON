@@ -93,7 +93,7 @@ To change the default behavior you have the following options:
   * **parseNumbers: true**, convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
   * **parseNulls: true**, convert the string `"null"` to the null value `null`.
   * **parseAll: true**, all of the above.
-  * **parseWithFunction: function**, define your own parse function.
+  * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
 
@@ -163,7 +163,7 @@ $('form').serializeJSON({parseNulls: true, parseNumbers: true});
 For rare cases, a custom parser can be defined with a function, for example:
 
 ```javascript
-var emptyStringsAndZerosToNulls = function(val) {
+var emptyStringsAndZerosToNulls = function(val, inputName) {
   if (val === "") return null; // parse empty strings as nulls
   if (val === 0) return null;  // parse 0 as null
   return val;
