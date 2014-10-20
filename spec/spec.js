@@ -393,8 +393,79 @@ describe("$.serializeJSON", function () {
       it('raises an error if the type is not known', function() {
         $form = $('<form>');
         $form.append($('<input type="text" name="b1:kaka" value="not a valid type"/>'));
-        expect(function(){$form.serializeJSON()})
+        expect(function(){ $form.serializeJSON() })
           .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip, auto"));
+      });
+    });
+    describe('form with multiple types', function() {
+      it("parses every type as expected", function() { // EXAMPLE from the README file
+        $form = $('<form>');
+        $form.append($('<input type="text" name="notype"           value="default type is :string"/>'));
+        $form.append($('<input type="text" name="string:string"    value=":string type overrides parsing options"/>'));
+        $form.append($('<input type="text" name="excludes:skip"    value="Use :skip to not include this field in the result"/>'));
+
+        $form.append($('<input type="text" name="number[1]:number"           value="1"/>'));
+        $form.append($('<input type="text" name="number[1.1]:number"         value="1.1"/>'));
+        $form.append($('<input type="text" name="number[other stuff]:number" value="other stuff"/>'));
+
+        $form.append($('<input type="text" name="boolean[true]:boolean"      value="true"/>'));
+        $form.append($('<input type="text" name="boolean[false]:boolean"     value="false"/>'));
+        $form.append($('<input type="text" name="boolean[0]:boolean"         value="0"/>'));
+
+        $form.append($('<input type="text" name="null[null]:null"            value="null"/>'));
+        $form.append($('<input type="text" name="null[other stuff]:null"     value="other stuff"/>'));
+
+        $form.append($('<input type="text" name="auto[string]:auto"          value="text with stuff"/>'));
+        $form.append($('<input type="text" name="auto[0]:auto"               value="0"/>'));
+        $form.append($('<input type="text" name="auto[1]:auto"               value="1"/>'));
+        $form.append($('<input type="text" name="auto[true]:auto"            value="true"/>'));
+        $form.append($('<input type="text" name="auto[false]:auto"           value="false"/>'));
+        $form.append($('<input type="text" name="auto[null]:auto"            value="null"/>'));
+        $form.append($('<input type="text" name="auto[list]:auto"            value="[1, 2, 3]"/>'));
+
+        $form.append($('<input type="text" name="array[empty]:array"         value="[]"/>'));
+        $form.append($('<input type="text" name="array[not empty]:array"     value="[1, 2, 3]"/>'));
+
+        $form.append($('<input type="text" name="object[empty]:object"       value="{}"/>'));
+        $form.append($('<input type="text" name="object[not empty]:object"   value=\'{"my": "stuff"}\'/>'));
+
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+          "notype": "default type is :string",
+          "string": ":string type overrides parsing options",
+          // :skip type removes the field from the output
+          "number": {
+            "1": 1,
+            "1.1": 1.1,
+            "other stuff": NaN, // <-- Other stuff parses as NaN (Not a Number)
+          },
+          "boolean": {
+            "true": true,
+            "false": false,
+            "0": false, // <-- "false", "null", "undefined", "", "0" parse as false
+          },
+          "null": {
+            "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
+            "other stuff": "other stuff"
+          },
+          "auto": { // works as the parseAll option
+            "string": "text with stuff",
+            "0": 0,         // <-- parsed as number
+            "1": 1,         // <-- parsed as number
+            "true": true,   // <-- parsed as boolean
+            "false": false, // <-- parsed as boolean
+            "null": null,   // <-- parsed as null
+            "list": "[1, 2, 3]" // <-- array and object types are not auto-parsed
+          },
+          "array": { // <-- works using JSON.parse
+            "empty": [],
+            "not empty": [1,2,3]
+          },
+          "object": { // <-- works using JSON.parse
+            "empty": {},
+            "not empty": {"my": "stuff"}
+          }
+        });
       });
     });
   });

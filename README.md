@@ -83,26 +83,34 @@ But you can force values to be parsed with specific types by appending the type 
 
 ```html
 <form>
-  <input type="text" name="default"          value="default type is :string"/>
-  <input type="text" name="force:string"     value="force :string to override parsing options"/>
-  <input type="text" name="out:skip"         value="Use :skip to not include this field in the result"/>
+  <input type="text" name="notype"           value="default type is :string"/>
+  <input type="text" name="string:string"    value=":string type overrides parsing options"/>
+  <input type="text" name="excluded:skip"    value="Use :skip to not include this field in the result"/>
 
-  <input type="text" name="n[1]:number"      value="1"/>
-  <input type="text" name="n[2]:number"      value="1.1"/>
-  <input type="text" name="n[3]:number"      value="other stuff"/>
+  <input type="text" name="number[1]:number"           value="1"/>
+  <input type="text" name="number[1.1]:number"         value="1.1"/>
+  <input type="text" name="number[other stuff]:number" value="other stuff"/>
 
-  <input type="text" name="b[1]:boolean"     value="true"/>
-  <input type="text" name="b[2]:boolean"     value="false"/>
-  <input type="text" name="b[3]:boolean"     value="0"/>
+  <input type="text" name="boolean[true]:boolean"      value="true"/>
+  <input type="text" name="boolean[false]:boolean"     value="false"/>
+  <input type="text" name="boolean[0]:boolean"         value="0"/>
 
-  <input type="text" name="null[1]:null"     value="null"/>
-  <input type="text" name="null[2]:null"     value="not null"/>
+  <input type="text" name="null[null]:null"            value="null"/>
+  <input type="text" name="null[other stuff]:null"     value="other stuff"/>
 
-  <input type="text" name="a[1]:array"       value="[]"/>
-  <input type="text" name="a[2]:array"       value="[1, 2, 3]"/>
+  <input type="text" name="auto[string]:auto"          value="text with stuff"/>
+  <input type="text" name="auto[0]:auto"               value="0"/>
+  <input type="text" name="auto[1]:auto"               value="1"/>
+  <input type="text" name="auto[true]:auto"            value="true"/>
+  <input type="text" name="auto[false]:auto"           value="false"/>
+  <input type="text" name="auto[null]:auto"            value="null"/>
+  <input type="text" name="auto[list]:auto"            value="[1, 2, 3]"/>
 
-  <input type="text" name="o[1]:object"      value="{}"/>
-  <input type="text" name="o[2]:object"      value='{"my": "stuff"}'/>
+  <input type="text" name="array[empty]:array"         value="[]"/>
+  <input type="text" name="array[list]:array"          value="[1, 2, 3]"/>
+
+  <input type="text" name="object[empty]:object"       value="{}"/>
+  <input type="text" name="object[dict]:object"        value='{"my": "stuff"}'/>
 </form>
 ```
 
@@ -110,30 +118,39 @@ But you can force values to be parsed with specific types by appending the type 
 $('form').serializeJSON();
 // returns =>
 {
-  "default": "default type is :string",
-  "force": "force :string to override parsing options"
-  // type :skip removes the field
-  "n": {
+  "notype": "default type is :string",
+  "string": ":string type overrides parsing options",
+  // :skip type removes the field from the output
+  "number": {
     "1": 1,
-    "2": 1.1,
-    "3": NaN, // <-- Other stuff parses as NaN (Not a Number)
+    "1.1": 1.1,
+    "other stuff": NaN, // <-- Other stuff parses as NaN (Not a Number)
   },
-  "b": {
-    "1": true,
-    "2": false,
-    "3": false, // <-- "false", "null", "undefined", "", "0" parse as false
+  "boolean": {
+    "true": true,
+    "false": false,
+    "0": false, // <-- "false", "null", "undefined", "", "0" parse as false
   },
   "null": {
-    "1": null, // <-- "false", "null", "undefined", "", "0" parse as null
-    "2": "not null"
+    "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
+    "other stuff": "other stuff"
   },
-  "a": { // <-- Parsed with JSON.parse
-    "1": [],
-    "2": [1,2,3]
+  "auto": { // works as the parseAll option
+    "string": "text with stuff",
+    "0": 0,         // <-- parsed as number
+    "1": 1,         // <-- parsed as number
+    "true": true,   // <-- parsed as boolean
+    "false": false, // <-- parsed as boolean
+    "null": null,   // <-- parsed as null
+    "list": "[1, 2, 3]" // <-- array and object types are not auto-parsed
   },
-  "o": { // <-- Parsed with JSON.parse
-    "1": {},
-    "2": {"my": "stuff"}
+  "array": { // <-- works using JSON.parse
+    "empty": [],
+    "not empty": [1,2,3]
+  },
+  "object": { // <-- works using JSON.parse
+    "empty": {},
+    "not empty": {"my": "stuff"}
   }
 }
 ```
@@ -156,7 +173,7 @@ To change the default behavior you have the following options:
   * **parseBooleans: true**, convert strings `"true"` and `"false"` to booleans `true` and `false`.
   * **parseNumbers: true**, convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
   * **parseNulls: true**, convert the string `"null"` to the null value `null`.
-  * **parseAll: true**, all of the above.
+  * **parseAll: true**, all of the above. Makes default type to be `:auto` instead of `:string`.
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
