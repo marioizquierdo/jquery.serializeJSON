@@ -348,12 +348,53 @@ describe("$.serializeJSON", function () {
         expect(function(){$form.serializeJSON()}).toThrow();
       });
     });
+    describe(':auto', function() {
+      it('parses Strings, Booleans and Nulls if they look like they could be one of them (same as parseAll option)', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="Numeric 0:auto"     value="0"/>'));
+        $form.append($('<input type="text" name="Numeric 1:auto"     value="1"/>'));
+        $form.append($('<input type="text" name="Numeric 2.2:auto"   value="2.2"/>'));
+        $form.append($('<input type="text" name="Numeric -2.25:auto" value="-2.25"/>'));
+        $form.append($('<input type="text" name="Bool true:auto"     value="true"/>'));
+        $form.append($('<input type="text" name="Bool false:auto"    value="false"/>'));
+        $form.append($('<input type="text" name="Null:auto"          value="null"/>'));
+        $form.append($('<input type="text" name="String:auto"        value="text is always string"/>'));
+        $form.append($('<input type="text" name="Empty:auto"         value=""/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     true,
+          "Bool false":    false,
+          "Null":          null,
+          "String":        "text is always string",
+          "Empty":         ""
+        });
+      });
+      it('does not auto-recognize arrays or objects', function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="empty array:auto"  value="[]"/>'));
+        $form.append($('<input type="text" name="array:auto"        value="[1,2,3]"/>'));
+        $form.append($('<input type="text" name="empty object:auto" value="{}"/>'));
+        $form.append($('<input type="text" name="object:auto"       value="{one: 1}"/>'));
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+          "empty array": "[]",
+          "array": "[1,2,3]",
+          "empty object": "{}",
+          "object": "{one: 1}"
+        }); // they are still strings
+      });
+
+    });
     describe('invalid types', function() {
       it('raises an error if the type is not known', function() {
         $form = $('<form>');
         $form.append($('<input type="text" name="b1:kaka" value="not a valid type"/>'));
         expect(function(){$form.serializeJSON()})
-          .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip"));
+          .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip, auto"));
       });
     });
   });

@@ -85,6 +85,7 @@
       if (type == 'boolean' || (opts.parseBooleans && (str === "true" || str === "false"))) return (["false", "null", "undefined", "", "0"].indexOf(str) === -1); // boolean
       if (type == 'null'    || (opts.parseNulls    && str == "null")) return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
       if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
+      if (type == 'auto') return f.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); // try again with something like "parseAll"
       return str; // otherwise, keep same string
     },
 
@@ -124,7 +125,7 @@
       var match, f;
       f = $.serializeJSON;
       if (match = name.match(/(.*):([^:]+)$/)){
-        var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip']; // validate type
+        var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip', 'auto']; // validate type
         if (validTypes.indexOf(match[2]) !== -1) {
           return [match[1], match[2]];
         } else {
