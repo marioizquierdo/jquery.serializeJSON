@@ -731,6 +731,14 @@ describe("$.serializeJSON", function () {
           }
         });
       });
+
+      it('does not serialize disabled checkboxes', function() {
+        $form = $('<form>');
+        $form.append($('<input type="checkbox" name="checkDisabled1" value="true" disabled/>'));
+        $form.append($('<input type="checkbox" name="checkDisabled2" value="true" disabled data-unchecked-value="NOPE"/>'));
+        obj = $form.serializeJSON({checkboxUncheckedValue: 'false'});
+        expect(obj).toEqual({});
+      });
     });
 
     describe('useIntKeysAsArrayIndex', function() {
