@@ -3,6 +3,15 @@ jquery.serializeJSON
 
 Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)) that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
 
+Install
+-------
+
+Install like any other jQuery plugin. You can use [bower](https://github.com/bower/bower), or just download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script and include it in your page after jQuery:
+
+```html
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery.serializejson.min.js"></script>
+```
 
 Usage Example
 -------------
@@ -41,8 +50,8 @@ HTML form (input, textarea and select tags supported):
 JavaScript:
 
 ```javascript
-
 $('#my-profile').serializeJSON();
+
 // returns =>
 {
   fullName: "Mario Izquierdo",
@@ -62,7 +71,6 @@ $('#my-profile').serializeJSON();
     '1': { name: "tinytest.js",   language: "javascript", popular: "0" }
   }
 }
-
 ```
 
 The `serializeJSON` function returns a JavaScript object, not a JSON String. It should probably have been called `serializeObject`, or something like that, but those names were already taken.
@@ -71,14 +79,18 @@ To serialize into JSON, use the `JSON.stringify` method, that is available on al
 To support old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
 
 ```javascript
-  var json = JSON.stringify(object);
+  var jsonString = JSON.stringify(obj);
 ```
+
+Note that `.serializeJSON()` implememtation relies on jQuery's [.serializeArray()](https://api.jquery.com/serializeArray/) to grab the form attributes and then create the object using the names.
+That means, it will serialize the inputs that are supported by `.serializeArray()`, that uses the standard W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2) to determine which elements it should include. In particular, the included elements cannot be disabled and must contain a name attribute. No submit button value is serialized since the form was not submitted using a button. And data from file select elements is not serialized.
+
 
 
 Parse values with :types
 ------------------------
 
-Values are **strings** by default.
+Parsed values are **strings** by default.
 But you can force values to be parsed with specific types by appending the type with a colon.
 
 ```html
@@ -116,6 +128,7 @@ But you can force values to be parsed with specific types by appending the type 
 
 ```javascript
 $('form').serializeJSON();
+
 // returns =>
 {
   "notype": "default type is :string",
@@ -159,21 +172,21 @@ $('form').serializeJSON();
 Options
 -------
 
-By default:
+By default (`serializeJSON` with no options):
 
   * Values are always **strings** (unless using :types in the input names)
   * Keys (names) are always strings (no auto-array detection by default)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
 
-This is because `serializeJSON` is designed to return exactly the same as a regular HTML form submission when serialized as Rack/Rails params.
+This is because `serializeJSON` is designed to return exactly the same as a regular HTML form submission when serialized as Rack/Rails params, which ensures maximun compatibility and stability.
 
 To change the default behavior you have the following options:
 
-  * **parseBooleans: true**, convert strings `"true"` and `"false"` to booleans `true` and `false`.
-  * **parseNumbers: true**, convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
-  * **parseNulls: true**, convert the string `"null"` to the null value `null`.
-  * **parseAll: true**, all of the above. Makes default type to be `:auto` instead of `:string`.
+  * **parseBooleans: true**, automatically detect and convert strings `"true"` and `"false"` to booleans `true` and `false`.
+  * **parseNumbers: true**, automatically detect and convert strings like `"1"`, `"33.33"`, `"-44"` to numbers like `1`, `33.33`, `-44`.
+  * **parseNulls: true**, automatically detect and convert the string `"null"` to the null value `null`.
+  * **parseAll: true**, all of the above. This is the same as if the default :type was `:auto` instead of `:string`.
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
@@ -202,6 +215,7 @@ If no :types are specified in the name, the values are always parsed as strings:
 
 ```javascript
 $('form').serializeJSON();
+
 // returns =>
 {
   "bool": {
@@ -227,6 +241,7 @@ To auto-detect types, use the parse options. For example, to parse nulls and num
 
 ```javascript
 $('form').serializeJSON({parseNulls: true, parseNumbers: true});
+
 // returns =>
 {
   "bool": {
@@ -255,6 +270,7 @@ var emptyStringsAndZerosToNulls = function(val, inputName) {
 }
 
 $('form').serializeJSON({parseWithFunction: emptyStringsAndZerosToNulls, parseNumbers: true});
+
 // returns =>
 {
   "bool": {
@@ -304,6 +320,7 @@ Serializes like this by default:
 
 ```javascript
 $('form').serializeJSON();
+
 // returns =>
 {'check1': 'true'} // Note that check2 and check3 are not included because they are not checked
 ```
@@ -313,6 +330,7 @@ To include all checkboxes, use the `checkboxUncheckedValue` option like this:
 
 ```javascript
 $('form').serializeJSON({checkboxUncheckedValue: "false"});
+
 // returns =>
 {'check1': 'true', check2: 'false', check3: 'false'}
 ```
@@ -334,6 +352,7 @@ The "unchecked" value can also be specified via the HTML attribute `data-uncheck
 Serializes like this by default:
 ```javascript
 $('form#checkboxes').serializeJSON(); // Note no option is used
+
 // returns =>
 {
   'checked': {
@@ -354,6 +373,7 @@ And remember that you can combine it with other options to parse values as well.
 
 ```javascript
 $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBooleans: true, parseNumbers: true});
+
 // returns =>
 {
   'checked': {
@@ -388,6 +408,7 @@ Serializes like this by default:
 
 ```javascript
 $('form').serializeJSON();
+
 // returns =>
 {'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
 ```
@@ -398,6 +419,7 @@ But to interpret integers as array indexes, use the option `useIntKeysAsArrayInd
 
 ```javascript
 $('form').serializeJSON({useIntKeysAsArrayIndex: true});
+
 // returns =>
 {'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
 ```
@@ -415,6 +437,7 @@ For example:
 $.serializeJSON.defaultOptions.parseAll = true; // parse booleans, numbers and nulls by default
 
 $('form').serializeJSON(); // No options => then use $.serializeJSON.defaultOptions
+
 // returns =>
 {
   "bool": {
@@ -433,17 +456,6 @@ $('form').serializeJSON(); // No options => then use $.serializeJSON.defaultOpti
 }
 ```
 
-
-Install
--------
-
-Install it like any other jQuery plugin.
-For example, download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script and include it in your page after jQuery:
-
-```html
-<script type="text/javascript" src="jquery.min.js"></script>
-<script type="text/javascript" src="jquery.serializejson.min.js"></script>
-```
 
 Alternatives
 ------------
@@ -465,25 +477,6 @@ But I still think this one is better because:
  * Compatible with [bower](https://github.com/bower/bower).
  * Compatible with [zepto.js](http://zeptojs.com/) and pretty much every version of jQuery.
  * The source code is as small as it can be. The minified version is 1Kb.
-
-Why serialize a form?
----------------------
-
-Probably to submit via AJAX, or to handle user input in your JavaScript application.
-
-To submit a form using AJAX, the jQuery [.serialize()](https://api.jquery.com/serialize/) function should work just fine. Most backend frameworks will understand the form attribute names and convert them to accessible values that can be easily assigned to your backend models.
-
-Actually, the input name format used by `.serializeJSON()` is borrowed from [Rails Parameter Naming Conventions](http://guides.rubyonrails.org/form_helpers.html#understanding-parameter-naming-conventions).
-
-But if you want to handle user input in the frontend JavaScript application, then `.serialize()` is not very useful because it just creates a params string. Another jQuery function is `.serializeArray`, but it doesn't handle nested objects.
-
-
-Usage details
--------------
-
-The current implementation of `.serializeJSON()` relies on jQuery's [.serializeArray()](https://api.jquery.com/serializeArray/) to grab the form attributes and then create the object using the names.
-
-It means, it will serialize the inputs that are supported by `.serializeArray()`, that uses the standard W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2) to determine which elements it should include; in particular the element cannot be disabled and must contain a name attribute. No submit button value is serialized since the form was not submitted using a button. Data from file select elements is not serialized.
 
 
 Contributions
@@ -515,4 +508,4 @@ Changelog
 Author
 -------
 
-Written by [Mario Izquierdo](https://github.com/marioizquierdo)
+Written and maintained by [Mario Izquierdo](https://github.com/marioizquierdo)
