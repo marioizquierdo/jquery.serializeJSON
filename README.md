@@ -6,7 +6,7 @@ Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](h
 Install
 -------
 
-Install with [bower](http://bower.io/) `bower install jquery.serializeJSON`, or with [npm](https://www.npmjs.com/) `npm install jquery-serializejson`, or just download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.js) script.
+Install with [bower](http://bower.io/) `bower install jquery.serializeJSON`, or [npm](https://www.npmjs.com/) `npm install jquery-serializejson`, or just download the [jquery.serializejson.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.js) script.
 
 And make sure it is included after jQuery (or Zepto), for example:
 ```html
