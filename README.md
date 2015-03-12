@@ -43,6 +43,13 @@ HTML form (input, textarea and select tags supported):
   <textarea              name="projects[1][language]">javascript</textarea>
   <input type="hidden"   name="projects[1][popular]" value="0" />
   <input type="checkbox" name="projects[1][popular]" value="1"/>
+  
+  <!-- select options work too! just make the name property an array -->
+  <select multiple name="colors[]">
+        <option value="red">Red</option>
+        <option value="blue">Blue</option>
+    	<option value="yellow">Yellow</option>
+	</select>
 </form>
 
 ```
