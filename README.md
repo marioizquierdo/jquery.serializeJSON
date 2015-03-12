@@ -6,7 +6,13 @@ Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](h
 Install
 -------
 
-Install like any other jQuery plugin. You can use [bower](https://github.com/bower/bower), or just download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script and include it in your page after jQuery:
+With [bower](http://bower.io/) `bower install jquery.serializeJSON`.
+
+Or with [npm](https://www.npmjs.com/) `npm install jquery-serializejson`.
+
+Or just download the [jquery.serializejson.min.js](https://raw.githubusercontent.com/marioizquierdo/jquery.serializeJSON/master/jquery.serializejson.min.js) script.
+
+And make sure it is included after jQuery (or Zepto), for example:
 
 ```html
 <script type="text/javascript" src="jquery.min.js"></script>
