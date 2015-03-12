@@ -33,22 +33,29 @@ HTML form (input, textarea and select tags supported):
   <input type="text" name="jobbies[]"             value="code" />
   <input type="text" name="jobbies[]"             value="climbing" />
 
-  <!-- and more ... -->
+  <!-- textareas, checkboxes ... -->
   <textarea              name="projects[0][name]">serializeJSON</textarea>
   <textarea              name="projects[0][language]">javascript</textarea>
   <input type="hidden"   name="projects[0][popular]" value="0" />
-  <input type="checkbox" name="projects[0][popular]" value="1" checked="checked"/>
+  <input type="checkbox" name="projects[0][popular]" value="1" checked />
 
   <textarea              name="projects[1][name]">tinytest.js</textarea>
   <textarea              name="projects[1][language]">javascript</textarea>
   <input type="hidden"   name="projects[1][popular]" value="0" />
   <input type="checkbox" name="projects[1][popular]" value="1"/>
-  
-  <!-- select options work too! just make the name property an array -->
-  <select multiple name="colors[]">
-        <option value="red">Red</option>
-        <option value="blue">Blue</option>
-    	<option value="yellow">Yellow</option>
+
+  <!-- select -->
+  <select name="selectOne">
+    <option value="paper">Paper</option>
+    <option value="rock" selected>Rock</option>
+    <option value="scissors">Scissors</option>
+  </select>
+
+  <!-- select multiple options, just name it as an array[] -->
+  <select multiple name="selectMultiple[]">
+    <option value="red"  selected>Red</option>
+    <option value="blue" selected>Blue</option>
+    <option value="yellow">Yellow</option>
 	</select>
 </form>
 
@@ -76,7 +83,10 @@ $('#my-profile').serializeJSON();
   projects: {
     '0': { name: "serializeJSON", language: "javascript", popular: "1" },
     '1': { name: "tinytest.js",   language: "javascript", popular: "0" }
-  }
+  },
+
+  selectOne: "rock",
+  selectMultiple: ["red", "blue"]
 }
 ```
 
@@ -396,6 +406,24 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBoolean
 }
 ```
 
+## Ignore Empty Form Fields ##
+
+Since `serializeJSON()` is called on a jQuery object, just use jQuery selectors to select only the fields you want to serialize (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
+
+```
+// Select only imputs that have a non-empty value
+$('form :input[value!=""]').serializeJSON();
+
+// Or filter them from the form
+obj = $('form').find('input').not('[value=""]').serializeJSON();
+
+// For more complicated filtering, you can use a function
+obj = $form.find(':input').filter(function () {
+          return $.trim(this.value).length > 0
+      }).serializeJSON();
+```
+
+
 
 ## Use integer keys as array indexes ##
 
@@ -433,18 +461,6 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 **Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
 
-## Ignoring Empty Form Fields
-Sometimes you don't want to include form elements that haven't changed (sometimes called "pristine" elements). There are several ways to handle this, each of which uses jQuery to exclude them from your selected object (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
-
-```
-obj = $form.find('input').not('[value=""]').serializeJSON();
-
-obj = $form.find(':input[value!=""]').serializeJSON();
-
-obj = $form.find(':input').filter(function () {
-          return $.trim(this.value).length > 0
-      }).serializeJSON();
-```
 
 ## Defaults ##
 
