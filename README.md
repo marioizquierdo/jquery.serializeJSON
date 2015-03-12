@@ -1,7 +1,7 @@
 jquery.serializeJSON
 ====================
 
-Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)) that serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash.
+Adds the method `.serializeJSON()` to [jQuery](http://jquery.com/) (or [Zepto](http://zeptojs.com/)) that serializes a form into a JavaScript Object, using the same format as the default Ruby on Rails request params.
 
 Install
 -------
