@@ -172,7 +172,6 @@
 
       // With more keys is a deepSet. Apply recursively.
       } else {
-
         nextKey = keys[1];
 
         // '' is used to push values into the array,
@@ -188,14 +187,20 @@
           }
         }
 
-        // o[key] defaults to object or array, depending if nextKey is an array index (int or '') or an object key (string)
-        if (f.isUndefined(o[key])) {
-          if (nextKey === '') { // '' is used to push values into the array.
-            o[key] = [];
-          } else if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
-            o[key] = [];
+        // '' is used to push values into the array "array[]"
+        if (nextKey === '') {
+          if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+            o[key] = []; // define (or override) as array to push values
+          }
+        } else {
+          if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
+            if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+              o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
+            }
           } else { // for anything else, use an object, where nextKey is going to be the attribute name
-            o[key] = {};
+            if (f.isUndefined(o[key]) || !f.isObject(o[key])) {
+              o[key] = {}; // define (or override) as object, to set nested properties
+            }
           }
         }
 

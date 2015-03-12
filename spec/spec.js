@@ -136,6 +136,36 @@ describe("$.serializeJSON", function () {
     });
   });
 
+  describe("with existing properties", function() {
+    beforeEach(function() {
+      $form = $('<form>');
+      $form.append($('<input type="text"   name="str" value="String" />'));
+      $form.append($('<input type="text"   name="str" value="String Override" />'));
+
+      $form.append($('<input type="text"   name="array" value="a string that was there before" />'));
+      $form.append($('<input type="text"   name="array[]" value="one" />'));
+      $form.append($('<input type="text"   name="array[]" value="two" />'));
+
+      $form.append($('<input type="text"   name="crosstype"         value="str" />'));
+      $form.append($('<input type="text"   name="crosstype:number"  value="2" />'));
+      $form.append($('<input type="text"   name="crosstype:boolean" value="true" />'));
+
+      $form.append($('<input type="hidden" name="object"                 value=""/>'));
+      $form.append($('<input type="text"   name="object[nested]"         value="blabla" />'));
+      $form.append($('<input type="text"   name="object[nested][nested]" value="final value" />'));
+    });
+
+    it("overrides to keep the last property value", function() {
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({
+        str: "String Override",
+        array: ["one", "two"],
+        crosstype: true,
+        object: { nested: { nested: "final value" }}
+      });
+    });
+  });
+
   describe('unchecked checkboxes', function() {
     it('are ignored by default (same as regural HTML forms and the jQuery.serializeArray function)', function() {
       $form = $('<form>');
