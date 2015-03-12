@@ -426,6 +426,18 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 **Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
 
+## Ignoring Empty Form Fields
+Sometimes you don't want to include form elements that haven't changed (sometimes called "pristine" elements). There are several ways to handle this, each of which uses jQuery to exclude them from your selected object (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
+
+```
+obj = $form.find('input').not('[value=""]').serializeJSON();
+
+obj = $form.find(':input[value!=""]').serializeJSON();
+
+obj = $form.find(':input').filter(function () {
+          return $.trim(this.value).length > 0
+      }).serializeJSON();
+```
 
 ## Defaults ##
 
