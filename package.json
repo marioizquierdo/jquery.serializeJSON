@@ -1,0 +1,28 @@
+{
+  "name": "jquery-serializejson",
+  "version": "2.5.0",
+  "description": "Serializes a form into a JavaScript Object with the same format as the default Ruby on Rails request params hash",
+  "main": "jquery.serializejson.js",
+  "scripts": {
+    "test": "echo \"Open /spec/spec_runner_jquery.html or /spec/spec_runner_zepto.html to run the jasmine specs in your browser\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marioizquierdo/jquery.serializeJSON.git"
+  },
+  "keywords": [
+    "jquery-plugin",
+    "ecosystem:jquery",
+    "form-serialization",
+    "form-to-json",
+    "html-to-json",
+    "form",
+    "json"
+  ],
+  "author": "Mario Izquierdo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marioizquierdo/jquery.serializeJSON/issues"
+  },
+  "homepage": "https://github.com/marioizquierdo/jquery.serializeJSON"
+}
