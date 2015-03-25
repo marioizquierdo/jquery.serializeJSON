@@ -411,7 +411,7 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBoolean
 
 Since `serializeJSON()` is called on a jQuery object, just use jQuery selectors to select only the fields you want to serialize (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
 
-```
+```javascript
 // Select only imputs that have a non-empty value
 $('form :input[value!=""]').serializeJSON();
 

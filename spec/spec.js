@@ -110,6 +110,28 @@ describe("$.serializeJSON", function () {
     });
   });
 
+  describe('with a select multiple', function() {
+    it("serializes all the selected elements", function() {
+      $form = $('<form>');
+      $form.append($('<select name="camels[]" multiple><option value="1" selected>1</option><option value="2">2</option><option value="3" selected>3</option></select>'));
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({camels: ['1','3']}); // selected elements included as an array
+    });
+    it("ignores the field if nothing is selected", function() {
+      $form = $('<form>');
+      $form.append($('<select name="camels[]" multiple><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>'));
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({ }); // nothing is serialized
+    });
+    it("can be set to empty string using a hidden field", function() {
+      $form = $('<form>');
+      $form.append($('<input type="hidden" name="camels:array" value="[]" />'));
+      $form.append($('<select name="camels[]" multiple><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>'));
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({camels: []}); // empty list
+    });
+  });
+
   describe('with complext array of objects', function() {
     beforeEach(function() {
       $form = $('<form>');
