@@ -82,13 +82,13 @@
     parseValue: function(str, type, opts) {
       var value, f;
       f = $.serializeJSON;
+      if (type && opts.customTypes && opts.customTypes[type]) return opts.customTypes[type](str);
       if (type == 'string') return str; // force string
       if (type == 'number'  || (opts.parseNumbers  && f.isNumeric(str))) return Number(str); // number
       if (type == 'boolean' || (opts.parseBooleans && (str === "true" || str === "false"))) return (["false", "null", "undefined", "", "0"].indexOf(str) === -1); // boolean
       if (type == 'null'    || (opts.parseNulls    && str == "null")) return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
       if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
       if (type == 'auto') return f.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); // try again with something like "parseAll"
-      if (type && opts.customTypes && opts.customTypes[type]) return opts.customTypes[type](str);
       return str; // otherwise, keep same string
     },
 
