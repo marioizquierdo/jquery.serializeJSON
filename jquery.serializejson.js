@@ -88,7 +88,7 @@
       if (type == 'null'    || (opts.parseNulls    && str == "null")) return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
       if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
       if (type == 'auto') return f.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); // try again with something like "parseAll"
-      if (opts.customTypes[type]) return opts.customTypes[type](str);
+      if (type && opts.customTypes && opts.customTypes[type]) return opts.customTypes[type](str);
       return str; // otherwise, keep same string
     },
 
@@ -127,10 +127,12 @@
     extractTypeFromInputName: function(name) {
       var match, f, customTypes;
       f = $.serializeJSON;
-      customTypes = Object.keys(f.defaultOptions.customTypes);
       if (match = name.match(/(.*):([^:]+)$/)){
         var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip', 'auto']; // validate type
-        validTypes += customTypes;
+        var opts = f.optsWithDefaults()
+        customTypes = Object.keys(opts.customTypes);
+        validTypes.concat(customTypes);
+
         if (validTypes.indexOf(match[2]) !== -1) {
           return [match[1], match[2]];
         } else {
