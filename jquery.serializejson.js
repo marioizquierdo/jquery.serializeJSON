@@ -21,7 +21,7 @@
 
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name);
+      keys = f.splitInputNameIntoKeysArray(input.name, opts);
       type = keys.pop(); // the last element is always the type ("string" by default)
       if (type !== 'skip') { // easy way to skip a value
         value = f.parseValue(input.value, type, opts); // string, number, boolean or null
@@ -109,10 +109,11 @@
     // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
     // "arr[][val]"       => ['arr', '', 'val', '_']
     // "arr[][val]:null"  => ['arr', '', 'val', 'null']
-    splitInputNameIntoKeysArray: function (name) {
+    splitInputNameIntoKeysArray: function (name, opts) {
+      opts = opts || {};
       var keys, nameWithoutType, type, _ref, f;
       f = $.serializeJSON;
-      _ref = f.extractTypeFromInputName(name), nameWithoutType = _ref[0], type = _ref[1];
+      _ref = f.extractTypeFromInputName(name, opts), nameWithoutType = _ref[0], type = _ref[1];
       keys = nameWithoutType.split('['); // split string into array
       keys = $.map(keys, function (key) { return key.replace(/]/g, ''); }); // remove closing brackets
       if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
@@ -124,14 +125,13 @@
     // "foo"              =>  ["foo", "_"]
     // "foo:boolean"      =>  ["foo", "boolean"]
     // "foo[bar]:null"    =>  ["foo[bar]", "null"]
-    extractTypeFromInputName: function(name) {
+    extractTypeFromInputName: function(name, opts) {
       var match, f, customTypes;
       f = $.serializeJSON;
       if (match = name.match(/(.*):([^:]+)$/)){
         var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip', 'auto']; // validate type
-        var opts = f.optsWithDefaults()
-        customTypes = Object.keys(opts.customTypes);
-        validTypes.concat(customTypes);
+        customTypes = opts.customTypes ? Object.keys(opts.customTypes) : [];
+        validTypes = validTypes.concat(customTypes);
 
         if (validTypes.indexOf(match[2]) !== -1) {
           return [match[1], match[2]];

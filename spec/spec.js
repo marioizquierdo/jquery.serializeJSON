@@ -825,37 +825,20 @@ describe("$.serializeJSON", function () {
       });
     });
 
-    // describe('useIntKeysAsArrayIndex', function() {
-    //   it("uses int keys as array indexes instead of object properties", function() {
-    //     $form = $('<form>');
-    //     $form.append($('<input type="text" name="foo[0]" value="0"/>'));
-    //     $form.append($('<input type="text" name="foo[1]" value="1"/>'));
-    //     $form.append($('<input type="text" name="foo[5]" value="5"/>'));
+    describe('customTypes', function() {
+      it("serializes value according to custom function", function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="foo:alwaysBoo" value="0"/>'));
 
-    //     obj = $form.serializeJSON({useIntKeysAsArrayIndex: false}); // default
-    //     expect(obj).toEqual({"foo": {'0': '0', '1': '1', '5': '5'}});
+        obj = $form.serializeJSON({
+          customTypes: {
+            alwaysBoo: function() { return "Boo" }
+          }
+        });
 
-    //     obj = $form.serializeJSON({useIntKeysAsArrayIndex: true}); // with option useIntKeysAsArrayIndex true
-    //     expect(obj).toEqual({"foo": ['0', '1', undefined, undefined, undefined, '5']});
-
-    //     obj = $form.serializeJSON({useIntKeysAsArrayIndex: true, parseNumbers: true}); // same but also parsing numbers
-    //     expect(obj).toEqual({"foo": [0, 1, undefined, undefined, undefined, 5]});
-    //   });
-
-    //   it("doesnt get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
-    //     $form = $('<form>');
-    //     $form.append($('<input type="text"  name="drinks[1st]" value="coffee"/>'));
-    //     $form.append($('<input type="text"  name="drinks[2nd]" value="beer"/>'));
-
-    //     obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
-    //     expect(obj).toEqual({
-    //       drinks: {
-    //         '1st': "coffee",
-    //         '2nd': "beer"
-    //       }
-    //     });
-    //   });
-    // });
+        expect(obj).toEqual({"foo": "Boo"});
+      });
+    });
 
     describe('with modified defaults', function() {
       var defaults = $.serializeJSON.defaultOptions;
