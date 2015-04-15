@@ -464,7 +464,7 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 **Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
 
 
-## Define custom data types ##
+## Define custom types ##
 
 You can define your own data types or override the defaults.
 
@@ -494,7 +494,7 @@ $('form').serializeJSON({
 // returns =>
 {
   "scary": "boo",
-  "string": "changed input value", 
+  "string": "string has been overridden", 
   "number": 5,     // remains unchanged
 }
 ```
