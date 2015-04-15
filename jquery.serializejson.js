@@ -15,13 +15,14 @@
     var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
     f = $.serializeJSON;
     opts = f.optsWithDefaults(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
+    $.extend(f.types, opts.types); // extend default types with custom types
     f.validateOptions(opts);
     formAsArray = this.serializeArray(); // array of objects {name, value}
     f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
 
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name, opts);
+      keys = f.splitInputNameIntoKeysArray(input.name);
       type = keys.pop(); // the last element is always the type ("string" by default)
       if (type !== 'skip') { // easy way to skip a value
         value = f.parseValue(input.value, type, opts); // string, number, boolean or null
@@ -44,7 +45,7 @@
       parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
       checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
       useIntKeysAsArrayIndex: false, // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
-      customTypes: {}, // define custom types that receive the value as argument
+      types: {}, // overridable data types
     },
 
     // Merge options with defaults to get {parseNumbers, parseBoolens, parseNulls, useIntKeysAsArrayIndex}
@@ -60,7 +61,7 @@
         parseWithFunction:         f.optWithDefaults('parseWithFunction', options),
         checkboxUncheckedValue:    f.optWithDefaults('checkboxUncheckedValue', options),
         useIntKeysAsArrayIndex:    f.optWithDefaults('useIntKeysAsArrayIndex', options),
-        customTypes:               f.optWithDefaults('customTypes', options),
+        types:                     f.optWithDefaults('types', options),
       }
     },
 
@@ -70,7 +71,7 @@
 
     validateOptions: function(opts) {
       var opt, validOpts;
-      validOpts = ['parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'checkboxUncheckedValue', 'useIntKeysAsArrayIndex', 'customTypes'];
+      validOpts = ['parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'checkboxUncheckedValue', 'useIntKeysAsArrayIndex', 'types']
       for (opt in opts) {
         if (validOpts.indexOf(opt) === -1) {
           throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(','));
@@ -78,17 +79,25 @@
       }
     },
 
-    // Convert the string to a number, boolean or null, depending on the enable option and the string format.
+    types: {
+      string:  function(str) { return String(str) },
+      number:  function(str) { return Number(str) },
+      boolean: function(str) { return (["false", "null", "undefined", "", "0"].indexOf(str) === -1) },
+      null:    function(str) { return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str },
+      array:   function(str) { return JSON.parse(str) },
+      object:  function(str) { return JSON.parse(str) },
+      auto:    function(str) { return $.serializeJSON.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}) } // try again with something like "parseAll"
+    },
+
     parseValue: function(str, type, opts) {
-      var value, f;
-      f = $.serializeJSON;
-      if (type && opts.customTypes && opts.customTypes[type]) return opts.customTypes[type](str);
-      if (type == 'string') return str; // force string
-      if (type == 'number'  || (opts.parseNumbers  && f.isNumeric(str))) return Number(str); // number
-      if (type == 'boolean' || (opts.parseBooleans && (str === "true" || str === "false"))) return (["false", "null", "undefined", "", "0"].indexOf(str) === -1); // boolean
-      if (type == 'null'    || (opts.parseNulls    && str == "null")) return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
-      if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
-      if (type == 'auto') return f.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); // try again with something like "parseAll"
+      var f = $.serializeJSON;
+      // Parse with a type if available
+      if (type && f.types && f.types[type]) return f.types[type](str); // use specific type
+
+      // Otherwise, check if there is any auto-parse option enabled and use it.
+      if (opts.parseNumbers  && f.isNumeric(str)) return Number(str); // auto: number
+      if (opts.parseBooleans && (str === "true" || str === "false")) return (["false", "null", "undefined", "", "0"].indexOf(str) === -1); // auto: boolean
+      if (opts.parseNulls    && str == "null") return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // auto: null
       return str; // otherwise, keep same string
     },
 
@@ -109,11 +118,10 @@
     // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
     // "arr[][val]"       => ['arr', '', 'val', '_']
     // "arr[][val]:null"  => ['arr', '', 'val', 'null']
-    splitInputNameIntoKeysArray: function (name, opts) {
-      opts = opts || {};
+    splitInputNameIntoKeysArray: function (name) {
       var keys, nameWithoutType, type, _ref, f;
       f = $.serializeJSON;
-      _ref = f.extractTypeFromInputName(name, opts), nameWithoutType = _ref[0], type = _ref[1];
+      _ref = f.extractTypeFromInputName(name), nameWithoutType = _ref[0], type = _ref[1];
       keys = nameWithoutType.split('['); // split string into array
       keys = $.map(keys, function (key) { return key.replace(/]/g, ''); }); // remove closing brackets
       if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
@@ -125,13 +133,12 @@
     // "foo"              =>  ["foo", "_"]
     // "foo:boolean"      =>  ["foo", "boolean"]
     // "foo[bar]:null"    =>  ["foo[bar]", "null"]
-    extractTypeFromInputName: function(name, opts) {
-      var match, f, customTypes;
+    extractTypeFromInputName: function(name) {
+      var match, f;
       f = $.serializeJSON;
       if (match = name.match(/(.*):([^:]+)$/)){
-        var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip', 'auto']; // validate type
-        customTypes = opts.customTypes ? Object.keys(opts.customTypes) : [];
-        validTypes = validTypes.concat(customTypes);
+        var validTypes = Object.keys(f.types);
+        validTypes.push('skip');
 
         if (validTypes.indexOf(match[2]) !== -1) {
           return [match[1], match[2]];

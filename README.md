@@ -208,6 +208,7 @@ To change the default behavior you have the following options:
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
+  * **types: object**, extends or overrides default data types.
 
 More details about options usage in the sections below.
 
@@ -461,6 +462,42 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 ```
 
 **Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
+
+
+## Define custom data types ##
+
+You can define your own data types or override the defaults.
+
+For example:
+
+```html
+<form>
+  <input type="text" name="scary:alwaysBoo" value="notBoo"/>
+  <input type="text" name="string:string" value="string"/>
+  <input type="text" name="number:number" value="5"/>
+</form>
+```
+
+```javascript
+
+$('form').serializeJSON({
+  types: {
+    alwaysBoo: function(value) { // value is always a string
+      return "boo";
+    },
+    string: function(value) {
+      return value + " has been overridden";
+    }
+  }
+}); 
+
+// returns =>
+{
+  "scary": "boo",
+  "string": "changed input value", 
+  "number": 5,     // remains unchanged
+}
+```
 
 
 ## Defaults ##
