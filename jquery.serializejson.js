@@ -15,14 +15,14 @@
     var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
     f = $.serializeJSON;
     opts = f.optsWithDefaults(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
-    $.extend(f.types, opts.types); // extend default types with custom types
+    opts.types = $.extend({}, f.types, opts.types); // extend default types with custom types
     f.validateOptions(opts);
     formAsArray = this.serializeArray(); // array of objects {name, value}
     f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
 
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name);
+      keys = f.splitInputNameIntoKeysArray(input.name, opts);
       type = keys.pop(); // the last element is always the type ("string" by default)
       if (type !== 'skip') { // easy way to skip a value
         value = f.parseValue(input.value, type, opts); // string, number, boolean or null
@@ -92,7 +92,7 @@
     parseValue: function(str, type, opts) {
       var f = $.serializeJSON;
       // Parse with a type if available
-      if (type && f.types && f.types[type]) return f.types[type](str); // use specific type
+      if (type && opts.types && opts.types[type]) return opts.types[type](str); // use specific type
 
       // Otherwise, check if there is any auto-parse option enabled and use it.
       if (opts.parseNumbers  && f.isNumeric(str)) return Number(str); // auto: number
@@ -118,10 +118,10 @@
     // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
     // "arr[][val]"       => ['arr', '', 'val', '_']
     // "arr[][val]:null"  => ['arr', '', 'val', 'null']
-    splitInputNameIntoKeysArray: function (name) {
+    splitInputNameIntoKeysArray: function (name, opts) {
       var keys, nameWithoutType, type, _ref, f;
       f = $.serializeJSON;
-      _ref = f.extractTypeFromInputName(name), nameWithoutType = _ref[0], type = _ref[1];
+      _ref = f.extractTypeFromInputName(name, opts), nameWithoutType = _ref[0], type = _ref[1];
       keys = nameWithoutType.split('['); // split string into array
       keys = $.map(keys, function (key) { return key.replace(/]/g, ''); }); // remove closing brackets
       if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
@@ -133,11 +133,12 @@
     // "foo"              =>  ["foo", "_"]
     // "foo:boolean"      =>  ["foo", "boolean"]
     // "foo[bar]:null"    =>  ["foo[bar]", "null"]
-    extractTypeFromInputName: function(name) {
-      var match, f;
-      f = $.serializeJSON;
+    extractTypeFromInputName: function(name, opts) {
+      var match, validTypes, f;
       if (match = name.match(/(.*):([^:]+)$/)){
-        var validTypes = Object.keys(f.types);
+        f = $.serializeJSON;
+        validTypes = opts ? opts.types : f.types;
+        validTypes = Object.keys(validTypes);
         validTypes.push('skip');
 
         if (validTypes.indexOf(match[2]) !== -1) {

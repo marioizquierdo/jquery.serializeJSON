@@ -1072,7 +1072,6 @@ describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
     expect(split('foo[bar]:boolean')).toEqual(['foo', 'bar','boolean']);
     expect(split('foo[bar]:null')).toEqual(['foo', 'bar','null']);
     expect(split('foo[bar]:string')).toEqual(['foo', 'bar','string']);
-
   });
 });
 
