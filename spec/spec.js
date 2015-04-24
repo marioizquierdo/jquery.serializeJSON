@@ -207,7 +207,7 @@ describe("$.serializeJSON", function () {
 
     it('could use a hidden field and a custom parser to force an empty array in an array of unchecked checkboxes', function() {
       $form = $('<form>');
-      $form.append($('<input type="hidden" name="flags" value="[]"/>'));
+      $form.append($('<input type="hidden"   name="flags" value="[]"/>'));
       $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
       $form.append($('<input type="checkbox" name="flags[]" value="red"/>'));
       obj = $form.serializeJSON({parseWithFunction: function(val){ return val == '[]' ? [] : val }});
@@ -220,7 +220,7 @@ describe("$.serializeJSON", function () {
 
     it('could use a hidden field with type :array to force an empty array in an array of unchecked checkboxes', function() {
       $form = $('<form>');
-      $form.append($('<input type="hidden" name="flags:array" value="[]"/>'));
+      $form.append($('<input type="hidden"   name="flags:array" value="[]"/>'));
       $form.append($('<input type="checkbox" name="flags[]" value="green"/>'));
       $form.append($('<input type="checkbox" name="flags[]" value="red"/>'));
       obj = $form.serializeJSON();
@@ -554,6 +554,13 @@ describe("$.serializeJSON", function () {
       });
     });
 
+    describe('validateOptions', function() {
+      it("should raise an error if the option is not one of the valid options", function() {
+        expect(function(){ $form.serializeJSON({invalidOption: true}); })
+          .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
+      });
+    });
+
     describe('parseNumbers', function() {
       it("returns numbers for the numeric string values", function() {
         obj = $form.serializeJSON({parseNumbers: true});
@@ -825,10 +832,10 @@ describe("$.serializeJSON", function () {
       });
     });
 
-    describe('types', function() {
+    describe('customTypes', function() {
       it("serializes value according to custom function without disturbing default types", function() {
         $form = $('<form>');
-        $form.append($('<input type="text" name="foo:alwaysBoo" value="0"/>'));
+        $form.append($('<input type="text" name="foo:alwaysBoo"    value="0"/>'));
         $form.append($('<input type="text" name="notype"           value="default type is :string"/>'));
         $form.append($('<input type="text" name="string:string"    value=":string type overrides parsing options"/>'));
         $form.append($('<input type="text" name="excludes:skip"    value="Use :skip to not include this field in the result"/>'));
@@ -859,7 +866,7 @@ describe("$.serializeJSON", function () {
         $form.append($('<input type="text" name="object[not empty]:object"   value=\'{"my": "stuff"}\'/>'));
 
         obj = $form.serializeJSON({
-          types: {
+          customTypes: {
             alwaysBoo: function() { return "Boo" }
           }
         });
@@ -903,17 +910,37 @@ describe("$.serializeJSON", function () {
         });
       });
 
-      it("overrides default types", function() {
+      it("overrides defaultTypes", function() {
         $form = $('<form>');
         $form.append($('<input type="text" name="incremented:number" value="0"/>'));
-
         obj = $form.serializeJSON({
-          types: {
+          customTypes: {
             number: function(str) { return Number(str) + 1 }
           }
         });
-
         expect(obj).toEqual({ "incremented": 1 });
+      });
+
+      it("overrides defaultTypes even if they are re-defined", function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="num:number" value="0"/>'));
+
+        obj = $form.serializeJSON({
+          defaultTypes: {
+            number: function(str) { return 1 }
+          }
+        });
+        expect(obj).toEqual({ "num": 1 });
+
+        obj = $form.serializeJSON({
+          defaultTypes: {
+            number: function(str) { return 1 }
+          },
+          customTypes: {
+            number: function(str) { return 22 }
+          }
+        });
+        expect(obj).toEqual({ "num": 22 });
       });
     });
 
