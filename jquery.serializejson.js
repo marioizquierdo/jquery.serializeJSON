@@ -49,7 +49,7 @@
         string:  function(str) { return String(str) },
         number:  function(str) { return Number(str) },
         boolean: function(str) { return (["false", "null", "undefined", "", "0"].indexOf(str) === -1) },
-        null:    function(str) { return (["false", "null", "undefined", "", "0"].indexOf(str) !== -1) ? null : str },
+        "null":    function(str) { return (["false", "null", "undefined", "", "0"].indexOf(str) !== -1) ? null : str },
         array:   function(str) { return JSON.parse(str) },
         object:  function(str) { return JSON.parse(str) },
         auto:    function(str) { return $.serializeJSON.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}) } // try again with something like "parseAll"
