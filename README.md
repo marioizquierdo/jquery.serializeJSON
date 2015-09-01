@@ -546,20 +546,20 @@ I found others solving the same problem:
  * https://github.com/serbanghita/formToObject.js (plain js, no jQuery)
  * https://gist.github.com/shiawuen/2634143 (simpler but small)
 
-But I still think this one is better because:
+But none of them checked what I needed at the time `serializeJSON` was created. Factors that differentiate `serializeJSON` from most of the alternatives:
 
- * It is built on top of jQuery (or Zepto) `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes in account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard, stable and crossbrowser as it can be.
- * The format suggested for the form field names is the same used by Rails, that is standard and well tested.
- * The spec suite makes sure we don't break functionality on future versions.
- * Compatible with [bower](https://github.com/bower/bower).
- * Compatible with [zepto.js](http://zeptojs.com/) and pretty much every version of jQuery.
- * The source code is as small as it can be. The minified version is 1Kb.
+ * Simple and small code base. The minimified version is 1Kb.
+ * Yet flexible enough with features like nested objects, unchecked-checkboxes and custom types.
+ * Implemented on top of jQuery (or Zepto) `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes into account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard and stable as it can be.
+ * The format for the input field names is the same used by Rails (from [Rack::Utils.parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query)), that is successfully used by many backend systems and already well understood by many front end developers.
+ * Exaustive test suite helps iterate on new releases and bugfixes with confidence.
+ * Compatible with [bower](https://github.com/bower/bower), [zepto.js](http://zeptojs.com/) and pretty much every version of [jQuery](https://jquery.com/).
 
 
 Contributions
 -------------
 
-Contributions are awesome. Feature branch *pull requests* are the preferred method. Just make sure to add tests for it. To run the jasmine specs, open `spec/SpecRunner.html` in your browser.
+Contributions are awesome. Feature branch *pull requests* are the preferred method. Just make sure to add tests for it. To run the jasmine specs, just open `spec/spec_runner_jquery.html` in your browser.
 
 Changelog
 ---------
