@@ -7,7 +7,15 @@
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
   and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
 */
-(function ($) {
+(function (factory) {
+    if (typeof define === 'function' && define.amd) { // AMD. Register as an anonymous module.
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') { // Node/CommonJS
+        module.exports = factory(require('jquery'));
+    } else { // Browser globals (zepto supported)
+        factory($, jQuery, Zepto); // Zepto supported on browsers as well
+    }
+}(function ($) {
   "use strict";
 
   // jQuery('form').serializeJSON()
@@ -264,4 +272,4 @@
 
   };
 
-}(window.jQuery || window.Zepto || window.$));
+}));
