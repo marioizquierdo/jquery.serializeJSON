@@ -563,6 +563,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 
 Changelog
 ---------
+ * *2.6.2* (Oct 24, 2015): Add support for AMD/CommonJS/Browserify modules. Thanks to [jisaacks](https://github.com/jisaacks).
  * *2.6.1* (May 13, 2015): Bugfix #43 (Fix IE 8 compatibility). Thanks to [rywall](https://github.com/rywall).
  * *2.6.0* (Apr 24, 2015): Allow to define custom types with the option `customTypes` and inspect/override default types with the option `defaultTypes`. Thanks to [tygriffin](https://github.com/tygriffin) for the [pull request](https://github.com/marioizquierdo/jquery.serializeJSON/pull/40).
  * *2.5.0* (Mar 11, 2015): Override serialized properties if using the same name, even for nested values, instead of crashing the script, fixing issue#29. Also fix a crash when using Zepto and the data-unchecked-value option.
