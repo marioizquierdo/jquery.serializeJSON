@@ -22,16 +22,20 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
-    var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
+    var serializedObject, formAsArray, keys, type, value, _ref, f, opts, $form;
     f = $.serializeJSON;
     opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
     formAsArray = this.serializeArray(); // array of objects {name, value}
     f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
 
+    $form = this;
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
       keys = f.splitInputNameIntoKeysArray(input.name, opts);
       type = keys.pop(); // the last element is always the type ("string" by default)
+      if(type === '_'){
+        type = f.trySetTypeFromDataAttr($form, input.name, opts)
+      }
       if (type !== 'skip') { // easy way to skip a value
         value = f.parseValue(input.value, type, opts); // string, number, boolean or null
         if (opts.parseWithFunction && type === '_') { // allow for custom parsing
@@ -158,19 +162,41 @@
     // "foo:boolean"      =>  ["foo",      'boolean']
     // "foo[bar]:null"    =>  ["foo[bar]", 'null']
     extractTypeFromInputName: function(name, opts) {
-      var match, validTypes, f;
+      var match, f;
+      f = $.serializeJSON;
       if (match = name.match(/(.*):([^:]+)$/)){
-        f = $.serializeJSON;
-
-        validTypes = f.optionKeys(opts ? opts.typeFunctions : f.defaultOptions.defaultTypes);
-        validTypes.push('skip'); // skip is a special type that makes it easy to remove
-        if (validTypes.indexOf(match[2]) !== -1) {
-          return [match[1], match[2]];
-        } else {
-          throw new Error("serializeJSON ERROR: Invalid type " + match[2] + " found in input name '" + name + "', please use one of " + validTypes.join(', '));
-        }
+        f.validateType(name, match[2], opts);
+        return [match[1], match[2]];
       } else {
         return [name, '_']; // no defined type, then use parse options
+      }
+    },
+
+    validateType: function(name, type, opts) {
+      var validTypes, f;
+      f = $.serializeJSON;
+      validTypes = f.optionKeys(opts ? opts.typeFunctions : f.defaultOptions.defaultTypes);
+      validTypes.push('skip'); // skip is a special type that makes it easy to remove
+
+      if (validTypes.indexOf(type) !== -1) {
+        return true;
+      } else {
+        throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + validTypes.join(', '));
+      }
+    },
+
+    // Set value type from the data-value-type attribute of the inputs
+    trySetTypeFromDataAttr: function($form, name, opts) {
+      var selector, type;
+      var f = $.serializeJSON;
+      selector = 'input[name="' + name.replace(/(\[|\])/g, "\\$1") + '"]';
+      type = $form.find(selector).attr('data-value-type');
+
+      if(type){
+        f.validateType(name, type, opts);
+        return type;
+      } else {
+        return '_';
       }
     },
 
