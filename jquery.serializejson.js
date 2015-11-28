@@ -24,16 +24,16 @@
   $.fn.serializeJSON = function (options) {
     var serializedObject, formAsArray, keys, type, value, _ref, f, opts, $form;
     f = $.serializeJSON;
+    $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
     opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
-    formAsArray = this.serializeArray(); // array of objects {name, value}
-    f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
+    formAsArray = $form.serializeArray(); // array of objects {name, value}
+    f.readCheckboxUncheckedValues(formAsArray, $form, opts); // add {name, value} of unchecked checkboxes if needed
 
-    $form = this;
     serializedObject = {};
     $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name, opts);
-      type = keys.pop(); // the last element is always the type ("string" by default)
-      if(type === '_'){
+      keys = f.splitInputNameIntoKeysArray(input.name, opts); // return a list of nested keys, with the last one being the type
+      type = keys.pop();
+      if(type === '_') { // no type explicitly specified (returned as '_' by the splitInputNameIntoKeysArray function)
         type = f.trySetTypeFromDataAttr($form, input.name, opts)
       }
       if (type !== 'skip') { // easy way to skip a value
