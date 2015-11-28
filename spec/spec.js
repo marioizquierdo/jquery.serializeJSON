@@ -520,6 +520,39 @@ describe("$.serializeJSON", function () {
         });
       });
     });
+
+    describe('data-value-type attribute', function() {
+      it("should set type if field name do not contain :type definition", function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="fooData" data-value-type="alwaysBoo"   value="0"/>'));
+        $form.append($('<input type="text" name="foo:alwaysBoo" data-value-type="string"   value="0"/>'));
+        $form.append($('<input type="text" name="notype" value="default type is :string"/>'));
+        $form.append($('<input type="text" name="stringData" data-value-type="string"   value="data-value-type=string type overrides parsing options"/>'));
+        $form.append($('<input type="text" name="string:string" data-value-type="boolean"   value=":string type overrides parsing options"/>'));
+        $form.append($('<input type="text" name="excludes" data-value-type="skip"   value="Use :skip to not include this field in the result"/>'));
+        $form.append($('<input type="text" name="numberData" data-value-type="number"   value="1"/>'));
+        $form.append($('<input type="text" name="numberData[A]" data-value-type="number"        value="1"/>'));
+        $form.append($('<input type="text" name="numberData[B][C]" data-value-type="number"     value="2"/>'));
+        $form.append($('<input type="text" name="numberData[D][E][F]" data-value-type="number"  value="3"/>'));
+        $form.append($('<input type="text" name="number:number" data-value-type="string"   value="1"/>'));
+
+        obj = $form.serializeJSON({
+          customTypes: {
+            alwaysBoo: function() { return "Boo" }
+          }
+        });
+
+        expect(obj).toEqual({
+          "fooData": "Boo",
+          "foo": "Boo",
+          "notype": "default type is :string",
+          "stringData": "data-value-type=string type overrides parsing options",
+          "string": ":string type overrides parsing options",
+          "numberData": { A: 1, B: { C: 2 }, D: { E: { F: 3 } } },
+          "number": 1
+        });
+      });
+    });
   });
 
   // options
