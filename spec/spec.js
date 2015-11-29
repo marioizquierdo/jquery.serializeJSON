@@ -1104,34 +1104,26 @@ describe("$.serializeJSON", function () {
 describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
   var split = $.serializeJSON.splitInputNameIntoKeysArray;
   it("accepts a simple name", function() {
-    expect(split('foo')).toEqual(['foo', '_']);
+    expect(split('foo')).toEqual(['foo']);
   });
   it("accepts a name wrapped in brackets", function() {
-    expect(split('[foo]')).toEqual(['foo', '_']);
+    expect(split('[foo]')).toEqual(['foo']);
   });
   it("accepts names separated by brackets", function() {
-    expect(split('foo[inn][bar]')).toEqual(['foo', 'inn', 'bar', '_']);
-    expect(split('foo[inn][bar][0]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
+    expect(split('foo[inn][bar]')).toEqual(['foo', 'inn', 'bar']);
+    expect(split('foo[inn][bar][0]')).toEqual(['foo', 'inn', 'bar', '0']);
   });
   it("accepts empty brakets as empty strings", function() {
-    expect(split('arr[][bar]')).toEqual(['arr', '', 'bar', '_']);
-    expect(split('arr[][][bar]')).toEqual(['arr', '', '', 'bar', '_']);
-    expect(split('arr[][bar][]')).toEqual(['arr', '', 'bar', '', '_']);
+    expect(split('arr[][bar]')).toEqual(['arr', '', 'bar']);
+    expect(split('arr[][][bar]')).toEqual(['arr', '', '', 'bar']);
+    expect(split('arr[][bar][]')).toEqual(['arr', '', 'bar', '']);
   });
   it("accepts nested brackets", function() {
-    expect(split('foo[inn[bar]]')).toEqual(['foo', 'inn', 'bar', '_']);
-    expect(split('foo[inn[bar[0]]]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
-    expect(split('[foo[inn[bar[0]]]]')).toEqual(['foo', 'inn', 'bar', '0', '_']);
-    expect(split('foo[arr[]]')).toEqual(['foo', 'arr', '', '_']);
-    expect(split('foo[bar[arr[]]]')).toEqual(['foo', 'bar', 'arr', '', '_']);
-  });
-  it("returns type as last element", function() {
-    expect(split('foo')).toEqual(['foo', '_']);
-    expect(split('foo:number')).toEqual(['foo', 'number']);
-    expect(split('foo[bar]:number')).toEqual(['foo', 'bar','number']);
-    expect(split('foo[bar]:boolean')).toEqual(['foo', 'bar','boolean']);
-    expect(split('foo[bar]:null')).toEqual(['foo', 'bar','null']);
-    expect(split('foo[bar]:string')).toEqual(['foo', 'bar','string']);
+    expect(split('foo[inn[bar]]')).toEqual(['foo', 'inn', 'bar']);
+    expect(split('foo[inn[bar[0]]]')).toEqual(['foo', 'inn', 'bar', '0']);
+    expect(split('[foo[inn[bar[0]]]]')).toEqual(['foo', 'inn', 'bar', '0']);
+    expect(split('foo[arr[]]')).toEqual(['foo', 'arr', '']);
+    expect(split('foo[bar[arr[]]]')).toEqual(['foo', 'bar', 'arr', '']);
   });
 });
 

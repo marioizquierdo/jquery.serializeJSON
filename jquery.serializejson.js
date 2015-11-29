@@ -22,25 +22,29 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
-    var serializedObject, formAsArray, keys, type, value, _ref, f, opts, $form;
+    var f, $form, opts, formAsArray, serializedObject, name, value, _obj, nameWithNoType, type, keys;
     f = $.serializeJSON;
     $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
-    opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
-    formAsArray = $form.serializeArray(); // array of objects {name, value}
-    f.readCheckboxUncheckedValues(formAsArray, $form, opts); // add {name, value} of unchecked checkboxes if needed
+    opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls, ...} with defaults
 
+    // Use native `serializeArray` function to get an array of {name, value} objects.
+    formAsArray = $form.serializeArray();
+    f.readCheckboxUncheckedValues(formAsArray, opts, $form); // add objects to the array from unchecked checkboxes if needed
+
+    // Convert the formAsArray into a serializedObject with nested keys
     serializedObject = {};
-    $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name, opts); // return a list of nested keys, with the last one being the type
-      type = keys.pop();
-      if(type === '_') { // no type explicitly specified (returned as '_' by the splitInputNameIntoKeysArray function)
-        type = f.trySetTypeFromDataAttr($form, input.name, opts)
-      }
-      if (type !== 'skip') { // easy way to skip a value
-        value = f.parseValue(input.value, type, opts); // string, number, boolean or null
-        if (opts.parseWithFunction && type === '_') { // allow for custom parsing
-          value = opts.parseWithFunction(value, input.name);
-        }
+    $.each(formAsArray, function (i, obj) {
+      name  = obj.name; // original input name
+      value = obj.value; // input value
+      _obj = f.extractTypeAndNameWithNoType(name);
+      nameWithNoType = _obj.nameWithNoType; // input name with no type (i.e. "foo:string" => "foo")
+      type = _obj.type; // type defined from the input name in :type colon notation
+      if (!type) type = f.tryToFindTypeFromDataAttr(name, $form); // type defined in the data-value-type attr
+      f.validateType(name, type, opts); // make sure that the type is one of the valid types if defined
+
+      if (type !== 'skip') { // ignore elements with type 'skip'
+        keys = f.splitInputNameIntoKeysArray(nameWithNoType);
+        value = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
         f.deepSet(serializedObject, keys, value, opts);
       }
     });
@@ -68,7 +72,8 @@
         "null":    function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1 ? str : null; },
         "array":   function(str) { return JSON.parse(str); },
         "object":  function(str) { return JSON.parse(str); },
-        "auto":    function(str) { return $.serializeJSON.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); } // try again with something like "parseAll"
+        "auto":    function(str) { return $.serializeJSON.parseValue(str, null, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); }, // try again with something like "parseAll"
+        "skip":    null // skip is a special type that makes it easy to ignore elements
       },
 
       useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
@@ -110,21 +115,25 @@
     },
 
     // Given a string, apply the type or the relevant "parse" options, to return the parsed value
-    parseValue: function(str, type, opts) {
-      var typeFunction, f;
+    parseValue: function(valStr, inputName, type, opts) {
+      var f, parsedVal;
       f = $.serializeJSON;
+      parsedVal = valStr; // if no parsing is needed, the returned value will be the same
 
-      // Parse with a type if available
-      typeFunction = opts.typeFunctions && opts.typeFunctions[type];
-      if (typeFunction) { return typeFunction(str); } // use specific type
+      if (opts.typeFunctions && type && opts.typeFunctions[type]) { // use a type if available
+        parsedVal = opts.typeFunctions[type](valStr);
+      } else if (opts.parseNumbers  && f.isNumeric(valStr)) { // auto: number
+        parsedVal = Number(valStr);
+      } else if (opts.parseBooleans && (valStr === "true" || valStr === "false")) { // auto: boolean
+        parsedVal = (valStr === "true");
+      } else if (opts.parseNulls    && valStr == "null") { // auto: null
+        parsedVal = null;
+      }
+      if (opts.parseWithFunction && !type) { // custom parse function (apply after previous parsing options, but not if there's a specific type)
+        parsedVal = opts.parseWithFunction(parsedVal, inputName);
+      }
 
-      // Otherwise, check if there is any auto-parse option enabled and use it.
-      if (opts.parseNumbers  && f.isNumeric(str)) { return Number(str); } // auto: number
-      if (opts.parseBooleans && (str === "true" || str === "false")) { return str === "true"; } // auto: boolean
-      if (opts.parseNulls    && str == "null") { return null; } // auto: null
-
-      // If none applies, just return the str
-      return str;
+      return parsedVal;
     },
 
     isObject:          function(obj) { return obj === Object(obj); }, // is it an Object?
@@ -134,70 +143,84 @@
 
     optionKeys: function(obj) { if (Object.keys) { return Object.keys(obj); } else { var key, keys = []; for(key in obj){ keys.push(key); } return keys;} }, // polyfill Object.keys to get option keys in IE<9
 
-    // Split the input name in programatically readable keys.
-    // The last element is always the type (default "_").
-    // Examples:
-    // "foo"              => ['foo', '_']
-    // "foo:string"       => ['foo', 'string']
-    // "foo:boolean"      => ['foo', 'boolean']
-    // "[foo]"            => ['foo', '_']
-    // "foo[inn][bar]"    => ['foo', 'inn', 'bar', '_']
-    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar', '_']
-    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
-    // "arr[][val]"       => ['arr', '', 'val', '_']
-    // "arr[][val]:null"  => ['arr', '', 'val', 'null']
-    splitInputNameIntoKeysArray: function(name, opts) {
-      var keys, nameWithoutType, type, _ref, f;
+
+    // Fill the formAsArray object with values for the unchecked checkbox inputs,
+    // using the same format as the jquery.serializeArray function.
+    // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
+    // and/or the data-unchecked-value attribute of the inputs.
+    readCheckboxUncheckedValues: function (formAsArray, opts, $form) {
+      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
+      if (opts == null) { opts = {}; }
       f = $.serializeJSON;
-      _ref = f.extractTypeFromInputName(name, opts); nameWithoutType = _ref[0]; type = _ref[1];
-      keys = nameWithoutType.split('['); // split string into array
-      keys = $.map(keys, function (key) { return key.replace(/\]/g, ''); }); // remove closing brackets
-      if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
-      keys.push(type); // add type at the end
-      return keys;
+
+      selector = 'input[type=checkbox][name]:not(:checked):not([disabled])';
+      $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
+      $uncheckedCheckboxes.each(function (i, el) {
+        $el = $(el);
+        dataUncheckedValue = $el.attr('data-unchecked-value');
+        if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
+          formAsArray.push({name: el.name, value: dataUncheckedValue});
+        } else {
+          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
+            formAsArray.push({name: el.name, value: opts.checkboxUncheckedValue});
+          }
+        }
+      });
     },
 
-    // Returns [name-without-type, type] from name.
-    // "foo"              =>  ["foo",      '_']
-    // "foo:boolean"      =>  ["foo",      'boolean']
-    // "foo[bar]:null"    =>  ["foo[bar]", 'null']
-    extractTypeFromInputName: function(name, opts) {
-      var match, f;
-      f = $.serializeJSON;
-      if (match = name.match(/(.*):([^:]+)$/)){
-        f.validateType(name, match[2], opts);
-        return [match[1], match[2]];
+    // Returns [name-without-type, type] from name. The type is null if none specified.
+    // "foo"           =>  {nameWithNoType: "foo",      type:  null}
+    // "foo:boolean"   =>  {nameWithNoType: "foo",      type: "boolean"}
+    // "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
+    extractTypeAndNameWithNoType: function(name) {
+      var match;
+      if (match = name.match(/(.*):([^:]+)$/)) {
+        return {nameWithNoType: match[1], type: match[2]};
       } else {
-        return [name, '_']; // no defined type, then use parse options
+        return {nameWithNoType: name, type: null};
       }
     },
 
+    // Find an input in the $form with the same name,
+    // and get the data-value-type attribute.
+    // Returns nil if none found. Returns the first data-value-type found if many inputs have the same name.
+    tryToFindTypeFromDataAttr: function(name, $form) {
+      var escapedName, selector, $input, typeFromDataAttr;
+      escapedName = name.replace(/(\[|\])/g, "\\$1"); // escape the [] in the name to be used as selector
+      selector = 'input[name="' + escapedName + '"]';
+      $input = $form.find(selector).add($form.filter(selector));
+      typeFromDataAttr = $input.attr('data-value-type'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
+      return typeFromDataAttr || null;
+    },
+
+    // Raise an error if the type is not recognized.
     validateType: function(name, type, opts) {
       var validTypes, f;
       f = $.serializeJSON;
       validTypes = f.optionKeys(opts ? opts.typeFunctions : f.defaultOptions.defaultTypes);
-      validTypes.push('skip'); // skip is a special type that makes it easy to remove
-
-      if (validTypes.indexOf(type) !== -1) {
+      if (!type || validTypes.indexOf(type) !== -1) {
         return true;
       } else {
         throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + validTypes.join(', '));
       }
     },
 
-    // Set value type from the data-value-type attribute of the inputs
-    trySetTypeFromDataAttr: function($form, name, opts) {
-      var selector, type;
-      var f = $.serializeJSON;
-      selector = 'input[name="' + name.replace(/(\[|\])/g, "\\$1") + '"]';
-      type = $form.find(selector).attr('data-value-type');
 
-      if(type){
-        f.validateType(name, type, opts);
-        return type;
-      } else {
-        return '_';
-      }
+    // Split the input name in programatically readable keys.
+    // Examples:
+    // "foo"              => ['foo']
+    // "[foo]"            => ['foo']
+    // "foo[inn][bar]"    => ['foo', 'inn', 'bar']
+    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar']
+    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0']
+    // "arr[][val]"       => ['arr', '', 'val']
+    splitInputNameIntoKeysArray: function(nameWithNoType) {
+      var keys, f;
+      f = $.serializeJSON;
+      keys = nameWithNoType.split('['); // split string into array
+      keys = $.map(keys, function (key) { return key.replace(/\]/g, ''); }); // remove closing brackets
+      if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
+      return keys;
     },
 
     // Set a value in an object or array, using multiple keys to set in a nested object or array:
@@ -272,30 +295,6 @@
         tail = keys.slice(1);
         f.deepSet(o[key], tail, value, opts);
       }
-    },
-
-    // Fill the formAsArray object with values for the unchecked checkbox inputs,
-    // using the same format as the jquery.serializeArray function.
-    // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
-    // and/or the data-unchecked-value attribute of the inputs.
-    readCheckboxUncheckedValues: function (formAsArray, $form, opts) {
-      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
-      if (opts == null) { opts = {}; }
-      f = $.serializeJSON;
-
-      selector = 'input[type=checkbox][name]:not(:checked):not([disabled])';
-      $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
-      $uncheckedCheckboxes.each(function (i, el) {
-        $el = $(el);
-        dataUncheckedValue = $el.attr('data-unchecked-value');
-        if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
-          formAsArray.push({name: el.name, value: dataUncheckedValue});
-        } else {
-          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
-            formAsArray.push({name: el.name, value: opts.checkboxUncheckedValue});
-          }
-        }
-      });
     }
 
   };
