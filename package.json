@@ -1,7 +1,7 @@
 {
   "name": "jquery-serializejson",
   "main": "jquery.serializejson.js",
-  "version": "2.6.2",
+  "version": "2.7.0",
   "description": "jQuery or Zepto plugin to serialize a form into a JavaScript Object, using the same format as the default Ruby on Rails request params",
   "homepage": "https://github.com/marioizquierdo/jquery.serializeJSON",
   "author": "Mario Izquierdo",
