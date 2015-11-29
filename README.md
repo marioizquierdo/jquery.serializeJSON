@@ -186,6 +186,18 @@ $('form').serializeJSON();
 }
 ```
 
+Types can also be specified with the `data-value-type` attribute, instead of the :type notation:
+
+```html
+<form>
+  <input type="text" name="number[1]"     data-value-type="number"  value="1"/>
+  <input type="text" name="number[1.1]"   data-value-type="number"  value="1.1"/>
+  <input type="text" name="boolean[true]" data-value-type="boolean" value="true"/>
+  <input type="text" name="null[null]"    data-value-type="null"    value="null"/>
+  <input type="text" name="auto[string]"  data-value-type="auto"    value="0"/>
+</form>
+```
+
 
 
 Options
