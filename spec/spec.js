@@ -534,7 +534,7 @@ describe("$.serializeJSON", function () {
         $form.append($('<input type="text" name="numberData[A]" data-value-type="number"        value="1"/>'));
         $form.append($('<input type="text" name="numberData[B][C]" data-value-type="number"     value="2"/>'));
         $form.append($('<input type="text" name="numberData[D][E][F]" data-value-type="number"  value="3"/>'));
-        $form.append($('<input type="text" name="number:number" data-value-type="string"   value="1"/>'));
+        $form.append($('<input type="text" name="number" data-value-type="number"   value="1"/>'));
 
         obj = $form.serializeJSON({
           customTypes: {
@@ -552,6 +552,32 @@ describe("$.serializeJSON", function () {
           "number": 1
         });
       });
+
+      if ($.fn.jquery) { // not supported on Zepto
+        it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
+          $inputs = $(
+            '<input type="text" name="fooData" data-value-type="alwaysBoo"   value="0"/>' +
+            '<input type="text" name="foo:alwaysBoo" data-value-type="string"   value="0"/>' +
+            '<input type="text" name="notype" value="default type is :string"/>' +
+            '<input type="text" name="stringData" data-value-type="string"   value="data-value-type=string type overrides parsing options"/>' +
+            '<input type="text" name="number" data-value-type="number"   value="1"/>'
+          );
+
+          obj = $inputs.serializeJSON({
+            customTypes: {
+              alwaysBoo: function() { return "Boo" }
+            }
+          });
+
+          expect(obj).toEqual({
+            "fooData": "Boo",
+            "foo": "Boo",
+            "notype": "default type is :string",
+            "stringData": "data-value-type=string type overrides parsing options",
+            "number": 1
+          });
+        });
+      }
     });
   });
 
@@ -1097,6 +1123,16 @@ describe("$.serializeJSON", function () {
         });
       });
     });
+  });
+});
+
+// extractTypeAndNameWithNoType
+describe("$.serializeJSON.extractTypeAndNameWithNoType", function() {
+  var extract = $.serializeJSON.extractTypeAndNameWithNoType;
+  it("returns an object with type and nameWithNoType properties form the name with :type colon notation", function() {
+    expect(extract('foo')).toEqual({nameWithNoType: 'foo', type: null})
+    expect(extract('foo:boolean')).toEqual({nameWithNoType: 'foo', type: 'boolean'})
+    expect(extract('foo[bar]:null')).toEqual({nameWithNoType: 'foo[bar]', type: 'null'})
   });
 });
 

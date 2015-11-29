@@ -168,10 +168,11 @@
       });
     },
 
-    // Returns [name-without-type, type] from name. The type is null if none specified.
-    // "foo"           =>  {nameWithNoType: "foo",      type:  null}
-    // "foo:boolean"   =>  {nameWithNoType: "foo",      type: "boolean"}
-    // "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
+    // Returns and object with properties {name_without_type, type} from a given name.
+    // The type is null if none specified. Example:
+    //   "foo"           =>  {nameWithNoType: "foo",      type:  null}
+    //   "foo:boolean"   =>  {nameWithNoType: "foo",      type: "boolean"}
+    //   "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
     extractTypeAndNameWithNoType: function(name) {
       var match;
       if (match = name.match(/(.*):([^:]+)$/)) {
