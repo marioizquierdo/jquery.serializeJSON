@@ -535,6 +535,7 @@ describe("$.serializeJSON", function () {
         $form.append($('<input type="text" name="numberData[B][C]" data-value-type="number"     value="2"/>'));
         $form.append($('<input type="text" name="numberData[D][E][F]" data-value-type="number"  value="3"/>'));
         $form.append($('<input type="text" name="number" data-value-type="number"   value="1"/>'));
+        $form.append($('<select name="selectNumber" data-value-type="number"><option value="1">Value 1</option><option selected value="2">Value 2</option></select>'));
 
         obj = $form.serializeJSON({
           customTypes: {
@@ -549,7 +550,8 @@ describe("$.serializeJSON", function () {
           "stringData": "data-value-type=string type overrides parsing options",
           "string": ":string type overrides parsing options",
           "numberData": { A: 1, B: { C: 2 }, D: { E: { F: 3 } } },
-          "number": 1
+          "number": 1,
+          "selectNumber": 2
         });
       });
 
