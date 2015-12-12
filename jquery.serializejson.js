@@ -188,7 +188,7 @@
     tryToFindTypeFromDataAttr: function(name, $form) {
       var escapedName, selector, $input, typeFromDataAttr;
       escapedName = name.replace(/(\[|\])/g, "\\$1"); // escape the [] in the name to be used as selector
-      selector = 'input[name="' + escapedName + '"]';
+      selector = '[name="' + escapedName + '"]';
       $input = $form.find(selector).add($form.filter(selector));
       typeFromDataAttr = $input.attr('data-value-type'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
       return typeFromDataAttr || null;
