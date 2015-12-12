@@ -1,7 +1,7 @@
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 2.7.0 (Nov, 2015)
+  version 2.7.1 (Nov, 2015)
 
   Copyright (c) 2012, 2015 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
