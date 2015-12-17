@@ -525,6 +525,8 @@ describe("$.serializeJSON", function () {
       it("should set type if field name do not contain :type definition", function() {
         $form = $('<form>');
         $form.append($('<input type="text" name="fooData" data-value-type="alwaysBoo"   value="0"/>'));
+        $form.append($('<input type="text" name="fooDataWithBrackets[kokoszka]" data-value-type="alwaysBoo"   value="0"/>'));
+        $form.append($('<input type="text" name="fooDataWithBrackets[kokoszka i cos innego]" data-value-type="alwaysBoo"   value="0"/>'));
         $form.append($('<input type="text" name="foo:alwaysBoo" data-value-type="string"   value="0"/>'));
         $form.append($('<input type="text" name="notype" value="default type is :string"/>'));
         $form.append($('<input type="text" name="stringData" data-value-type="string"   value="data-value-type=string type overrides parsing options"/>'));
@@ -544,6 +546,10 @@ describe("$.serializeJSON", function () {
         });
 
         expect(obj).toEqual({
+          "fooDataWithBrackets": {
+            kokoszka: "Boo",
+            "kokoszka i cos innego": "Boo"
+          },
           "fooData": "Boo",
           "foo": "Boo",
           "notype": "default type is :string",
