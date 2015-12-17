@@ -187,8 +187,8 @@
     // Returns nil if none found. Returns the first data-value-type found if many inputs have the same name.
     tryToFindTypeFromDataAttr: function(name, $form) {
       var escapedName, selector, $input, typeFromDataAttr;
-      escapedName = name.replace(/(\[|\])/g, "\\$1"); // escape the [] in the name to be used as selector
-      selector = '[name="' + escapedName + '"]';
+      escapedName = name.replace(/(:|\.|\[|\]|\s)/g,'\\$1'); // every non-standard character need to be escaped by \\
+      selector = '[name=' + escapedName + ']';
       $input = $form.find(selector).add($form.filter(selector));
       typeFromDataAttr = $input.attr('data-value-type'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
       return typeFromDataAttr || null;
