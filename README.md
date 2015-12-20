@@ -575,6 +575,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 
 Changelog
 ---------
+ * *2.7.2* (Dec 19, 2015): Bugfix #55 (Allow data types with the `data-value-type` attribute to use brackets in names). Thanks to [stricte](https://github.com/stricte).
  * *2.7.1* (Dec 12, 2015): Bugfix #54 (`data-value-type` attribute only works with input elements). Thanks to [madrabaz](https://github.com/madrabaz).
  * *2.7.0* (Nov 28, 2015): Allow to define custom types with the `data-value-type` attribute. Thanks to [madrabaz](https://github.com/madrabaz).
  * *2.6.2* (Oct 24, 2015): Add support for AMD/CommonJS/Browserify modules. Thanks to [jisaacks](https://github.com/jisaacks).
