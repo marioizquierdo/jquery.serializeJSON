@@ -222,6 +222,7 @@ To change the default behavior you use the following options:
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`
   * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
+  * **skipValues**, to skip serialization of certain values of certain types, example: `{"string": [""], "number": [0, null]}` will skip empty string fields and number fields with values `0` or `null`
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
 
 More info about options usage in the sections below.
