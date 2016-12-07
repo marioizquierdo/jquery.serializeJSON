@@ -45,7 +45,11 @@
       if (type !== 'skip') { // ignore elements with type 'skip'
         keys = f.splitInputNameIntoKeysArray(nameWithNoType);
         value = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
-        f.deepSet(serializedObject, keys, value, opts);
+
+        // Skip value if equal to configured skipValues for current type
+        if (!opts.skipValues[type] || opts.skipValues[type].indexOf(value) === -1) {
+          f.deepSet(serializedObject, keys, value, opts);
+        }
       }
     });
     return serializedObject;
@@ -75,6 +79,7 @@
         "auto":    function(str) { return $.serializeJSON.parseValue(str, null, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); }, // try again with something like "parseAll"
         "skip":    null // skip is a special type that makes it easy to ignore elements
       },
+      skipValues: {},  // skip serialization of certain values of certain types, example: {"string": [""], "number": [0, null]} will skip empty string fields and number fields with values 0 or null
 
       useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
     },
@@ -88,7 +93,7 @@
       defaultOptions = f.defaultOptions || {}; // defaultOptions
 
       // Make sure that the user didn't misspell an option
-      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
+      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipValues', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
       for (opt in options) {
         if (validOpts.indexOf(opt) === -1) {
           throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(', '));
@@ -108,6 +113,7 @@
         parseNulls:    parseAll || optWithDefault('parseNulls'),
         parseWithFunction:         optWithDefault('parseWithFunction'),
 
+        skipValues:                optWithDefault('skipValues'),
         typeFunctions: $.extend({}, optWithDefault('defaultTypes'), optWithDefault('customTypes')),
 
         useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex')
