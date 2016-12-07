@@ -47,7 +47,8 @@
         value = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
 
         // Skip value if equal to configured skipValues for current type
-        if (!opts.skipValues[type] || opts.skipValues[type].indexOf(value) === -1) {
+        var skipSerialization = opts.skipValues && opts.skipValues[type] && opts.skipValues[type].indexOf(value) >= 0;
+        if (!skipSerialization) {
           f.deepSet(serializedObject, keys, value, opts);
         }
       }
