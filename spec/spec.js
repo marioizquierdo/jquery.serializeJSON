@@ -759,6 +759,57 @@ describe("$.serializeJSON", function () {
       });
     });
 
+    describe('skipFalsyValuesForTypes', function() {
+      it("skips serialization of empty strings, empty arrays and zero numbers", function() {
+        var $form2 = $('<form>');
+        $form2.append($('<input type="text" name="Numeric 0:number"    value="0"/>'));
+        $form2.append($('<input type="text" name="Numeric 1:number"    value="1"/>'));
+        $form2.append($('<input type="text" name="Bool true:boolean"   value="true"/>'));
+        $form2.append($('<input type="text" name="Bool false:boolean"  value="false"/>'));
+        $form2.append($('<input type="text" name="String:string"       value="text is always string"/>'));
+        $form2.append($('<input type="text" name="Empty:string"        value=""/>'));
+        $form2.append($('<input type="text" name="Array:array"         value="[1, 2]"/>'));
+        $form2.append($('<input type="text" name="Empty Array:array"   value="[]"/>'));
+
+        obj = $form2.serializeJSON({skipFalsyValuesForTypes: ['string', 'array', 'number']});
+        expect(obj).toEqual({
+          "Numeric 1":     1,
+          "Bool true":     true,
+          "Bool false":    false,
+          "String":        "text is always string",
+          "Array":         [1, 2]
+        });
+      });
+    });
+
+    describe('skipFalsyValuesForFields', function() {
+      it("skips serialization of empty values for fields named Empty, Null and String", function() {
+        obj = $form.serializeJSON({skipFalsyValuesForFields: ['Empty', 'Null', 'String']});
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+
+        // with parseAll = true, also Null field will be skipped
+        obj = $form.serializeJSON({parseAll: true, skipFalsyValuesForFields: ['Empty', 'Null', 'String']});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     true,
+          "Bool false":    false,
+          "String":        "text is always string"
+        });
+      });
+    });
+
     describe('checkboxUncheckedValue', function() {
       it('uses that value for unchecked checkboxes', function() {
         $form = $('<form>');
