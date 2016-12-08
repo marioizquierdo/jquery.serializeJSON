@@ -624,7 +624,7 @@ describe("$.serializeJSON", function () {
     describe('validateOptions', function() {
       it("should raise an error if the option is not one of the valid options", function() {
         expect(function(){ $form.serializeJSON({invalidOption: true}); })
-          .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, skipValues, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
+          .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, skipFalsyValuesForTypes, skipFalsyValuesForFields, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
       });
     });
 
