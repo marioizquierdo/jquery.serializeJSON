@@ -587,6 +587,35 @@ describe("$.serializeJSON", function () {
         });
       }
     });
+
+    describe('data-skip-falsy attribute', function() {
+      it("", function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="skipFalsyZero:number" data-skip-falsy="true" value="0"/>'));
+        $form.append($('<input type="text" name="skipFalsyFoo:string" data-skip-falsy="true" value="foo"/>'));
+        $form.append($('<input type="text" name="skipFalsyEmpty:string" data-skip-falsy="true" value=""/>'));
+        $form.append($('<input type="text" name="noskipFalsyZero:number" data-skip-falsy="false" value="0"/>'));
+        $form.append($('<input type="text" name="noskipFalsyFoo:string" data-skip-falsy="false" value="foo"/>'));
+        $form.append($('<input type="text" name="noskipFalsyEmpty:string" data-skip-falsy="false" value=""/>'));
+        $form.append($('<input type="text" name="zero:number" value="0"/>'));
+        $form.append($('<input type="text" name="foo:string" value="foo"/>'));
+        $form.append($('<input type="text" name="empty:string" value=""/>'));
+
+        obj = $form.serializeJSON({
+          skipFalsyValuesForFields: ['noskipFalsyZero']  // should not be applied, because it is overriden by data-skip-falsy attr on input field
+        });
+
+        expect(obj).toEqual({
+          "skipFalsyFoo": "foo",
+          "noskipFalsyZero": 0,
+          "noskipFalsyFoo": "foo",
+          "noskipFalsyEmpty": "",
+          "zero": 0,
+          "foo": "foo",
+          "empty": ""
+        });
+      });
+    });
   });
 
   // options
