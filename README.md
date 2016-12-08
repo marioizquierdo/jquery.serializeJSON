@@ -221,7 +221,7 @@ To change the default behavior you use the following options:
   * **parseAll: true**, all of the above. This is the same as if the default :type was `:auto` instead of `:string`.
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
   * **skipFalsyValuesForTypes**, to skip serialization of falsy values for listed types
-  * **skipFalsyValuesForFields**, to skip serialization of falsy values for listed field names
+  * **skipFalsyValuesForFields**, to skip serialization of falsy values for listed field names. It can be set (or overriden) by setting `data-skip-falsy` input attribute to `true` or `false`.
   * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`
   * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
@@ -479,6 +479,13 @@ obj = $form.find(':input').filter(function () {
       }).serializeJSON();
 ```
 
+Or you can use any of the following options:
+
+ * `skipFalsyValuesForTypes` option to skip empty values for listed types
+ * `skipFalsyValuesForFields` option to skip empty values for listed field names
+ * `data-skip-falsy="true"` input field attribute to skip empty values on the current field
+
+_Note: To make it work correctly you should use it on fields with :type or set the `parseAll` option to `true`._
 
 
 ## Use integer keys as array indexes ##
