@@ -49,9 +49,12 @@
         // Skip serialization of false values for listed types or field names
         var skipSerialization = false;
         if (!value || value.length == 0) {
-          if (opts.skipFalsyValuesForTypes && opts.skipFalsyValuesForTypes.indexOf(type) >= 0)
+          var skipFromDataAttr = f.tryToFindSkipFalsyFromDataAttr(name, $form);
+          if (skipFromDataAttr === true || skipFromDataAttr === false)
+            skipSerialization = skipFromDataAttr;
+          else if (opts.skipFalsyValuesForTypes && opts.skipFalsyValuesForTypes.indexOf(type) >= 0)
             skipSerialization = true;
-          if (!skipSerialization && opts.skipFalsyValuesForFields && opts.skipFalsyValuesForFields.indexOf(name) >= 0)
+          else if (opts.skipFalsyValuesForFields && opts.skipFalsyValuesForFields.indexOf(nameWithNoType) >= 0)
             skipSerialization = true;
         }
 
@@ -201,7 +204,7 @@
 
     // Find an input in the $form with the same name,
     // and get the data-value-type attribute.
-    // Returns nil if none found. Returns the first data-value-type found if many inputs have the same name.
+    // Returns null if none found. Returns the first data-value-type found if many inputs have the same name.
     tryToFindTypeFromDataAttr: function(name, $form) {
       var escapedName, selector, $input, typeFromDataAttr;
       escapedName = name.replace(/(:|\.|\[|\]|\s)/g,'\\$1'); // every non-standard character need to be escaped by \\
@@ -209,6 +212,21 @@
       $input = $form.find(selector).add($form.filter(selector));
       typeFromDataAttr = $input.attr('data-value-type'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
       return typeFromDataAttr || null;
+    },
+
+    // Find an input in the $form with the same name,
+    // and get the data-skip-empty attribute.
+    // Returns null if none found.
+    // Returns boolean value of first data-skip-empty found if many inputs have the same name.
+    tryToFindSkipFalsyFromDataAttr: function(name, $form) {
+      var escapedName, selector, $input, skipFalsyFromDataAttr;
+      escapedName = name.replace(/(:|\.|\[|\]|\s)/g,'\\$1'); // every non-standard character need to be escaped by \\
+      selector = '[name="' + escapedName + '"]';
+      $input = $form.find(selector).add($form.filter(selector));
+      skipFalsyFromDataAttr = $input.attr('data-skip-falsy'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
+      if (skipFalsyFromDataAttr && (skipFalsyFromDataAttr === "true" || skipFalsyFromDataAttr == "false"))
+        return (skipFalsyFromDataAttr === "true")
+      return null;
     },
 
     // Raise an error if the type is not recognized.
