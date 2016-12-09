@@ -220,8 +220,8 @@ To change the default behavior you use the following options:
   * **parseNulls: true**, automatically detect and convert the string `"null"` to the null value `null`.
   * **parseAll: true**, all of the above. This is the same as if the default :type was `:auto` instead of `:string`.
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
-  * **skipFalsyValuesForTypes**, to skip serialization of falsy values for listed types
-  * **skipFalsyValuesForFields**, to skip serialization of falsy values for listed field names. It can be set (or overriden) by setting `data-skip-falsy` input attribute to `true` or `false`.
+  * **skipFalsyValuesForTypes: []**, skip fields with given types and falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
+  * **skipFalsyValuesForFields: []**, skip fields with given names and falsy values. You can use `data-skip-falsy="true"` input attribute as well. Falsy values are determined after converting to a given type, note that `"0"` as :string is truthy, but `0` as :number is falsy.
   * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`
   * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
   * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
@@ -479,13 +479,10 @@ obj = $form.find(':input').filter(function () {
       }).serializeJSON();
 ```
 
-Or you can use any of the following options:
+For falsy values (`false, "", 0, null, undefined, NaN`), you can use serializeJSON specific options to skip fields by name (`skipFalsyValuesForFields: [name]`) or by type (`skipFalsyValuesForTypes: ["string", "null"]`).
 
- * `skipFalsyValuesForTypes` option to skip empty values for listed types
- * `skipFalsyValuesForFields` option to skip empty values for listed field names
- * `data-skip-falsy="true"` input field attribute to skip empty values on the current field
+You can also use a data attribute `data-skip-falsy="true"` on the inputs that should be ignored (`data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo:number" value="0" data-skip-falsy="true">`).
 
-_Note: To make it work correctly you should use it on fields with :type or set the `parseAll` option to `true`._
 
 
 ## Use integer keys as array indexes ##
