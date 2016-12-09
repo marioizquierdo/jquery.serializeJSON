@@ -1093,7 +1093,6 @@ describe("$.serializeJSON", function () {
 
     describe('with modified defaults', function() {
       var defaults = $.serializeJSON.defaultOptions;
-      console.log(defaults);
       afterEach(function() {
         $.serializeJSON.defaultOptions = defaults; // restore defaults
       });
