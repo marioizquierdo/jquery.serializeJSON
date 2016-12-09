@@ -108,39 +108,38 @@ That means, it will serialize the inputs that are supported by `.serializeArray(
 Parse values with :types
 ------------------------
 
-Parsed values are **strings** by default.
-But you can force values to be parsed with specific types by appending the type with a colon.
+Parsed values are **strings** by default. But you can force values to be parsed with specific types by appending the type with a colon.
 
 ```html
 <form>
-  <input type="text" name="notype"           value="default type is :string"/>
-  <input type="text" name="string:string"    value=":string type overrides parsing options"/>
+  <input type="text" name="deftype"          value=":string is the default (implicit) type"/>
+  <input type="text" name="text:string"      value=":string type can still be used to overrid other parsing options"/>
   <input type="text" name="excluded:skip"    value="Use :skip to not include this field in the result"/>
 
-  <input type="text" name="number[1]:number"           value="1"/>
-  <input type="text" name="number[1.1]:number"         value="1.1"/>
-  <input type="text" name="number[other stuff]:number" value="other stuff"/>
+  <input type="text" name="numbers[1]:number"           value="1"/>
+  <input type="text" name="numbers[1.1]:number"         value="1.1"/>
+  <input type="text" name="numbers[other stuff]:number" value="other stuff"/>
 
-  <input type="text" name="boolean[true]:boolean"      value="true"/>
-  <input type="text" name="boolean[false]:boolean"     value="false"/>
-  <input type="text" name="boolean[0]:boolean"         value="0"/>
+  <input type="text" name="bools[true]:boolean"      value="true"/>
+  <input type="text" name="bools[false]:boolean"     value="false"/>
+  <input type="text" name="bools[0]:boolean"         value="0"/>
 
-  <input type="text" name="null[null]:null"            value="null"/>
-  <input type="text" name="null[other stuff]:null"     value="other stuff"/>
+  <input type="text" name="nulls[null]:null"            value="null"/>
+  <input type="text" name="nulls[other stuff]:null"     value="other stuff"/>
 
-  <input type="text" name="auto[string]:auto"          value="text with stuff"/>
-  <input type="text" name="auto[0]:auto"               value="0"/>
-  <input type="text" name="auto[1]:auto"               value="1"/>
-  <input type="text" name="auto[true]:auto"            value="true"/>
-  <input type="text" name="auto[false]:auto"           value="false"/>
-  <input type="text" name="auto[null]:auto"            value="null"/>
-  <input type="text" name="auto[list]:auto"            value="[1, 2, 3]"/>
+  <input type="text" name="autos[string]:auto"          value="text with stuff"/>
+  <input type="text" name="autos[0]:auto"               value="0"/>
+  <input type="text" name="autos[1]:auto"               value="1"/>
+  <input type="text" name="autos[true]:auto"            value="true"/>
+  <input type="text" name="autos[false]:auto"           value="false"/>
+  <input type="text" name="autos[null]:auto"            value="null"/>
+  <input type="text" name="autos[list]:auto"            value="[1, 2, 3]"/>
 
-  <input type="text" name="array[empty]:array"         value="[]"/>
-  <input type="text" name="array[list]:array"          value="[1, 2, 3]"/>
+  <input type="text" name="arrays[empty]:array"         value="[]"/>
+  <input type="text" name="arrays[list]:array"          value="[1, 2, 3]"/>
 
-  <input type="text" name="object[empty]:object"       value="{}"/>
-  <input type="text" name="object[dict]:object"        value='{"my": "stuff"}'/>
+  <input type="text" name="objects[empty]:object"       value="{}"/>
+  <input type="text" name="objects[dict]:object"        value='{"my": "stuff"}'/>
 </form>
 ```
 
@@ -149,24 +148,24 @@ $('form').serializeJSON();
 
 // returns =>
 {
-  "notype": "default type is :string",
-  "string": ":string type overrides parsing options",
-  // :skip type removes the field from the output
-  "number": {
+  "deftype": "default type is :string",
+  "text": ":string type overrides parsing options",
+  // excluded:skip is not included in the output
+  "numbers": {
     "1": 1,
     "1.1": 1.1,
     "other stuff": NaN, // <-- Other stuff parses as NaN (Not a Number)
   },
-  "boolean": {
+  "bools": {
     "true": true,
     "false": false,
     "0": false, // <-- "false", "null", "undefined", "", "0" parse as false
   },
-  "null": {
+  "nulls": {
     "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
     "other stuff": "other stuff"
   },
-  "auto": { // works as the parseAll option
+  "autos": { // works as the parseAll option
     "string": "text with stuff",
     "0": 0,         // <-- parsed as number
     "1": 1,         // <-- parsed as number
@@ -175,11 +174,11 @@ $('form').serializeJSON();
     "null": null,   // <-- parsed as null
     "list": "[1, 2, 3]" // <-- array and object types are not auto-parsed
   },
-  "array": { // <-- works using JSON.parse
+  "arrays": { // <-- works using JSON.parse
     "empty": [],
     "not empty": [1,2,3]
   },
-  "object": { // <-- works using JSON.parse
+  "objects": { // <-- works using JSON.parse
     "empty": {},
     "not empty": {"my": "stuff"}
   }
@@ -190,29 +189,27 @@ Types can also be specified with the `data-value-type` attribute, instead of the
 
 ```html
 <form>
-  <input type="text" name="number[1]"     data-value-type="number"  value="1"/>
-  <input type="text" name="number[1.1]"   data-value-type="number"  value="1.1"/>
-  <input type="text" name="boolean[true]" data-value-type="boolean" value="true"/>
-  <input type="text" name="null[null]"    data-value-type="null"    value="null"/>
-  <input type="text" name="auto[string]"  data-value-type="auto"    value="0"/>
+  <input type="text" name="anumb"   data-value-type="number"  value="1"/>
+  <input type="text" name="abool"   data-value-type="boolean" value="true"/>
+  <input type="text" name="anull"   data-value-type="null"    value="null"/>
+  <input type="text" name="anauto"  data-value-type="auto"    value="0"/>
 </form>
 ```
-
 
 
 Options
 -------
 
-By default (`serializeJSON` with no options):
+By default `.serializeJSON()`, with no options works like this:
 
-  * Values are always **strings** (unless using :types in the input names)
-  * Keys (names) are always strings (no auto-array detection by default)
+  * Values are always **strings** (unless appending :types to the input names)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
+  * Keys (input names) are always **strings** (nested params are objects by default)
 
 This is because `serializeJSON` is designed to return exactly the same as a regular HTML form submission when serialized as Rack/Rails params, which ensures maximun compatibility and stability.
 
-To change the default behavior you use the following options:
+For convenience, you can change the default behavior with:
 
   * **checkboxUncheckedValue: string**, Use this value for unchecked checkboxes, instead of ignoring them. Make sure to use a String. If the value needs to be parsed (i.e. to a Boolean) use a parse option (i.e. `parseBooleans: true`).
   * **parseBooleans: true**, automatically detect and convert strings `"true"` and `"false"` to booleans `true` and `false`.
@@ -220,11 +217,11 @@ To change the default behavior you use the following options:
   * **parseNulls: true**, automatically detect and convert the string `"null"` to the null value `null`.
   * **parseAll: true**, all of the above. This is the same as if the default :type was `:auto` instead of `:string`.
   * **parseWithFunction: function**, define your own parse function(inputValue, inputName) { return parsedValue }
-  * **skipFalsyValuesForTypes: []**, skip fields with given types and falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
   * **skipFalsyValuesForFields: []**, skip fields with given names and falsy values. You can use `data-skip-falsy="true"` input attribute as well. Falsy values are determined after converting to a given type, note that `"0"` as :string is truthy, but `0` as :number is falsy.
+  * **skipFalsyValuesForTypes: []**, skip fields with given types and falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
   * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`
   * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
-  * **useIntKeysAsArrayIndex: true**, when using integers as keys, serialize as an array.
+  * **useIntKeysAsArrayIndex: true**, when using integers as keys (i.e. `<input name="foods[0]" value="banana">`), serialize as an array (`{"foods": ["banana"]}`) instead of an object (`{"foods": {"0": "banana"}`).
 
 More info about options usage in the sections below.
 
@@ -479,17 +476,17 @@ obj = $form.find(':input').filter(function () {
       }).serializeJSON();
 ```
 
-For falsy values (`false, "", 0, null, undefined, NaN`), you can use serializeJSON specific options to skip fields by name (`skipFalsyValuesForFields: [name]`) or by type (`skipFalsyValuesForTypes: ["string", "null"]`).
+## Ignore Fields With Falsy Values ##
 
-You can also use a data attribute `data-skip-falsy="true"` on the inputs that should be ignored (`data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo:number" value="0" data-skip-falsy="true">`).
+For falsy values (`false, "", 0, null, undefined, NaN`), you can use serializeJSON specific options to skip fields by name (`skipFalsyValuesForFields: ["fullName", "address[city]"]`) or by type (`skipFalsyValuesForTypes: ["string", "null"]`).
+
+You can also use a data attribute `data-skip-falsy="true"` on the inputs that should be ignored. Note that `data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo" value="0" data-value-type="number" data-skip-falsy="true">` (Note that `"0"` as a string is not falsy, but `0` as number is falsy)).
 
 
 
 ## Use integer keys as array indexes ##
 
-Using the option `useIntKeysAsArrayIndex`.
-
-For example:
+By default, all serialized keys are **strings**, this includes keys that look like numbers like this:
 
 ```html
 <form>
@@ -499,27 +496,25 @@ For example:
 </form>
 ```
 
-Serializes like this by default:
-
 ```javascript
 $('form').serializeJSON();
 
-// returns =>
+// arr is an object =>
 {'arr': {'0': 'foo', '1': 'var', '5': 'inn' }}
 ```
 
-Which is how the Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) method behaves (remember that serializeJSON input name format is inspired by Rails parameters, that are parsed using this Rack method).
+Which is how Rack [parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query) behaves. Remember that serializeJSON input name format is fully compatible with Rails parameters, that are parsed using this Rack method.
 
-But to interpret integers as array indexes, use the option `useIntKeysAsArrayIndex`:
+Use the option `useIntKeysAsArrayIndex` to interpret integers as array indexes:
 
 ```javascript
 $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
-// returns =>
+// arr is an array =>
 {'arr': ['foo', 'var', undefined, undefined, undefined, 'inn']}
 ```
 
-**Note**: that this was the default behavior of serializeJSON before version 2. Use this option for backwards compatibility.
+**Note**: this was the default behavior of serializeJSON before version 2. You can use this option for backwards compatibility.
 
 
 ## Defaults ##
