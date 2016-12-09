@@ -594,6 +594,7 @@ describe("$.serializeJSON", function () {
         $form.append($('<input type="text" name="skipFalsyZero:number" data-skip-falsy="true" value="0"/>'));
         $form.append($('<input type="text" name="skipFalsyFoo:string" data-skip-falsy="true" value="foo"/>'));
         $form.append($('<input type="text" name="skipFalsyEmpty:string" data-skip-falsy="true" value=""/>'));
+        $form.append($('<input type="text" name="skipFalsyEmpty2:string" data-skip-falsy value=""/>'));
         $form.append($('<input type="text" name="noskipFalsyZero:number" data-skip-falsy="false" value="0"/>'));
         $form.append($('<input type="text" name="noskipFalsyFoo:string" data-skip-falsy="false" value="foo"/>'));
         $form.append($('<input type="text" name="noskipFalsyEmpty:string" data-skip-falsy="false" value=""/>'));

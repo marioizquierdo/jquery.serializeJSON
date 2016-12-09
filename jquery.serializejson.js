@@ -214,8 +214,9 @@
       selector = '[name="' + escapedName + '"]';
       $input = $form.find(selector).add($form.filter(selector));
       skipFalsyFromDataAttr = $input.attr('data-skip-falsy'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
-      if (skipFalsyFromDataAttr && (skipFalsyFromDataAttr === "true" || skipFalsyFromDataAttr == "false"))
-        return (skipFalsyFromDataAttr === "true")
+      if (skipFalsyFromDataAttr != null) {
+        return skipFalsyFromDataAttr !== "false";
+      }
       return null;
     },
 
