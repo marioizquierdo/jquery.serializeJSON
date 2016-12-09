@@ -22,7 +22,7 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
-    var f, $form, opts, formAsArray, serializedObject, name, value, _obj, nameWithNoType, type, keys;
+    var f, $form, opts, formAsArray, serializedObject, name, value, _obj, nameWithNoType, type, keys, skipSerialization;
     f = $.serializeJSON;
     $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
     opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls, ...} with defaults
@@ -47,20 +47,10 @@
         value = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
 
         // Skip serialization of false values for listed types or field names
-        var skipSerialization = false;
-        if (!value || value.length == 0) {
-          var skipFromDataAttr = f.tryToFindSkipFalsyFromDataAttr(name, $form);
-          if (skipFromDataAttr === true || skipFromDataAttr === false)
-            skipSerialization = skipFromDataAttr;
-          else if (opts.skipFalsyValuesForTypes && opts.skipFalsyValuesForTypes.indexOf(type) >= 0)
-            skipSerialization = true;
-          else if (opts.skipFalsyValuesForFields && opts.skipFalsyValuesForFields.indexOf(nameWithNoType) >= 0)
-            skipSerialization = true;
-        }
-
-        // Serialize value if note skipped
-        if (!skipSerialization)
+        skipSerialization = f.skipSerialization($form, name, nameWithNoType, type, value, opts);
+        if (!skipSerialization) {
           f.deepSet(serializedObject, keys, value, opts);
+        }
       }
     });
     return serializedObject;
@@ -227,6 +217,24 @@
       if (skipFalsyFromDataAttr && (skipFalsyFromDataAttr === "true" || skipFalsyFromDataAttr == "false"))
         return (skipFalsyFromDataAttr === "true")
       return null;
+    },
+
+    // Check data-skip-falsy input attribute, skipFalsyValuesForTypes and skipFalsyValuesForFields options.
+    // Returns true, if serialization of the field is enabled, false otherwise.
+    skipSerialization: function($form, name, nameWithNoType, type, value, opts) {
+      var f = $.serializeJSON;
+      var skipSerialization = false;
+      if (!value || value.length == 0) {
+        var skipFromDataAttr = f.tryToFindSkipFalsyFromDataAttr(name, $form);
+        if (skipFromDataAttr === true || skipFromDataAttr === false) {
+          skipSerialization = skipFromDataAttr;
+        } else if (opts.skipFalsyValuesForTypes && opts.skipFalsyValuesForTypes.indexOf(type) >= 0) {
+          skipSerialization = true;
+        } else if (opts.skipFalsyValuesForFields && opts.skipFalsyValuesForFields.indexOf(nameWithNoType) >= 0) {
+          skipSerialization = true;
+        }
+      }
+      return skipSerialization;
     },
 
     // Raise an error if the type is not recognized.
