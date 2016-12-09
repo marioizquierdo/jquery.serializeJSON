@@ -458,10 +458,11 @@ $('form').serializeJSON({
 The default types are defined in `$.serializeJSON.defaultOptions.defaultTypes`. If you want to define your own set of types, you could also re-define that option (it will not override the types, but define a new set of types).
 
 
-
 ## Ignore Empty Form Fields ##
 
-Since `serializeJSON()` is called on a jQuery object, just use jQuery selectors to select only the fields you want to serialize (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
+You can use the option `.serializeJSON(skipFalsyValuesForTypes: ["string"])`, which ignores any string field with an empty value (default type is :string, and empty strings are falsy).
+
+Another option, since `serializeJSON()` is called on a jQuery object, is to just use the proper jQuery selector to skip empty values (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
 
 ```javascript
 // Select only imputs that have a non-empty value
@@ -476,12 +477,12 @@ obj = $form.find(':input').filter(function () {
       }).serializeJSON();
 ```
 
+
 ## Ignore Fields With Falsy Values ##
 
-For falsy values (`false, "", 0, null, undefined, NaN`), you can use serializeJSON specific options to skip fields by name (`skipFalsyValuesForFields: ["fullName", "address[city]"]`) or by type (`skipFalsyValuesForTypes: ["string", "null"]`).
+When using :types, you can also skip falsy values (`false, "", 0, null, undefined, NaN`) by using the option `skipFalsyValuesForFields: ["fullName", "address[city]"]` or `skipFalsyValuesForTypes: ["string", "null"]`.
 
-You can also use a data attribute `data-skip-falsy="true"` on the inputs that should be ignored. Note that `data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo" value="0" data-value-type="number" data-skip-falsy="true">` (Note that `"0"` as a string is not falsy, but `0` as number is falsy)).
-
+Or setting a data attribute `data-skip-falsy="true"` on the inputs that should be ignored. Note that `data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo" value="0" data-value-type="number" data-skip-falsy="true">` (Note that `"0"` as a string is not falsy, but `0` as number is falsy)).
 
 
 ## Use integer keys as array indexes ##
@@ -576,6 +577,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 
 Changelog
 ---------
+ * *2.8.0* (Dec 09, 2016): Add options `skipFalsyValuesForFields`, `skipFalsyValuesForTypes` and attr `data-skip-falsy` to easily skip falsy values (which includes empty strings). Thanks to [milkaknap](https://github.com/milkaknap).
  * *2.7.2* (Dec 19, 2015): Bugfix #55 (Allow data types with the `data-value-type` attribute to use brackets in names). Thanks to [stricte](https://github.com/stricte).
  * *2.7.1* (Dec 12, 2015): Bugfix #54 (`data-value-type` attribute only works with input elements). Thanks to [madrabaz](https://github.com/madrabaz).
  * *2.7.0* (Nov 28, 2015): Allow to define custom types with the `data-value-type` attribute. Thanks to [madrabaz](https://github.com/madrabaz).
