@@ -587,6 +587,36 @@ describe("$.serializeJSON", function () {
         });
       }
     });
+
+    describe('data-skip-falsy attribute', function() {
+      it("", function() {
+        $form = $('<form>');
+        $form.append($('<input type="text" name="skipFalsyZero:number" data-skip-falsy="true" value="0"/>'));
+        $form.append($('<input type="text" name="skipFalsyFoo:string" data-skip-falsy="true" value="foo"/>'));
+        $form.append($('<input type="text" name="skipFalsyEmpty:string" data-skip-falsy="true" value=""/>'));
+        $form.append($('<input type="text" name="skipFalsyEmpty2:string" data-skip-falsy value=""/>'));
+        $form.append($('<input type="text" name="noskipFalsyZero:number" data-skip-falsy="false" value="0"/>'));
+        $form.append($('<input type="text" name="noskipFalsyFoo:string" data-skip-falsy="false" value="foo"/>'));
+        $form.append($('<input type="text" name="noskipFalsyEmpty:string" data-skip-falsy="false" value=""/>'));
+        $form.append($('<input type="text" name="zero:number" value="0"/>'));
+        $form.append($('<input type="text" name="foo:string" value="foo"/>'));
+        $form.append($('<input type="text" name="empty:string" value=""/>'));
+
+        obj = $form.serializeJSON({
+          skipFalsyValuesForFields: ['noskipFalsyZero']  // should not be applied, because it is overriden by data-skip-falsy attr on input field
+        });
+
+        expect(obj).toEqual({
+          "skipFalsyFoo": "foo",
+          "noskipFalsyZero": 0,
+          "noskipFalsyFoo": "foo",
+          "noskipFalsyEmpty": "",
+          "zero": 0,
+          "foo": "foo",
+          "empty": ""
+        });
+      });
+    });
   });
 
   // options
@@ -624,7 +654,7 @@ describe("$.serializeJSON", function () {
     describe('validateOptions', function() {
       it("should raise an error if the option is not one of the valid options", function() {
         expect(function(){ $form.serializeJSON({invalidOption: true}); })
-          .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
+          .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, skipFalsyValuesForTypes, skipFalsyValuesForFields, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
       });
     });
 
@@ -726,6 +756,57 @@ describe("$.serializeJSON", function () {
           "Null":          0,
           "String":        0,
           "Empty":         0
+        });
+      });
+    });
+
+    describe('skipFalsyValuesForTypes', function() {
+      it("skips serialization of empty strings, empty arrays and zero numbers", function() {
+        var $form2 = $('<form>');
+        $form2.append($('<input type="text" name="Numeric 0:number"    value="0"/>'));
+        $form2.append($('<input type="text" name="Numeric 1:number"    value="1"/>'));
+        $form2.append($('<input type="text" name="Bool true:boolean"   value="true"/>'));
+        $form2.append($('<input type="text" name="Bool false:boolean"  value="false"/>'));
+        $form2.append($('<input type="text" name="String:string"       value="text is always string"/>'));
+        $form2.append($('<input type="text" name="Empty:string"        value=""/>'));
+        $form2.append($('<input type="text" name="Array:array"         value="[1, 2]"/>'));
+        $form2.append($('<input type="text" name="Empty Array:array"   value="[]"/>'));
+
+        obj = $form2.serializeJSON({skipFalsyValuesForTypes: ['string', 'array', 'number']});
+        expect(obj).toEqual({
+          "Numeric 1":     1,
+          "Bool true":     true,
+          "Bool false":    false,
+          "String":        "text is always string",
+          "Array":         [1, 2]
+        });
+      });
+    });
+
+    describe('skipFalsyValuesForFields', function() {
+      it("skips serialization of empty values for fields named Empty, Null and String", function() {
+        obj = $form.serializeJSON({skipFalsyValuesForFields: ['Empty', 'Null', 'String']});
+        expect(obj).toEqual({
+          "Numeric 0":     "0",
+          "Numeric 1":     "1",
+          "Numeric 2.2":   "2.2",
+          "Numeric -2.25": "-2.25",
+          "Bool true":     "true",
+          "Bool false":    "false",
+          "Null":          "null",
+          "String":        "text is always string"
+        });
+
+        // with parseAll = true, also Null field will be skipped
+        obj = $form.serializeJSON({parseAll: true, skipFalsyValuesForFields: ['Empty', 'Null', 'String']});
+        expect(obj).toEqual({
+          "Numeric 0":     0,
+          "Numeric 1":     1,
+          "Numeric 2.2":   2.2,
+          "Numeric -2.25": -2.25,
+          "Bool true":     true,
+          "Bool false":    false,
+          "String":        "text is always string"
         });
       });
     });

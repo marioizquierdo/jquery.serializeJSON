@@ -22,7 +22,7 @@
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
-    var f, $form, opts, formAsArray, serializedObject, name, value, _obj, nameWithNoType, type, keys;
+    var f, $form, opts, formAsArray, serializedObject, name, value, _obj, nameWithNoType, type, keys, skipSerialization;
     f = $.serializeJSON;
     $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
     opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls, ...} with defaults
@@ -45,7 +45,12 @@
       if (type !== 'skip') { // ignore elements with type 'skip'
         keys = f.splitInputNameIntoKeysArray(nameWithNoType);
         value = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
-        f.deepSet(serializedObject, keys, value, opts);
+
+        // Skip serialization of false values for listed types or field names
+        skipSerialization = f.skipSerialization($form, name, nameWithNoType, type, value, opts);
+        if (!skipSerialization) {
+          f.deepSet(serializedObject, keys, value, opts);
+        }
       }
     });
     return serializedObject;
@@ -63,6 +68,9 @@
       parseNulls: false, // convert "null" to null
       parseAll: false, // all of the above
       parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
+
+      skipFalsyValuesForTypes: [], // skip serialization of falsy values for listed value types
+      skipFalsyValuesForFields: [], // skip serialization of falsy values for listed field names
 
       customTypes: {}, // override defaultTypes
       defaultTypes: {
@@ -88,7 +96,7 @@
       defaultOptions = f.defaultOptions || {}; // defaultOptions
 
       // Make sure that the user didn't misspell an option
-      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
+      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipFalsyValuesForTypes', 'skipFalsyValuesForFields', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
       for (opt in options) {
         if (validOpts.indexOf(opt) === -1) {
           throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(', '));
@@ -108,6 +116,8 @@
         parseNulls:    parseAll || optWithDefault('parseNulls'),
         parseWithFunction:         optWithDefault('parseWithFunction'),
 
+        skipFalsyValuesForTypes:   optWithDefault('skipFalsyValuesForTypes'),
+        skipFalsyValuesForFields:  optWithDefault('skipFalsyValuesForFields'),
         typeFunctions: $.extend({}, optWithDefault('defaultTypes'), optWithDefault('customTypes')),
 
         useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex')
@@ -184,7 +194,7 @@
 
     // Find an input in the $form with the same name,
     // and get the data-value-type attribute.
-    // Returns nil if none found. Returns the first data-value-type found if many inputs have the same name.
+    // Returns null if none found. Returns the first data-value-type found if many inputs have the same name.
     tryToFindTypeFromDataAttr: function(name, $form) {
       var escapedName, selector, $input, typeFromDataAttr;
       escapedName = name.replace(/(:|\.|\[|\]|\s)/g,'\\$1'); // every non-standard character need to be escaped by \\
@@ -192,6 +202,40 @@
       $input = $form.find(selector).add($form.filter(selector));
       typeFromDataAttr = $input.attr('data-value-type'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
       return typeFromDataAttr || null;
+    },
+
+    // Find an input in the $form with the same name,
+    // and get the data-skip-empty attribute.
+    // Returns null if none found.
+    // Returns boolean value of first data-skip-empty found if many inputs have the same name.
+    tryToFindSkipFalsyFromDataAttr: function(name, $form) {
+      var escapedName, selector, $input, skipFalsyFromDataAttr;
+      escapedName = name.replace(/(:|\.|\[|\]|\s)/g,'\\$1'); // every non-standard character need to be escaped by \\
+      selector = '[name="' + escapedName + '"]';
+      $input = $form.find(selector).add($form.filter(selector));
+      skipFalsyFromDataAttr = $input.attr('data-skip-falsy'); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
+      if (skipFalsyFromDataAttr != null) {
+        return skipFalsyFromDataAttr !== "false";
+      }
+      return null;
+    },
+
+    // Check data-skip-falsy input attribute, skipFalsyValuesForTypes and skipFalsyValuesForFields options.
+    // Returns true, if serialization of the field is enabled, false otherwise.
+    skipSerialization: function($form, name, nameWithNoType, type, value, opts) {
+      var f = $.serializeJSON;
+      var skipSerialization = false;
+      if (!value || value.length == 0) {
+        var skipFromDataAttr = f.tryToFindSkipFalsyFromDataAttr(name, $form);
+        if (skipFromDataAttr === true || skipFromDataAttr === false) {
+          skipSerialization = skipFromDataAttr;
+        } else if (opts.skipFalsyValuesForTypes && opts.skipFalsyValuesForTypes.indexOf(type) >= 0) {
+          skipSerialization = true;
+        } else if (opts.skipFalsyValuesForFields && opts.skipFalsyValuesForFields.indexOf(nameWithNoType) >= 0) {
+          skipSerialization = true;
+        }
+      }
+      return skipSerialization;
     },
 
     // Raise an error if the type is not recognized.
