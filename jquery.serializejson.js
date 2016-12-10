@@ -158,21 +158,26 @@
     // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
     // and/or the data-unchecked-value attribute of the inputs.
     readCheckboxUncheckedValues: function (formAsArray, opts, $form) {
-      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
+      var selector, $uncheckedCheckboxes, $el, uncheckedValue, f, name;
       if (opts == null) { opts = {}; }
       f = $.serializeJSON;
 
       selector = 'input[type=checkbox][name]:not(:checked):not([disabled])';
       $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
       $uncheckedCheckboxes.each(function (i, el) {
+        // Check data attr first, then the option
         $el = $(el);
-        dataUncheckedValue = $el.attr('data-unchecked-value');
-        if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
-          formAsArray.push({name: el.name, value: dataUncheckedValue});
-        } else {
-          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
-            formAsArray.push({name: el.name, value: opts.checkboxUncheckedValue});
+        uncheckedValue = $el.attr('data-unchecked-value');
+        if (uncheckedValue == null) {
+          uncheckedValue = opts.checkboxUncheckedValue;
+        }
+
+        // If there's an uncheckedValue, push it into the serialized formAsArray
+        if (uncheckedValue != null) {
+          if (el.name && el.name.indexOf("[][") !== -1) { // identify a non-supported
+            throw new Error("serializeJSON ERROR: checkbox unchecked values are not supported on nested arrays of objects like '"+el.name+"'. See https://github.com/marioizquierdo/jquery.serializeJSON/issues/67");
           }
+          formAsArray.push({name: el.name, value: uncheckedValue});
         }
       });
     },

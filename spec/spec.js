@@ -244,6 +244,14 @@ describe("$.serializeJSON", function () {
       });
     });
 
+    it('should be ignored if they have no name', function() {
+      $form = $('<form>');
+      $form.append($('<input type="checkbox" value="yes"/>'));
+      $form.append($('<input type="checkbox" value="yes"/>'));
+      obj = $form.serializeJSON({checkboxUncheckedValue: 'NOPE'});
+      expect(obj).toEqual({});
+    });
+
     it('use the checkboxUncheckedValue option if defined', function() {
       $form = $('<form>');
       $form.append($('<input type="checkbox" name="check1" value="yes"/>'));
@@ -252,20 +260,12 @@ describe("$.serializeJSON", function () {
       expect(obj).toEqual({check1: 'NOPE', check2: 'NOPE'});
     });
 
-    it('use the HTML5 data-unchecked-value if defined', function() {
+    it('use the attr data-unchecked-value if defined', function() {
       $form = $('<form>');
       $form.append($('<input type="checkbox" name="check1" value="yes"/>')); // ignored
       $form.append($('<input type="checkbox" name="check2" value="yes" data-unchecked-value="NOPE"/>')); // with data-unchecked-value uses that value
       obj = $form.serializeJSON(); // NOTE: no checkboxUncheckedValue used
       expect(obj).toEqual({check2: 'NOPE'});
-    });
-
-    it('should be ignored if they have no name', function() {
-      $form = $('<form>');
-      $form.append($('<input type="checkbox" value="yes"/>'));
-      $form.append($('<input type="checkbox" value="yes"/>'));
-      obj = $form.serializeJSON({checkboxUncheckedValue: 'NOPE'});
-      expect(obj).toEqual({});
     });
   });
 
@@ -933,7 +933,6 @@ describe("$.serializeJSON", function () {
       });
 
       if ($.fn.jquery) { // not supported on Zepto
-
         it('works on multiple forms and inputs', function() {
           var $form1, $form2, $els;
           $form1 = $('<form>');
@@ -1016,6 +1015,17 @@ describe("$.serializeJSON", function () {
             check: [true, false, 'NOPE']
           }
         });
+      });
+
+      it('does not work on a nested list of objects', function() {
+        $form = $('<form>');
+        $form.append($('<input type="checkbox" name="answers[][correct]:boolean" value="true" data-unchecked-value="false">'));
+        $form.append($('<input type="text"     name="answers[][text]" value="Blue">'));
+
+        $form.append($('<input type="checkbox" name="answers[][correct]:boolean" value="true" data-unchecked-value="false">'));
+        $form.append($('<input type="text"     name="answers[][text]" value="Green">'));
+
+        expect(function(){$form.serializeJSON()}).toThrow(); // it throws a descriptive error for the user
       });
 
       it('does not serialize disabled checkboxes', function() {
