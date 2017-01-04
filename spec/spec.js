@@ -1067,6 +1067,13 @@ describe("$.serializeJSON", function () {
           }
         });
       });
+
+      it("regresion for github issue #69", function() {
+        $form = $('<form>');
+        $form.append($('<input name="array[0][value]" value="value">'));
+        obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
+        expect(obj).toEqual({"array": [{"value": "value"}]});
+      });
     });
 
     describe('customTypes', function() {
