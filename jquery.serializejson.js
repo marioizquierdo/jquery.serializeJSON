@@ -19,6 +19,11 @@
 
 }(function ($) {
   "use strict";
+  
+  // If using node.js and not globals
+  if (!$ && typeof exports !== 'undefined') {
+    $ = require('jquery');
+  }
 
   // jQuery('form').serializeJSON()
   $.fn.serializeJSON = function (options) {
