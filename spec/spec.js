@@ -1188,6 +1188,24 @@ describe("$.serializeJSON", function () {
       });
     });
 
+    it("can override :string type to change the default parsing function", function() {
+      $form = $('<form>');
+      $form.append($('<input type="text" name="foo" value="var"/>'));
+      $form.append($('<input type="text" name="empty" value=""/>'));
+
+      // default
+      obj = $form.serializeJSON();
+      expect(obj).toEqual({ "foo": "var", "empty": ""});
+
+      // with custom :string type function
+      obj = $form.serializeJSON({
+        customTypes: {
+          string: function(str) { return str || null; }
+        }
+      });
+      expect(obj).toEqual({ "foo": "var", "empty": null});
+    });
+
     describe('with modified defaults', function() {
       var defaults = $.serializeJSON.defaultOptions;
       afterEach(function() {
