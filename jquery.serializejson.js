@@ -52,6 +52,9 @@
         }
       }
     });
+    if (opts.compactArray === true) {
+       f.compactArray(serializedObject);
+    }
     return serializedObject;
   };
 
@@ -83,7 +86,8 @@
         "skip":    null // skip is a special type that makes it easy to ignore elements
       },
 
-      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
+      useIntKeysAsArrayIndex: false, // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
+      compactArray: false
     },
 
     // Merge option defaults into the options
@@ -95,7 +99,7 @@
       defaultOptions = f.defaultOptions || {}; // defaultOptions
 
       // Make sure that the user didn't misspell an option
-      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipFalsyValuesForTypes', 'skipFalsyValuesForFields', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
+      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipFalsyValuesForTypes', 'skipFalsyValuesForFields', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex', 'compactArray']; // re-define because the user may override the defaultOptions
       for (opt in options) {
         if (validOpts.indexOf(opt) === -1) {
           throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(', '));
@@ -119,7 +123,8 @@
         skipFalsyValuesForFields:  optWithDefault('skipFalsyValuesForFields'),
         typeFunctions: $.extend({}, optWithDefault('defaultTypes'), optWithDefault('customTypes')),
 
-        useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex')
+        useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex'),
+        compactArray: optWithDefault('compactArray')
       };
     },
 
@@ -336,6 +341,28 @@
         // Recursively set the inner object
         tail = keys.slice(1);
         f.deepSet(o[key], tail, value, opts);
+      }
+    },
+
+    // Remove undefined values when using int as a key
+    //
+    // compactArray([0: 'foo', 2: 'bar'])           // [0: 'foo', 1: 'bar']
+    compactArray: function (o) {
+      var f = $.serializeJSON;
+
+      if (f.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
+
+      for (var property in o) {
+        if (o.hasOwnProperty(property)) {
+          if (typeof o[property] == "object") {
+            if (Array.isArray(o[property])) {
+              o[property] = o[property].filter(function (e) {
+                return e != null;
+              });
+            }
+            f.compactArray(o[property]);
+          }
+        }
       }
     }
 

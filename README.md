@@ -244,6 +244,7 @@ Allowed options to change the default behavior:
   * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`.
   * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
   * **useIntKeysAsArrayIndex: true**, when using integers as keys (i.e. `<input name="foods[0]" value="banana">`), serialize as an array (`{"foods": ["banana"]}`) instead of an object (`{"foods": {"0": "banana"}`).
+  * **compactArrays: false**, when using integers as keys, reorder keys so there are no gaps (i.e. [0:"foo",5:"bar]
 
 More info about options usage in the sections below.
 
@@ -538,6 +539,7 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 **Note**: this was the default behavior of serializeJSON before version 2. You can use this option for backwards compatibility.
 
+Use the option `compactArrays` to remove the undefined generated with useIntKeysAsArrayIndex.  This is helpful if you dynamically create and delete inputs but do not want a bunch of nulls in the resulting arrays and you may not be able to use `skipFalsyValuesForFields` or `skipFalsyValuesForTypes`.
 
 ## Defaults ##
 
