@@ -52,8 +52,8 @@
         }
       }
     });
-    if (opts.compactArray === true) {
-       f.compactArray(serializedObject);
+    if (opts.compactArrays === true) {
+       f.compactArrays(serializedObject);
     }
     return serializedObject;
   };
@@ -87,7 +87,7 @@
       },
 
       useIntKeysAsArrayIndex: false, // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
-      compactArray: false
+      compactArrays: false
     },
 
     // Merge option defaults into the options
@@ -99,7 +99,7 @@
       defaultOptions = f.defaultOptions || {}; // defaultOptions
 
       // Make sure that the user didn't misspell an option
-      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipFalsyValuesForTypes', 'skipFalsyValuesForFields', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex', 'compactArray']; // re-define because the user may override the defaultOptions
+      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'skipFalsyValuesForTypes', 'skipFalsyValuesForFields', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex', 'compactArrays']; // re-define because the user may override the defaultOptions
       for (opt in options) {
         if (validOpts.indexOf(opt) === -1) {
           throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(', '));
@@ -124,7 +124,7 @@
         typeFunctions: $.extend({}, optWithDefault('defaultTypes'), optWithDefault('customTypes')),
 
         useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex'),
-        compactArray: optWithDefault('compactArray')
+        compactArrays: optWithDefault('compactArrays')
       };
     },
 
@@ -346,8 +346,8 @@
 
     // Remove undefined values when using int as a key
     //
-    // compactArray([0: 'foo', 2: 'bar'])           // [0: 'foo', 1: 'bar']
-    compactArray: function (o) {
+    // compactArrays([0: 'foo', 2: 'bar'])           // [0: 'foo', 1: 'bar']
+    compactArrays: function (o) {
       var f = $.serializeJSON;
 
       if (f.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
@@ -360,7 +360,7 @@
                 return e != null;
               });
             }
-            f.compactArray(o[property]);
+            f.compactArrays(o[property]);
           }
         }
       }
