@@ -193,7 +193,7 @@
     //   "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
     extractTypeAndNameWithNoType: function(name) {
       var match;
-      if (match = name.match(/(.*):([^:]+)$/)) {
+      if (match = name.match(/(.*):([A-Za-z]+)$/)) {
         return {nameWithNoType: match[1], type: match[2]};
       } else {
         return {nameWithNoType: name, type: null};
