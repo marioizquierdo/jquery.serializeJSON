@@ -21,11 +21,11 @@
 }(function ($) {
     "use strict";
 
-    // jQuery("form").serializeJSON()
     $.fn.serializeJSON = function (options) {
         var f = $.serializeJSON;
         var $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
-        var opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls, ...} with defaults
+        var opts = f.setupOpts(options); // validate and apply defaults
+        var typeFunctions = $.extend({}, opts.defaultTypes, opts.customTypes);
 
         // Use native `serializeArray` function to get an array of {name, value} objects.
         var formAsArray = $form.serializeArray();
@@ -36,21 +36,22 @@
         $.each(formAsArray, function (_i, obj) {
             var name  = obj.name; // original input name
             var value = obj.value; // input value
-            var nameAndType = f.extractTypeAndNameWithNoType(name);
-            var nameWithNoType = nameAndType.nameWithNoType; // input name with no type (i.e. "foo:string" => "foo")
-            var type = nameAndType.type; // type defined from the input name in :type colon notation
-            if (!type) type = f.attrFromInputWithName($form, name, "data-value-type");
-            f.validateType(name, type, opts); // make sure that the type is one of the valid types if defined
+            var objType = f.extractTypeAndNameWithNoType(name);
+            var nameWithNoType = objType.nameWithNoType; // input name with no type (i.e. "foo:string" => "foo")
 
-            if (type !== "skip") { // ignore inputs with type "skip"
-                var keys = f.splitInputNameIntoKeysArray(nameWithNoType);
-                var parsedValue = f.parseValue(value, name, type, opts); // convert to string, number, boolean, null or customType
-
-                var skipFalsy = !parsedValue && f.shouldSkipFalsy($form, name, nameWithNoType, type, opts); // ignore falsy inputs if specified
-                if (!skipFalsy) {
-                    f.deepSet(serializedObject, keys, parsedValue, opts);
-                }
+            var type = objType.type || f.attrFromInputWithName($form, name, "data-value-type") || "string";
+            if (type === "skip") {
+                return; // ignore fields with type skip
             }
+            var typedValue = f.applyTypeFunc(name, value, type, typeFunctions); // convert to string, number, boolean, null or customType
+
+            // ignore falsy inputs if specified
+            if (!typedValue && f.shouldSkipFalsy($form, name, nameWithNoType, type, opts)) {
+                return;
+            }
+
+            var keys = f.splitInputNameIntoKeysArray(nameWithNoType);
+            f.deepSet(serializedObject, keys, typedValue, opts);
         });
         return serializedObject;
     };
@@ -59,19 +60,17 @@
     // and to define defaults
     $.serializeJSON = {
 
-        defaultOptions: {
-            checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
+        // reassign to override option defaults for all serializeJSON calls
+        defaultOptions: {},
 
-            parseNumbers: false, // convert values like "1", "-2.33" to 1, -2.33
-            parseBooleans: false, // convert "true", "false" to true, false
-            parseNulls: false, // convert "null" to null
-            parseAll: false, // all of the above
-            parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
+        defaultBaseOptions: { // do not modify, use defaultOptions instead
+            checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
+            useIntKeysAsArrayIndex: false, // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
 
             skipFalsyValuesForTypes: [], // skip serialization of falsy values for listed value types
             skipFalsyValuesForFields: [], // skip serialization of falsy values for listed field names
 
-            customTypes: {}, // override defaultTypes
+            customTypes: {}, // extends defaultTypes
             defaultTypes: {
                 "string":  function(str) { return String(str); },
                 "number":  function(str) { return Number(str); },
@@ -79,81 +78,48 @@
                 "null":    function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1 ? str : null; },
                 "array":   function(str) { return JSON.parse(str); },
                 "object":  function(str) { return JSON.parse(str); },
-                "auto":    function(str) { return $.serializeJSON.parseValue(str, null, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); }, // try again with something like "parseAll"
-                "skip":    null // skip is a special type that makes it easy to ignore elements
-            },
-
-            useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
+                "skip":    null // skip is a special type used to ignore fields
+            }
         },
 
-        // Merge option defaults into the options
+        // Validate and set defaults
         setupOpts: function(options) {
+            if (options == null) options = {};
             var f = $.serializeJSON;
 
-            if (options == null) { options = {}; }   // options ||= {}
-            var defaultOptions = f.defaultOptions || {}; // defaultOptions
+            // Validate
+            var validOpts = [
+                "checkboxUncheckedValue",
+                "useIntKeysAsArrayIndex",
 
-            // Make sure that the user didn't misspell an option
-            var validOpts = ["checkboxUncheckedValue", "parseNumbers", "parseBooleans", "parseNulls", "parseAll", "parseWithFunction", "skipFalsyValuesForTypes", "skipFalsyValuesForFields", "customTypes", "defaultTypes", "useIntKeysAsArrayIndex"]; // re-define because the user may override the defaultOptions
+                "skipFalsyValuesForTypes",
+                "skipFalsyValuesForFields",
+
+                "defaultTypes",
+                "customTypes",
+            ];
             for (var opt in options) {
                 if (validOpts.indexOf(opt) === -1) {
                     throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(", "));
                 }
             }
 
-            // Helper to get the default value for this option if none is specified by the user
-            var optWithDefault = function(key) { return (options[key] !== false) && (options[key] !== "") && (options[key] || defaultOptions[key]); };
-
-            // Return computed options (opts to be used in the rest of the script)
-            var parseAll = optWithDefault("parseAll");
-            return {
-                checkboxUncheckedValue:    optWithDefault("checkboxUncheckedValue"),
-
-                parseNumbers:  parseAll || optWithDefault("parseNumbers"),
-                parseBooleans: parseAll || optWithDefault("parseBooleans"),
-                parseNulls:    parseAll || optWithDefault("parseNulls"),
-                parseWithFunction:         optWithDefault("parseWithFunction"),
-
-                skipFalsyValuesForTypes:   optWithDefault("skipFalsyValuesForTypes"),
-                skipFalsyValuesForFields:  optWithDefault("skipFalsyValuesForFields"),
-                typeFunctions: $.extend({}, optWithDefault("defaultTypes"), optWithDefault("customTypes")),
-
-                useIntKeysAsArrayIndex: optWithDefault("useIntKeysAsArrayIndex")
-            };
+            // Helper to get options or defaults
+            return $.extend({}, f.defaultBaseOptions, f.defaultOptions, options);
         },
 
-        // Given a string, apply the type or the relevant "parse" options, to return the parsed value
-        parseValue: function(valStr, inputName, type, opts) {
-            var f = $.serializeJSON;
-            var parsedVal = valStr; // if no parsing is needed, the returned value will be the same
-
-            if (opts.typeFunctions && type && opts.typeFunctions[type]) { // use a type if available
-                parsedVal = opts.typeFunctions[type](valStr);
-            } else if (opts.parseNumbers  && f.isNumeric(valStr)) { // auto: number
-                parsedVal = Number(valStr);
-            } else if (opts.parseBooleans && (valStr === "true" || valStr === "false")) { // auto: boolean
-                parsedVal = (valStr === "true");
-            } else if (opts.parseNulls    && valStr == "null") { // auto: null
-                parsedVal = null;
-            } else if (opts.typeFunctions && opts.typeFunctions["string"]) { // make sure to apply :string type if it was re-defined
-                parsedVal = opts.typeFunctions["string"](valStr);
+        // Parse value with type function
+        applyTypeFunc: function(name, valStr, type, typeFunctions) {
+            var typeFunc = typeFunctions[type];
+            if (!typeFunc) { // quick feedback to user if there is a typo or missconfiguration
+                throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + objectKeys(typeFunctions).join(", "));
             }
-
-            // Custom parse function: apply after parsing options, unless there's an explicit type.
-            if (opts.parseWithFunction && !type) {
-                parsedVal = opts.parseWithFunction(parsedVal, inputName);
-            }
-
-            return parsedVal;
+            return typeFunc(valStr);
         },
 
         isObject:          function(obj) { return obj === Object(obj); }, // is it an Object?
         isUndefined:       function(obj) { return obj === void 0; }, // safe check for undefined values
         isValidArrayIndex: function(val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
-        isNumeric:         function(obj) { return obj - parseFloat(obj) >= 0; }, // taken from jQuery.isNumeric implementation. Not using jQuery.isNumeric to support old jQuery and Zepto versions
-
-        optionKeys: function(obj) { if (Object.keys) { return Object.keys(obj); } else { var key, keys = []; for(key in obj){ keys.push(key); } return keys;} }, // polyfill Object.keys to get option keys in IE<9
-
 
         // Fill the formAsArray object with values for the unchecked checkbox inputs,
         // using the same format as the jquery.serializeArray function.
@@ -188,7 +154,7 @@
         //   "foo:boolean"   =>  {nameWithNoType: "foo",      type: "boolean"}
         //   "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
         extractTypeAndNameWithNoType : function(name) {
-            const match = name.match(/(.*):([^:]+)$/);
+            var match = name.match(/(.*):([^:]+)$/);
             if (match) {
                 return {nameWithNoType: match[1], type: match[2]};
             } else {
@@ -230,18 +196,6 @@
             return $input.attr(attrName);
         },
 
-        // Raise an error if the type is not recognized.
-        validateType: function(name, type, opts) {
-            var f = $.serializeJSON;
-            var validTypes = f.optionKeys(opts ? opts.typeFunctions : f.defaultOptions.defaultTypes);
-            if (!type || validTypes.indexOf(type) !== -1) {
-                return true;
-            } else {
-                throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + validTypes.join(", "));
-            }
-        },
-
-
         // Split the input name in programatically readable keys.
         // Examples:
         // "foo"              => ["foo"]
@@ -257,7 +211,9 @@
             return keys;
         },
 
-        // Set a value in an object or array, using multiple keys to set in a nested object or array:
+        // Set a value in an object or array, using multiple keys to set in a nested object or array.
+        // This is the main function of the script, that allows serializeJSON to use nested keys.
+        // Examples:
         //
         // deepSet(obj, ["foo"], v)               // obj["foo"] = v
         // deepSet(obj, ["foo", "inn"], v)        // obj["foo"]["inn"] = v // Create the inner obj["foo"] object, if needed
@@ -328,6 +284,17 @@
                 var tail = keys.slice(1);
                 f.deepSet(o[key], tail, value, opts);
             }
+        }
+    };
+
+    // polyfill Object.keys to get option keys in IE<9
+    var objectKeys = function(obj) {
+        if (Object.keys) {
+            return Object.keys(obj);
+        } else {
+            var key, keys = [];
+            for (key in obj) { keys.push(key); }
+            return keys;
         }
     };
 }));

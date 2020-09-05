@@ -1,5 +1,5 @@
 // serializeJSON
-/* global $, describe, it, beforeEach, afterEach, expect */
+/* eslint-env jasmine, jquery */
 describe("$.serializeJSON", function () {
     var obj, $form;
 
@@ -205,19 +205,6 @@ describe("$.serializeJSON", function () {
             expect(obj).toEqual({});
         });
 
-        it("could use a hidden field and a custom parser to force an empty array in an array of unchecked checkboxes", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"hidden\"   name=\"flags\" value=\"[]\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"green\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"red\"/>"));
-            obj = $form.serializeJSON({parseWithFunction: function(val){ return val == "[]" ? [] : val; }});
-            expect(obj).toEqual({"flags": []});
-
-            $form.find("input[value=\"red\"]").prop("checked", true);
-            obj = $form.serializeJSON({parseWithFunction: function(val){ return val == "[]" ? [] : val; }});
-            expect(obj).toEqual({"flags": ["red"]});
-        });
-
         it("could use a hidden field with type :array to force an empty array in an array of unchecked checkboxes", function() {
             $form = $("<form>");
             $form.append($("<input type=\"hidden\"   name=\"flags:array\" value=\"[]\"/>"));
@@ -344,15 +331,6 @@ describe("$.serializeJSON", function () {
                 obj = $form.serializeJSON();
                 expect(obj).toEqual({b1: "true", b2: "TRUE", b3: "yes", b4: "[1,2,3]", b5: "Bla bla bla bla ..."});
             });
-            it("is useful to override other parse options", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:string\" value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:string\" value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:string\" value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:string\" value=\"\"/>"));
-                obj = $form.serializeJSON({parseAll: true, parseWithFunction: function(val){return val === "" ? null : val; }});
-                expect(obj).toEqual({b1: "true", b2: "1", b3: "null", b4: ""});
-            });
         });
         describe(":array", function() {
             it("parses arrays with JSON.parse", function() {
@@ -400,53 +378,12 @@ describe("$.serializeJSON", function () {
                 expect(function(){$form.serializeJSON();}).toThrow();
             });
         });
-        describe(":auto", function() {
-            it("parses Strings, Booleans and Nulls if they look like they could be one of them (same as parseAll option)", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"Numeric 0:auto\"     value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"Numeric 1:auto\"     value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"Numeric 2.2:auto\"   value=\"2.2\"/>"));
-                $form.append($("<input type=\"text\" name=\"Numeric -2.25:auto\" value=\"-2.25\"/>"));
-                $form.append($("<input type=\"text\" name=\"Bool true:auto\"     value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"Bool false:auto\"    value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"Null:auto\"          value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"String:auto\"        value=\"text is always string\"/>"));
-                $form.append($("<input type=\"text\" name=\"Empty:auto\"         value=\"\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     true,
-                    "Bool false":    false,
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-            it("does not auto-recognize arrays or objects", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"empty array:auto\"  value=\"[]\"/>"));
-                $form.append($("<input type=\"text\" name=\"array:auto\"        value=\"[1,2,3]\"/>"));
-                $form.append($("<input type=\"text\" name=\"empty object:auto\" value=\"{}\"/>"));
-                $form.append($("<input type=\"text\" name=\"object:auto\"       value=\"{one: 1}\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({
-                    "empty array": "[]",
-                    "array": "[1,2,3]",
-                    "empty object": "{}",
-                    "object": "{one: 1}"
-                }); // they are still strings
-            });
-
-        });
         describe("invalid types", function() {
             it("raises an error if the type is not known", function() {
                 $form = $("<form>");
                 $form.append($("<input type=\"text\" name=\"b1:kaka\" value=\"not a valid type\"/>"));
                 expect(function(){ $form.serializeJSON(); })
-                    .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, auto, skip"));
+                    .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip"));
             });
         });
         describe("form with multiple types", function() {
@@ -466,14 +403,6 @@ describe("$.serializeJSON", function () {
 
                 $form.append($("<input type=\"text\" name=\"null[null]:null\"            value=\"null\"/>"));
                 $form.append($("<input type=\"text\" name=\"null[other stuff]:null\"     value=\"other stuff\"/>"));
-
-                $form.append($("<input type=\"text\" name=\"auto[string]:auto\"          value=\"text with stuff\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[0]:auto\"               value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[1]:auto\"               value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[true]:auto\"            value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[false]:auto\"           value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[null]:auto\"            value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[list]:auto\"            value=\"[1, 2, 3]\"/>"));
 
                 $form.append($("<input type=\"text\" name=\"array[empty]:array\"         value=\"[]\"/>"));
                 $form.append($("<input type=\"text\" name=\"array[not empty]:array\"     value=\"[1, 2, 3]\"/>"));
@@ -499,15 +428,6 @@ describe("$.serializeJSON", function () {
                     "null": {
                         "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
                         "other stuff": "other stuff"
-                    },
-                    "auto": { // works as the parseAll option
-                        "string": "text with stuff",
-                        "0": 0,         // <-- parsed as number
-                        "1": 1,         // <-- parsed as number
-                        "true": true,   // <-- parsed as boolean
-                        "false": false, // <-- parsed as boolean
-                        "null": null,   // <-- parsed as null
-                        "list": "[1, 2, 3]" // <-- array and object types are not auto-parsed
                     },
                     "array": { // <-- works using JSON.parse
                         "empty": [],
@@ -700,109 +620,7 @@ describe("$.serializeJSON", function () {
         describe("validateOptions", function() {
             it("should raise an error if the option is not one of the valid options", function() {
                 expect(function(){ $form.serializeJSON({invalidOption: true}); })
-                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, parseNumbers, parseBooleans, parseNulls, parseAll, parseWithFunction, skipFalsyValuesForTypes, skipFalsyValuesForFields, customTypes, defaultTypes, useIntKeysAsArrayIndex"));
-            });
-        });
-
-        describe("parseNumbers", function() {
-            it("returns numbers for the numeric string values", function() {
-                obj = $form.serializeJSON({parseNumbers: true});
-                expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          "null",
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-        });
-
-        describe("parseBooleans", function() {
-            it("returns booleans for the 'true'/'false' values", function() {
-                obj = $form.serializeJSON({parseBooleans: true});
-                expect(obj).toEqual({
-                    "Numeric 0":     "0",
-                    "Numeric 1":     "1",
-                    "Numeric 2.2":   "2.2",
-                    "Numeric -2.25": "-2.25",
-                    "Bool true":     true,
-                    "Bool false":    false,
-                    "Null":          "null",
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-        });
-
-        describe("parseNulls", function() {
-            it("returns null for the 'null' values", function() {
-                obj = $form.serializeJSON({parseNulls: true}); // empty object should be translated to default options
-                expect(obj).toEqual({
-                    "Numeric 0":     "0",
-                    "Numeric 1":     "1",
-                    "Numeric 2.2":   "2.2",
-                    "Numeric -2.25": "-2.25",
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-        });
-
-        describe("parseAll", function() {
-            it("parses all possible values", function() {
-                obj = $form.serializeJSON({parseAll: true});
-                expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     true,
-                    "Bool false":    false,
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-        });
-
-        describe("parseWithFunction custom parser", function() {
-            it("uses the passed in function to parse values", function() {
-                var myParser = function(val) { return val === "true" ? 1 : 0;};
-                obj = $form.serializeJSON({parseWithFunction: myParser});
-                expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     0,
-                    "Numeric 2.2":   0,
-                    "Numeric -2.25": 0,
-                    "Bool true":     1,
-                    "Bool false":    0,
-                    "Null":          0,
-                    "String":        0,
-                    "Empty":         0
-                });
-            });
-
-            it("can be combined with other parse options", function() {
-                var myParser = function(val) { return typeof(val) === "number" ? 1 : 0;};
-                obj = $form.serializeJSON({parseNumbers: true, parseWithFunction: myParser});
-                expect(obj).toEqual({
-                    "Numeric 0":     1,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   1,
-                    "Numeric -2.25": 1,
-                    "Bool true":     0,
-                    "Bool false":    0,
-                    "Null":          0,
-                    "String":        0,
-                    "Empty":         0
-                });
+                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, defaultTypes, customTypes"));
             });
         });
 
@@ -818,22 +636,6 @@ describe("$.serializeJSON", function () {
                     "Bool false":    "false",
                     "Null":          "null", // "null" as :string is not falsy
                     "String":        "text is always string"
-                    // "Empty" skip
-                });
-            });
-
-            it("checks on values after they were parsed by the given types", function() {
-                // with parseAll = true, the values are typed
-                obj = $form.serializeJSON({parseAll: true, skipFalsyValuesForFields: ["Empty", "Null", "Numeric 0", "String"]});
-                expect(obj).toEqual({
-                    // "Numeric 0" skip
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     true,
-                    "Bool false":    false, // not skip because was not included in list of names
-                    "String":        "text is always string"
-                    // "Null" skip
                     // "Empty" skip
                 });
             });
@@ -911,27 +713,6 @@ describe("$.serializeJSON", function () {
                 expect(obj).toEqual({check1: "NOPE", check2: "OVERRIDE", check3: "yes"});
             });
 
-            it("is parsed by parse options", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"true\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"true\" data-unchecked-value=\"0\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check3\" value=\"true\" checked/>"));
-
-                obj = $form.serializeJSON({checkboxUncheckedValue: "false", parseBooleans: true, parseNumbers: true});
-                expect(obj).toEqual({check1: false, check2: 0, check3: true});
-            });
-
-            it("is parsed by custom parseWithFunction", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\" data-unchecked-value=\"NOPE\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check3\" value=\"yes\" checked/>"));
-
-                var parser = function(val) { return val == "yes"; };
-                obj = $form.serializeJSON({checkboxUncheckedValue: "no", parseWithFunction: parser});
-                expect(obj).toEqual({check1: false, check2: false, check3: true});
-            });
-
             if ($.fn.jquery) { // not supported on Zepto
                 it("works on multiple forms and inputs", function() {
                     var $form1, $form2, $els;
@@ -1006,15 +787,6 @@ describe("$.serializeJSON", function () {
                         check: ["true", "false", "NOPE"]
                     }
                 });
-
-                // also with parse options
-                obj = $form.serializeJSON({checkboxUncheckedValue: "false", parseBooleans: true});
-                expect(obj).toEqual({
-                    form: {
-                        title: "list of checkboxes",
-                        check: [true, false, "NOPE"]
-                    }
-                });
             });
 
             it("does not work on a nested list of objects", function() {
@@ -1049,12 +821,9 @@ describe("$.serializeJSON", function () {
 
                 obj = $form.serializeJSON({useIntKeysAsArrayIndex: true}); // with option useIntKeysAsArrayIndex true
                 expect(obj).toEqual({"foo": ["0", "1", undefined, undefined, undefined, "5"]});
-
-                obj = $form.serializeJSON({useIntKeysAsArrayIndex: true, parseNumbers: true}); // same but also parsing numbers
-                expect(obj).toEqual({"foo": [0, 1, undefined, undefined, undefined, 5]});
             });
 
-            it("doesnt get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
+            it("does not get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
                 $form = $("<form>");
                 $form.append($("<input type=\"text\"  name=\"drinks[1st]\" value=\"coffee\"/>"));
                 $form.append($("<input type=\"text\"  name=\"drinks[2nd]\" value=\"beer\"/>"));
@@ -1095,14 +864,6 @@ describe("$.serializeJSON", function () {
                 $form.append($("<input type=\"text\" name=\"null[null]:null\"            value=\"null\"/>"));
                 $form.append($("<input type=\"text\" name=\"null[other stuff]:null\"     value=\"other stuff\"/>"));
 
-                $form.append($("<input type=\"text\" name=\"auto[string]:auto\"          value=\"text with stuff\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[0]:auto\"               value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[1]:auto\"               value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[true]:auto\"            value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[false]:auto\"           value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[null]:auto\"            value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"auto[list]:auto\"            value=\"[1, 2, 3]\"/>"));
-
                 $form.append($("<input type=\"text\" name=\"array[empty]:array\"         value=\"[]\"/>"));
                 $form.append($("<input type=\"text\" name=\"array[not empty]:array\"     value=\"[1, 2, 3]\"/>"));
 
@@ -1133,15 +894,6 @@ describe("$.serializeJSON", function () {
                     "null": {
                         "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
                         "other stuff": "other stuff"
-                    },
-                    "auto": { // works as the parseAll option
-                        "string": "text with stuff",
-                        "0": 0,         // <-- parsed as number
-                        "1": 1,         // <-- parsed as number
-                        "true": true,   // <-- parsed as boolean
-                        "false": false, // <-- parsed as boolean
-                        "null": null,   // <-- parsed as null
-                        "list": "[1, 2, 3]" // <-- array and object types are not auto-parsed
                     },
                     "array": { // <-- works using JSON.parse
                         "empty": [],
@@ -1206,101 +958,31 @@ describe("$.serializeJSON", function () {
             expect(obj).toEqual({ "foo": "var", "empty": null});
         });
 
-        describe("with modified defaults", function() {
+        describe("with defaultOptions", function() {
             var defaults = $.serializeJSON.defaultOptions;
             afterEach(function() {
                 $.serializeJSON.defaultOptions = defaults; // restore defaults
             });
 
-            it("uses those options by default", function() {
-                $.serializeJSON.defaultOptions = {parseBooleans: true, parseNulls: true};
-                obj = $form.serializeJSON({});
-                expect(obj).toEqual({
-                    "Numeric 0":     "0",
-                    "Numeric 1":     "1",
-                    "Numeric 2.2":   "2.2",
-                    "Numeric -2.25": "-2.25",
-                    "Bool true":     true,
-                    "Bool false":    false,
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-
-                $.serializeJSON.defaultOptions = {parseNumbers: true, parseNulls: true};
-                obj = $form.serializeJSON({});
-                expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
-
-            it("merges options with defaults", function() {
-                var myParser = function(val) { return typeof(val) === "number" ? 1 : 0;};
-                $.serializeJSON.defaultOptions = {parseWithFunction: myParser};
-                obj = $form.serializeJSON({parseNumbers: true});
-                expect(obj).toEqual({
-                    "Numeric 0":     1,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   1,
-                    "Numeric -2.25": 1,
-                    "Bool true":     0,
-                    "Bool false":    0,
-                    "Null":          0,
-                    "String":        0,
-                    "Empty":         0
-                });
-            });
-
             it("can be overriden with different options", function() {
-                $.serializeJSON.defaultOptions = {parseBooleans: true, parseNulls: true};
-                obj = $form.serializeJSON({parseBooleans: false}); // override default parseBooleans: true
-                expect(obj).toEqual({
-                    "Numeric 0":     "0",
-                    "Numeric 1":     "1",
-                    "Numeric 2.2":   "2.2",
-                    "Numeric -2.25": "-2.25",
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
-            });
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"num0:number\" value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"num1:number\" value=\"1\"/>"));
+                $form.append($("<input type=\"text\" name=\"empty\" value=\"\"/>"));
 
-            it("parseAll will override all other parse options", function() {
-                $.serializeJSON.defaultOptions = {parseNumbers: true, parseBooleans: false, parseNulls: false, parseAll: true};
-                obj = $form.serializeJSON({parseNumbers: false}); // but default parseAll is true
+                $.serializeJSON.defaultOptions = {skipFalsyValuesForFields: ["num0", "num1", "empty"]};
+                obj = $form.serializeJSON();
                 expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     true,
-                    "Bool false":    false,
-                    "Null":          null,
-                    "String":        "text is always string",
-                    "Empty":         ""
+                    // "num0":  0, // skip
+                    "num1":     1, // not skip because it is not falsy
+                    // "empty": "" // skip,
                 });
 
-                obj = $form.serializeJSON({parseAll: false}); // but default parseNumbers is true
+                obj = $form.serializeJSON({skipFalsyValuesForFields: ["num0"]});
                 expect(obj).toEqual({
-                    "Numeric 0":     0,
-                    "Numeric 1":     1,
-                    "Numeric 2.2":   2.2,
-                    "Numeric -2.25": -2.25,
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          "null",
-                    "String":        "text is always string",
-                    "Empty":         ""
+                    // "num0": 0, // skip
+                    "num1":    1, // not skip because it is not falsy
+                    "empty":   "" // not skip because the default option was override
                 });
             });
 
