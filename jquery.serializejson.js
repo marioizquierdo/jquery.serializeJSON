@@ -117,10 +117,6 @@
             return typeFunc(valStr);
         },
 
-        isObject:          function(obj) { return obj === Object(obj); }, // is it an Object?
-        isUndefined:       function(obj) { return obj === void 0; }, // safe check for undefined values
-        isValidArrayIndex: function(val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
-
         // Fill the formAsArray object with values for the unchecked checkbox inputs,
         // using the same format as the jquery.serializeArray function.
         // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
@@ -233,7 +229,7 @@
         deepSet: function (o, keys, value, opts) {
             if (opts == null) { opts = {}; }
             var f = $.serializeJSON;
-            if (f.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
+            if (isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
             if (!keys || keys.length === 0) { throw new Error("ArgumentError: param 'keys' expected to be an array with least one element"); }
 
             var key = keys[0];
@@ -256,7 +252,7 @@
                 if (key === "") {
                     var lastIdx = o.length - 1; // asume o is array
                     var lastVal = o[lastIdx];
-                    if (f.isObject(lastVal) && (f.isUndefined(lastVal[nextKey]) || keys.length > 2)) { // if nextKey is not present in the last object element, or there are more keys to deep set
+                    if (isObject(lastVal) && (isUndefined(lastVal[nextKey]) || keys.length > 2)) { // if nextKey is not present in the last object element, or there are more keys to deep set
                         key = lastIdx; // then set the new value in the same object element
                     } else {
                         key = lastIdx + 1; // otherwise, point to set the next index in the array
@@ -265,16 +261,16 @@
 
                 // "" is used to push values into the array "array[]"
                 if (nextKey === "") {
-                    if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+                    if (isUndefined(o[key]) || !$.isArray(o[key])) {
                         o[key] = []; // define (or override) as array to push values
                     }
                 } else {
-                    if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
-                        if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+                    if (opts.useIntKeysAsArrayIndex && isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
+                        if (isUndefined(o[key]) || !$.isArray(o[key])) {
                             o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
                         }
                     } else { // for anything else, use an object, where nextKey is going to be the attribute name
-                        if (f.isUndefined(o[key]) || !f.isObject(o[key])) {
+                        if (isUndefined(o[key]) || !isObject(o[key])) {
                             o[key] = {}; // define (or override) as object, to set nested properties
                         }
                     }
@@ -297,4 +293,8 @@
             return keys;
         }
     };
+
+    var isObject =          function(obj) { return obj === Object(obj); };
+    var isUndefined =       function(obj) { return obj === void 0; }; // safe check for undefined values
+    var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
 }));

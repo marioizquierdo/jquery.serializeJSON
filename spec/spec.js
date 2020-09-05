@@ -1048,29 +1048,6 @@ describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
     });
 });
 
-// isValidArrayIndex
-describe("$.serializeJSON.isValidArrayIndex", function() {
-    var validIndex = $.serializeJSON.isValidArrayIndex;
-    it("accepts positive integers", function() {
-        expect(validIndex(0)).toBeTruthy();
-        expect(validIndex(1)).toBeTruthy();
-        expect(validIndex(222)).toBeTruthy();
-        expect(validIndex("0")).toBeTruthy();
-        expect(validIndex("1")).toBeTruthy();
-        expect(validIndex("222")).toBeTruthy();
-    });
-    it("rejects negative integers", function() {
-        expect(validIndex(-1)).toBeFalsy();
-        expect(validIndex(-22)).toBeFalsy();
-    });
-    it("rejects strings, objects and arrays", function() {
-        expect(validIndex("")).toBeFalsy();
-        expect(validIndex("foo")).toBeFalsy();
-        expect(validIndex({"foo": "var"})).toBeFalsy();
-        expect(validIndex([0,1,2])).toBeFalsy();
-    });
-});
-
 // deepSet
 // used to assign nested keys like "address[state][abbr]" to an object
 describe("$.serializeJSON.deepSet", function () {
