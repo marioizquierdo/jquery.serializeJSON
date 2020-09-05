@@ -24,5 +24,9 @@
   ],
   "bugs": {
     "url": "https://github.com/marioizquierdo/jquery.serializeJSON/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.8.1"
   }
 }
