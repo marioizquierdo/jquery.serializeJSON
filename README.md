@@ -131,7 +131,7 @@ This means that it only serializes the inputs supported by `.serializeArray()`, 
 Parse values with :types
 ------------------------
 
-All attribute values are **strings** by default. But you can force values to be parsed with specific types by appending the `:type` to the field name with a colon.
+Fields values are **string** by default. But can be parsed with types by appending the `:type` suffix to the field name:
 
 ```html
 <form>
@@ -169,15 +169,15 @@ $('form').serializeJSON();
   "numbers": {
     "1": 1,
     "1.1": 1.1,
-    "other stuff": NaN, // <-- Not a Number
+    "other stuff": NaN, // <-- "other stuff" is parsed as NaN
   },
   "bools": {
     "true": true,
     "false": false,
-    "0": false, // <-- "false", "null", "undefined", "", "0" parsed as false
+    "0": false, // <-- "false", "null", "undefined", "", "0" are parsed as false
   },
   "nulls": {
-    "null": null, // <-- "false", "null", "undefined", "", "0" parsed as null
+    "null": null, // <-- "false", "null", "undefined", "", "0"  are parsed as null
     "other stuff": "other stuff"
   },
   "arrays": { // <-- uses JSON.parse
@@ -191,7 +191,7 @@ $('form').serializeJSON();
 }
 ```
 
-Types can also be specified with the attribute `data-value-type`, instead of adding the ":type" suffix in the field name:
+Types can also be specified with the attribute `data-value-type`, instead of adding the `:type` suffix in the field name:
 
 ```html
 <form>
@@ -202,7 +202,7 @@ Types can also be specified with the attribute `data-value-type`, instead of add
 </form>
 ```
 
-## Custom Types ##
+### Custom Types
 
 You can define your own types or override the defaults with the `customTypes` option. For example:
 
@@ -242,7 +242,7 @@ Options
 
 With no options, `.serializeJSON()` returns the same as a regular HTML form submission when serialized as Rack/Rails params. In particular:
 
-  * Values are always **strings** (unless appending :types to the input names)
+  * Values are always **strings** (unless appending a `:type` to the input names)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
   * Keys (input names) are always **strings** (nested params are objects by default)
@@ -258,7 +258,7 @@ This can be altered with options:
 
 More details about these options in the sections below.
 
-## Include unchecked checkboxes ##
+## Include unchecked checkboxes
 
 One of the most confusing details when serializing a form is the input type checkbox, because it includes the value if checked, but nothing if unchecked.
 
@@ -355,7 +355,7 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBoolean
 }
 ```
 
-## Ignore Empty Form Fields ##
+## Ignore Empty Form Fields
 
 You can use the option `.serializeJSON(skipFalsyValuesForTypes: ["string"])`, which ignores any string field with an empty value (default type is :string, and empty strings are falsy).
 
@@ -375,14 +375,14 @@ obj = $form.find(':input').filter(function () {
 ```
 
 
-## Ignore Fields With Falsy Values ##
+## Ignore Fields With Falsy Values
 
 When using :types, you can also skip falsy values (`false, "", 0, null, undefined, NaN`) by using the option `skipFalsyValuesForFields: ["fullName", "address[city]"]` or `skipFalsyValuesForTypes: ["string", "null"]`.
 
 Or setting a data attribute `data-skip-falsy="true"` on the inputs that should be ignored. Note that `data-skip-falsy` is aware of field :types, so it knows how to skip a non-empty input like this `<input name="foo" value="0" data-value-type="number" data-skip-falsy="true">` (Note that `"0"` as a string is not falsy, but `0` as number is falsy)).
 
 
-## Use integer keys as array indexes ##
+## Use integer keys as array indexes
 
 By default, all serialized keys are **strings**, this includes keys that look like numbers like this:
 
@@ -415,7 +415,7 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 **Note**: this was the default behavior of serializeJSON before version 2. You can use this option for backwards compatibility.
 
 
-## Defaults ##
+## Option Defaults
 
 All options defaults are defined in `$.serializeJSON.defaultOptions`. You can just modify it to avoid setting the option on every call to `serializeJSON`.
 
@@ -448,7 +448,7 @@ $('form').serializeJSON(); // No options => then use $.serializeJSON.defaultOpti
 Alternative Plugins
 -------------------
 
-I found others solving the same problem:
+Other plugins solve the same problem in similar ways:
 
  * https://github.com/macek/jquery-serialize-object
  * https://github.com/hongymagic/jQuery.serializeObject
@@ -457,9 +457,9 @@ I found others solving the same problem:
  * https://github.com/serbanghita/formToObject.js (plain js, no jQuery)
  * https://gist.github.com/shiawuen/2634143 (simpler but small)
 
-But none of them checked what I needed at the time `serializeJSON` was created. Factors that differentiate `serializeJSON` from most of the alternatives:
+None of them did what I needed at the time `serializeJSON` was created. Factors that differentiate `serializeJSON` from the alternatives:
 
- * Simple and small code base. The minimified version is 1Kb.
+ * Simple and small code base. The minimified version is < 1Kb.
  * Yet flexible enough with features like nested objects, unchecked-checkboxes and custom types.
  * Implemented on top of jQuery (or Zepto) `serializeArray`, that creates a JavaScript array of objects, ready to be encoded as a JSON string. It takes into account the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2), making `serializeJSON` as standard and stable as it can be.
  * The format for the input field names is the same used by Rails (from [Rack::Utils.parse_nested_query](http://codefol.io/posts/How-Does-Rack-Parse-Query-Params-With-parse-nested-query)), that is successfully used by many backend systems and already well understood by many front end developers.
@@ -474,6 +474,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 
 Changelog
 ---------
+
  * *2.9.0* (Jan 12, 2018): Overrides to `customTypes.string` function now also apply to fields with no type, because `:string` is the default implicit type. Thanks [JocaPC](https://github.com/JocaPC) for reporting the [issue #83](https://github.com/marioizquierdo/jquery.serializeJSON/issues/83).
  * *2.8.1* (Dec 09, 2016): Identify issue #67 and throw a descriptive error with a link to the issue, that explains why nested arrays of objects with checkboxes with unchecked values are not supported.
  * *2.8.0* (Dec 09, 2016): Add options `skipFalsyValuesForFields`, `skipFalsyValuesForTypes` and attr `data-skip-falsy` to easily skip falsy values (which includes empty strings). Thanks to [milkaknap](https://github.com/milkaknap).
