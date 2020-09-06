@@ -49,7 +49,7 @@
                 return; // ignore fields with type skip
             }
             if (!type) {
-                type = "string"; // default type is string
+                type = opts.defaultType; // "string" by default
             }
 
             var typedValue = f.applyTypeFunc(rawName, rawValue, type, typeFunctions); // Parse type as string, number, etc.
@@ -85,7 +85,8 @@
                 "array":   function(str) { return JSON.parse(str); },
                 "object":  function(str) { return JSON.parse(str); },
                 "skip":    null // skip is a special type used to ignore fields
-            }
+            },
+            defaultType: "string",
         },
 
         // Validate and set defaults
@@ -103,7 +104,8 @@
 
                 "disableSemicolonTypes",
                 "customTypes",
-                "defaultTypes"
+                "defaultTypes",
+                "defaultType"
             ];
             for (var opt in options) {
                 if (validOpts.indexOf(opt) === -1) {

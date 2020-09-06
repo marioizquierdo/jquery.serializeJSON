@@ -258,6 +258,7 @@ Available options:
   * **skipFalsyValuesForFields: []**, skip given fields (by name) with falsy values. You can use `data-skip-falsy="true"` input attribute as well. Falsy values are determined after converting to a given type, note that `"0"` as `:string` (default) is still truthy, but `0` as `:number` is falsy.
   * **skipFalsyValuesForTypes: []**, skip given fields (by :type) with falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
   * **customTypes: {}**, define your own `:type` functions. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`. Custom types extend the **defaultTypes**.
+  * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default. This can be changed to use a different type like "number", or even a custom type function if defined in `customTypes`.
   * **disableSemicolonTypes: true**, do not parse input names as types, allowing field names to use semicolons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
 
 More details about these options in the sections below.
