@@ -53,6 +53,7 @@
             }
 
             var typedValue = f.applyTypeFunc(rawName, rawValue, type, typeFunctions); // Parse type as string, number, etc.
+
             if (!typedValue && f.shouldSkipFalsy($form, rawName, name, type, opts)) {
                 return; // ignore falsy inputs if specified in the options
             }
@@ -161,7 +162,7 @@
             var parts = name.split(":");
             if (parts.length > 1) {
                 var t = parts.pop();
-                return [parts.join(""), t];
+                return [parts.join(":"), t];
             } else {
                 return [name, ""];
             }
