@@ -442,15 +442,14 @@ describe("$.serializeJSON", function () {
         });
 
         describe("data-value-type attribute", function() {
-            it("should set type if field name do not contain :type definition", function() {
+            it("should set type and have precedence over the :type suffix", function() {
                 $form = $("<form>");
                 $form.append($("<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
                 $form.append($("<input type=\"text\" name=\"fooDataWithBrackets[kokoszka]\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
                 $form.append($("<input type=\"text\" name=\"fooDataWithBrackets[kokoszka i cos innego]\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"string from data attr\"/>"));
+                $form.append($("<input type=\"text\" name=\"override::string\" data-value-type=\"boolean\"  value=\"boolean prevails\"/>"));
                 $form.append($("<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>"));
-                $form.append($("<input type=\"text\" name=\"stringData\" data-value-type=\"string\"   value=\"data-value-type=string type overrides parsing options\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\" data-value-type=\"boolean\"   value=\":string type overrides parsing options\"/>"));
                 $form.append($("<input type=\"text\" name=\"excludes\" data-value-type=\"skip\"   value=\"Use :skip to not include this field in the result\"/>"));
                 $form.append($("<input type=\"text\" name=\"numberData\" data-value-type=\"number\"   value=\"1\"/>"));
                 $form.append($("<input type=\"text\" name=\"numberData[A]\" data-value-type=\"number\"        value=\"1\"/>"));
@@ -471,10 +470,10 @@ describe("$.serializeJSON", function () {
                         "kokoszka i cos innego": "Boo"
                     },
                     "fooData": "Boo",
-                    "foo": "Boo",
+                    "foo:alwaysBoo": "string from data attr",
+                    "override::string": true,
                     "notype": "default type is :string",
-                    "stringData": "data-value-type=string type overrides parsing options",
-                    "string": ":string type overrides parsing options",
+                    // excludes was excluded because of type "skip"
                     "numberData": { A: 1, B: { C: 2 }, D: { E: { F: 3 } } },
                     "number": 1,
                     "selectNumber": 2
@@ -485,10 +484,9 @@ describe("$.serializeJSON", function () {
                 it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
                     var $inputs = $(
                         "<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>" +
-            "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
-            "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
-            "<input type=\"text\" name=\"stringData\" data-value-type=\"string\"   value=\"data-value-type=string type overrides parsing options\"/>" +
-            "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
+                        "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
+                        "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
+                        "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
                     );
 
                     obj = $inputs.serializeJSON({
@@ -499,9 +497,8 @@ describe("$.serializeJSON", function () {
 
                     expect(obj).toEqual({
                         "fooData": "Boo",
-                        "foo": "Boo",
+                        "foo:alwaysBoo": "0",
                         "notype": "default type is :string",
-                        "stringData": "data-value-type=string type overrides parsing options",
                         "number": 1
                     });
                 });
@@ -620,7 +617,7 @@ describe("$.serializeJSON", function () {
         describe("validateOptions", function() {
             it("should raise an error if the option is not one of the valid options", function() {
                 expect(function(){ $form.serializeJSON({invalidOption: true}); })
-                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, defaultTypes, customTypes"));
+                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, disableSemicolonTypes, customTypes, defaultTypes, defaultType"));
             });
         });
 
@@ -958,6 +955,107 @@ describe("$.serializeJSON", function () {
             expect(obj).toEqual({ "foo": "var", "empty": null});
         });
 
+        describe("defaultType", function() {
+            it("uses the specified type as default if no other type is defined", function() {
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\"    value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string overrides default option\"/>"));
+                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"Use :skip to not include this field in the result\"/>"));
+                $form.append($("<input type=\"text\" name=\"fooData\"       data-value-type=\"alwaysBoo\"  value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"foostr::kaka\"  data-value-type=\"string\"     value=\"string from data attr\"/>"));
+
+                obj = $form.serializeJSON({
+                    defaultType: "number",
+                    customTypes: {
+                        alwaysBoo: function() { return "Boo"; }
+                    }
+                });
+
+                expect(obj).toEqual({
+                    "notype": 0, // parsed with "number", used as default type
+                    "foo": "Boo",
+                    "string": ":string overrides default option",
+                    // :skip type removes the field from the output
+                    "fooData": "Boo",
+                    "foostr::kaka": "string from data attr"
+                });
+            });
+
+            it("can be specified to be a custom type function", function() {
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string overrides default option\"/>"));
+
+                obj = $form.serializeJSON({
+                    defaultType: "alwaysBoo",
+                    customTypes: {
+                        alwaysBoo: function() { return "Boo"; }
+                    }
+                });
+
+                expect(obj).toEqual({
+                    "notype": "Boo", // parsed with "alwaysBoo", used as default type
+                    "string": ":string overrides default option",
+                });
+            });
+
+            it("raises an error if the type function is not specified", function() {
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"fookey\" value=\"fooval\"/>"));
+                expect(function(){
+                    $form.serializeJSON({ defaultType: "not_a_valid_type" });
+                }).toThrow(new Error("serializeJSON ERROR: Invalid type not_a_valid_type found in input name 'fookey', please use one of string, number, boolean, null, array, object, skip"));
+            });
+        });
+
+
+        describe("disableSemicolonTypes", function() {
+            it("ignores type suffixes from input names", function() {
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"foo\"              value=\"bar\"/>"));
+                $form.append($("<input type=\"text\" name=\"notype::foobar\"   value=\"foobar\"/>"));
+                $form.append($("<input type=\"text\" name=\"string:string\"    value=\"keeps full input name\"/>"));
+                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"not skip because is not parsed as a type\"/>"));
+
+                obj = $form.serializeJSON({ disableSemicolonTypes: true });
+
+                expect(obj).toEqual({
+                    "foo": "bar", // nothing special over here
+                    "notype::foobar": "foobar", // colons are no special now
+                    "string:string": "keeps full input name",
+                    "excludes:skip": "not skip because is not parsed as a type"
+                });
+            });
+            it("still respects default type function and data-value-type attributes if specified", function() {
+                $form = $("<form>");
+                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\"    value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"string:string\"    value=\"99\"/>"));
+                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"666\"/>"));
+                $form.append($("<input type=\"text\" name=\"fooData\"       data-value-type=\"alwaysBoo\"  value=\"0\"/>"));
+                $form.append($("<input type=\"text\" name=\"foostr::kaka\"  data-value-type=\"string\"     value=\"string from data attr\"/>"));
+
+                obj = $form.serializeJSON({
+                    disableSemicolonTypes: true,
+                    defaultType: "number",
+                    customTypes: {
+                        alwaysBoo: function() { return "Boo"; }
+                    }
+                });
+
+                expect(obj).toEqual({
+                    "notype": 0, // parsed with "number", used as default type
+                    "foo:alwaysBoo": 0,
+                    "string:string": 99,
+                    "excludes:skip": 666,
+
+                    "fooData": "Boo", // data-value-type still works to define other types
+                    "foostr::kaka": "string from data attr"
+                });
+            });
+        });
+
         describe("with defaultOptions", function() {
             var defaults = $.serializeJSON.defaultOptions;
             afterEach(function() {
@@ -1011,13 +1109,14 @@ describe("$.serializeJSON", function () {
     });
 });
 
-// extractTypeAndNameWithNoType
-describe("$.serializeJSON.extractTypeAndNameWithNoType", function() {
-    var extract = $.serializeJSON.extractTypeAndNameWithNoType;
+// splitType
+describe("$.serializeJSON.splitType", function() {
+    var splitType = $.serializeJSON.splitType;
     it("returns an object with type and nameWithNoType properties form the name with :type colon notation", function() {
-        expect(extract("foo")).toEqual({nameWithNoType: "foo", type: null});
-        expect(extract("foo:boolean")).toEqual({nameWithNoType: "foo", type: "boolean"});
-        expect(extract("foo[bar]:null")).toEqual({nameWithNoType: "foo[bar]", type: "null"});
+        expect(splitType("foo")).toEqual(["foo", ""]);
+        expect(splitType("foo:boolean")).toEqual(["foo", "boolean"]);
+        expect(splitType("foo[bar]:null")).toEqual(["foo[bar]", "null"]);
+        expect(splitType("foo[my::key]:string")).toEqual(["foo[my::key]", "string"]);
     });
 });
 

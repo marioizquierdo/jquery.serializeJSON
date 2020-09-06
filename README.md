@@ -135,20 +135,20 @@ Fields values are **string** by default. But can be parsed with types by appendi
 
 ```html
 <form>
-  <input type="text" name="default"          value=":string is the default, implicit type for all fields"/>
-  <input type="text" name="text:string"      value=":string type explicitly defined"/>
-  <input type="text" name="excluded:skip"    value="Use :skip to ignore this field in the result"/>
+  <input type="text" name="default"          value=":string is default"/>
+  <input type="text" name="text:string"      value="some text string"/>
+  <input type="text" name="excluded:skip"    value="ignored field because of type :skip"/>
 
-  <input type="text" name="numbers[1]:number"           value="1"/>
-  <input type="text" name="numbers[1.1]:number"         value="1.1"/>
-  <input type="text" name="numbers[other stuff]:number" value="other stuff"/>
+  <input type="text" name="numbers[1]:number"        value="1"/>
+  <input type="text" name="numbers[1.1]:number"      value="1.1"/>
+  <input type="text" name="numbers[other]:number"    value="other"/>
 
   <input type="text" name="bools[true]:boolean"      value="true"/>
   <input type="text" name="bools[false]:boolean"     value="false"/>
   <input type="text" name="bools[0]:boolean"         value="0"/>
 
-  <input type="text" name="nulls[null]:null"            value="null"/>
-  <input type="text" name="nulls[other stuff]:null"     value="other stuff"/>
+  <input type="text" name="nulls[null]:null"         value="null"/>
+  <input type="text" name="nulls[other]:null"        value="other"/>
 
   <input type="text" name="arrays[empty]:array"         value="[]"/>
   <input type="text" name="arrays[list]:array"          value="[1, 2, 3]"/>
@@ -163,13 +163,14 @@ $('form').serializeJSON();
 
 // returns =>
 {
-  "default": ":string is the default, implicit type for all fields",
-  "text": ":string type explicitly defined",
+  "default": ":string is the default",
+  "text": "some text string",
   // excluded:skip is ignored in the output
+
   "numbers": {
     "1": 1,
     "1.1": 1.1,
-    "other stuff": NaN, // <-- "other stuff" is parsed as NaN
+    "other": NaN, // <-- "other" is parsed as NaN
   },
   "bools": {
     "true": true,
@@ -178,7 +179,7 @@ $('form').serializeJSON();
   },
   "nulls": {
     "null": null, // <-- "false", "null", "undefined", "", "0"  are parsed as null
-    "other stuff": "other stuff"
+    "other": "other" // <-- if not null, the type is a string
   },
   "arrays": { // <-- uses JSON.parse
     "empty": [],
@@ -202,6 +203,9 @@ Types can also be specified with the attribute `data-value-type`, instead of add
 </form>
 ```
 
+If your field names contain semicolons (e.g. `name="article[my::key][active]"`) the last part after the semicolon will be confused as an invalid type. One way to avoid that is to explicitly append the type `:string` (e.g. `name="article[my::key][active]:string"`), or to use the attribute `data-value-type="string"`. Data attributes have precedence over `:type` name suffixes. It is also possible to disable parsing `:type` suffixes with the option `{disableSemicolonTypes: true}`.
+
+
 ### Custom Types
 
 You can define your own types or override the defaults with the `customTypes` option. For example:
@@ -210,7 +214,7 @@ You can define your own types or override the defaults with the `customTypes` op
 <form>
   <input type="text" name="scary:alwaysBoo" value="not boo"/>
   <input type="text" name="str:string"      value="str"/>
-  <input type="text" name="number:number"   value="5"/>
+  <input type="text" name="five:number"     value="5"/>
 </form>
 ```
 
@@ -221,16 +225,16 @@ $('form').serializeJSON({
       return "boo";
     },
     string: function(str) {
-      return str + " override";
+      return str + "-override";
     }
   }
 });
 
 // returns =>
 {
-  "scary": "boo",        // <-- parsed with type :alwaysBoo
-  "str": "str override", // <-- parsed with new type :string (instead of the default)
-  "number": 5,           // <-- parsed with the default :number type
+  "scary": "boo",        // <-- parsed with "alwaysBoo" function type
+  "str": "str-override", // <-- parsed with "string" function override (instead of the default)
+  "five": 5,             // <-- parsed with "number" function, one of the default types
 }
 ```
 
@@ -242,19 +246,20 @@ Options
 
 With no options, `.serializeJSON()` returns the same as a regular HTML form submission when serialized as Rack/Rails params. In particular:
 
-  * Values are always **strings** (unless appending a `:type` to the input names)
+  * Values are **strings** (unless appending a `:type` to the input name)
   * Unchecked checkboxes are ignored (as defined in the W3C rules for [successful controls](http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2)).
   * Disabled elements are ignored (W3C rules)
   * Keys (input names) are always **strings** (nested params are objects by default)
 
-This can be altered with options:
+Available options:
 
   * **checkboxUncheckedValue: string**, string value used on unchecked checkboxes (otherwise those values are ignored). For example `{checkboxUncheckedValue: ""}`. If the value needs to be parsed (i.e. to a Boolean or Null) use a parse option (i.e. `parseBooleans: true`) or define the input with the `:boolean` or `:null` types.
   * **useIntKeysAsArrayIndex: true**, when using integers as keys (i.e. `<input name="foods[0]" value="banana">`), serialize as an array (`{"foods": ["banana"]}`) instead of an object (`{"foods": {"0": "banana"}`).
   * **skipFalsyValuesForFields: []**, skip given fields (by name) with falsy values. You can use `data-skip-falsy="true"` input attribute as well. Falsy values are determined after converting to a given type, note that `"0"` as `:string` (default) is still truthy, but `0` as `:number` is falsy.
   * **skipFalsyValuesForTypes: []**, skip given fields (by :type) with falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
-  * **customTypes: {}**, define your own :types or override the default types. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`.
-  * **defaultTypes: {defaultTypes}**, in case you want to re-define all the :types. Defined as an object like `{ type: function(value){...} }`
+  * **customTypes: {}**, define your own `:type` functions. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`. Custom types extend the **defaultTypes**.
+  * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default. This can be changed to use a different type like "number", or even a custom type function if defined in `customTypes`.
+  * **disableSemicolonTypes: true**, do not parse input names as types, allowing field names to use semicolons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
 
 More details about these options in the sections below.
 
