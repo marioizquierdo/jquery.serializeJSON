@@ -34,23 +34,30 @@
         // Convert the formAsArray into a serializedObject with nested keys
         var serializedObject = {};
         $.each(formAsArray, function (_i, obj) {
-            var name  = obj.name; // original input name
-            var value = obj.value; // input value
-            var objType = f.extractTypeAndNameWithNoType(name);
-            var nameWithNoType = objType.nameWithNoType; // input name with no type (i.e. "foo:string" => "foo")
+            var rawName  = obj.name; // original input name
+            var rawValue = obj.value; // input value
 
-            var type = objType.type || f.attrFromInputWithName($form, name, "data-value-type") || "string";
+            // Parse type
+            var name = rawName;
+            var type = f.attrFromInputWithName($form, rawName, "data-value-type");
+            if (!type && !opts.disableSemicolonTypes) {
+                var p = f.splitType(rawName); // "foo:string" => ["foo", "string"]
+                name = p[0];
+                type = p[1];
+            }
             if (type === "skip") {
                 return; // ignore fields with type skip
             }
-            var typedValue = f.applyTypeFunc(name, value, type, typeFunctions); // convert to string, number, boolean, null or customType
-
-            // ignore falsy inputs if specified
-            if (!typedValue && f.shouldSkipFalsy($form, name, nameWithNoType, type, opts)) {
-                return;
+            if (!type) {
+                type = "string"; // default type is string
             }
 
-            var keys = f.splitInputNameIntoKeysArray(nameWithNoType);
+            var typedValue = f.applyTypeFunc(rawName, rawValue, type, typeFunctions); // Parse type as string, number, etc.
+            if (!typedValue && f.shouldSkipFalsy($form, rawName, name, type, opts)) {
+                return; // ignore falsy inputs if specified in the options
+            }
+
+            var keys = f.splitInputNameIntoKeysArray(name);
             f.deepSet(serializedObject, keys, typedValue, opts);
         });
         return serializedObject;
@@ -59,9 +66,7 @@
     // Use $.serializeJSON as namespace for the auxiliar functions
     // and to define defaults
     $.serializeJSON = {
-
-        // reassign to override option defaults for all serializeJSON calls
-        defaultOptions: {},
+        defaultOptions: {}, // reassign to override option defaults for all serializeJSON calls
 
         defaultBaseOptions: { // do not modify, use defaultOptions instead
             checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
@@ -70,6 +75,7 @@
             skipFalsyValuesForTypes: [], // skip serialization of falsy values for listed value types
             skipFalsyValuesForFields: [], // skip serialization of falsy values for listed field names
 
+            disableSemicolonTypes: false, // do not interpret ":type" suffix as a type
             customTypes: {}, // extends defaultTypes
             defaultTypes: {
                 "string":  function(str) { return String(str); },
@@ -95,8 +101,9 @@
                 "skipFalsyValuesForTypes",
                 "skipFalsyValuesForFields",
 
-                "defaultTypes",
+                "disableSemicolonTypes",
                 "customTypes",
+                "defaultTypes"
             ];
             for (var opt in options) {
                 if (validOpts.indexOf(opt) === -1) {
@@ -144,17 +151,17 @@
             });
         },
 
-        // Returns and object with properties {name_without_type, type} from a given name.
-        // The type is null if none specified. Example:
-        //   "foo"           =>  {nameWithNoType: "foo",      type:  null}
-        //   "foo:boolean"   =>  {nameWithNoType: "foo",      type: "boolean"}
-        //   "foo[bar]:null" =>  {nameWithNoType: "foo[bar]", type: "null"}
-        extractTypeAndNameWithNoType : function(name) {
-            var match = name.match(/(.*):([^:]+)$/);
-            if (match) {
-                return {nameWithNoType: match[1], type: match[2]};
+        // Splits a field name into the name and the type. Examples:
+        //   "foo"           =>  ["foo", ""]
+        //   "foo:boolean"   =>  ["foo", "boolean"]
+        //   "foo[bar]:null" =>  ["foo[bar]", "null"]
+        splitType : function(name) {
+            var parts = name.split(":");
+            if (parts.length > 1) {
+                var t = parts.pop();
+                return [parts.join(""), t];
             } else {
-                return {nameWithNoType: name, type: null};
+                return [name, ""];
             }
         },
 

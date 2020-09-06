@@ -442,7 +442,7 @@ describe("$.serializeJSON", function () {
         });
 
         describe("data-value-type attribute", function() {
-            it("should set type if field name do not contain :type definition", function() {
+            it("should set type if field name does not contain :type definition", function() {
                 $form = $("<form>");
                 $form.append($("<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
                 $form.append($("<input type=\"text\" name=\"fooDataWithBrackets[kokoszka]\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
@@ -485,10 +485,10 @@ describe("$.serializeJSON", function () {
                 it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
                     var $inputs = $(
                         "<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>" +
-            "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
-            "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
-            "<input type=\"text\" name=\"stringData\" data-value-type=\"string\"   value=\"data-value-type=string type overrides parsing options\"/>" +
-            "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
+                        "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
+                        "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
+                        "<input type=\"text\" name=\"stringData\" data-value-type=\"string\"   value=\"data-value-type=string type overrides parsing options\"/>" +
+                        "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
                     );
 
                     obj = $inputs.serializeJSON({
