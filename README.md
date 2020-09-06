@@ -417,36 +417,16 @@ $('form').serializeJSON({useIntKeysAsArrayIndex: true});
 
 ## Option Defaults
 
-All options defaults are defined in `$.serializeJSON.defaultOptions`. You can just modify it to avoid setting the option on every call to `serializeJSON`.
-
-For example:
+All options defaults are defined in `$.serializeJSON.defaultOptions`. You can just modify it to avoid setting the option on every call to `serializeJSON`. For example:
 
 ```javascript
-$.serializeJSON.defaultOptions.parseAll = true; // parse booleans, numbers and nulls by default
-
-$('form').serializeJSON(); // No options => then use $.serializeJSON.defaultOptions
-
-// returns =>
-{
-  "bool": {
-    "true": true,
-    "false": false,
-  }
-  "number": {
-    "0": 0,
-    "1": 1,
-    "2.2": 2.2,
-    "-2.25": -2.25,
-  }
-  "null": null,
-  "string": "text is always string",
-  "empty": ""
-}
+$.serializeJSON.defaultOptions.checkboxUncheckedValue = ""; // include unckecked checkboxes as empty strings
+$.serializeJSON.defaultOptions.customTypes.foo = (str) => { return str + "-foo"; }; // define global custom type ":foo"
 ```
 
 
-Alternative Plugins
--------------------
+Alternatives
+------------
 
 Other plugins solve the same problem in similar ways:
 
