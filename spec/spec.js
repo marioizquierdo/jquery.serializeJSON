@@ -617,7 +617,7 @@ describe("$.serializeJSON", function () {
         describe("validateOptions", function() {
             it("should raise an error if the option is not one of the valid options", function() {
                 expect(function(){ $form.serializeJSON({invalidOption: true}); })
-                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, disableSemicolonTypes, customTypes, defaultTypes, defaultType"));
+                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, disableColonTypes, customTypes, defaultTypes, defaultType"));
             });
         });
 
@@ -1010,7 +1010,7 @@ describe("$.serializeJSON", function () {
         });
 
 
-        describe("disableSemicolonTypes", function() {
+        describe("disableColonTypes", function() {
             it("ignores type suffixes from input names", function() {
                 $form = $("<form>");
                 $form.append($("<input type=\"text\" name=\"foo\"              value=\"bar\"/>"));
@@ -1018,7 +1018,7 @@ describe("$.serializeJSON", function () {
                 $form.append($("<input type=\"text\" name=\"string:string\"    value=\"keeps full input name\"/>"));
                 $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"not skip because is not parsed as a type\"/>"));
 
-                obj = $form.serializeJSON({ disableSemicolonTypes: true });
+                obj = $form.serializeJSON({ disableColonTypes: true });
 
                 expect(obj).toEqual({
                     "foo": "bar", // nothing special over here
@@ -1037,7 +1037,7 @@ describe("$.serializeJSON", function () {
                 $form.append($("<input type=\"text\" name=\"foostr::kaka\"  data-value-type=\"string\"     value=\"string from data attr\"/>"));
 
                 obj = $form.serializeJSON({
-                    disableSemicolonTypes: true,
+                    disableColonTypes: true,
                     defaultType: "number",
                     customTypes: {
                         alwaysBoo: function() { return "Boo"; }

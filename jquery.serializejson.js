@@ -40,7 +40,7 @@
             // Parse type
             var name = rawName;
             var type = f.attrFromInputWithName($form, rawName, "data-value-type");
-            if (!type && !opts.disableSemicolonTypes) {
+            if (!type && !opts.disableColonTypes) {
                 var p = f.splitType(rawName); // "foo:string" => ["foo", "string"]
                 name = p[0];
                 type = p[1];
@@ -76,7 +76,7 @@
             skipFalsyValuesForTypes: [], // skip serialization of falsy values for listed value types
             skipFalsyValuesForFields: [], // skip serialization of falsy values for listed field names
 
-            disableSemicolonTypes: false, // do not interpret ":type" suffix as a type
+            disableColonTypes: false, // do not interpret ":type" suffix as a type
             customTypes: {}, // extends defaultTypes
             defaultTypes: {
                 "string":  function(str) { return String(str); },
@@ -103,7 +103,7 @@
                 "skipFalsyValuesForTypes",
                 "skipFalsyValuesForFields",
 
-                "disableSemicolonTypes",
+                "disableColonTypes",
                 "customTypes",
                 "defaultTypes",
                 "defaultType"

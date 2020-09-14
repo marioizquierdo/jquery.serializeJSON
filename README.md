@@ -203,7 +203,7 @@ Types can also be specified with the attribute `data-value-type`, instead of add
 </form>
 ```
 
-If your field names contain semicolons (e.g. `name="article[my::key][active]"`) the last part after the semicolon will be confused as an invalid type. One way to avoid that is to explicitly append the type `:string` (e.g. `name="article[my::key][active]:string"`), or to use the attribute `data-value-type="string"`. Data attributes have precedence over `:type` name suffixes. It is also possible to disable parsing `:type` suffixes with the option `{disableSemicolonTypes: true}`.
+If your field names contain colons (e.g. `name="article[my::key][active]"`) the last part after the colon will be confused as an invalid type. One way to avoid that is to explicitly append the type `:string` (e.g. `name="article[my::key][active]:string"`), or to use the attribute `data-value-type="string"`. Data attributes have precedence over `:type` name suffixes. It is also possible to disable parsing `:type` suffixes with the option `{disableColonTypes: true}`.
 
 
 ### Custom Types
@@ -259,7 +259,7 @@ Available options:
   * **skipFalsyValuesForTypes: []**, skip given fields (by :type) with falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
   * **customTypes: {}**, define your own `:type` functions. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`. Custom types extend the **defaultTypes**.
   * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default. This can be changed to use a different type like "number", or even a custom type function if defined in `customTypes`.
-  * **disableSemicolonTypes: true**, do not parse input names as types, allowing field names to use semicolons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
+  * **disableColonTypes: true**, do not parse input names as types, allowing field names to use colons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
 
 More details about these options in the sections below.
 
@@ -460,7 +460,8 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
- * *3.0.0* (Sep 06, 2020): Improve types (PR #105) and remove parsing options (PR #104). The type system with `:type` suffixes, `data-value-type` attributes, and a combination of the options `customTypes`, `disableSemicolonTypes` and `defaultType`, are safer and easier to use than the previous options `parseNumbers`, `parseAll`, etc. Thanks [Laykou](https://github.com/Laykou) for suggesting [PR #102] that pointed the problems of inputs with semicolons in their names.
+ * *3.1.0* (Sep 13, 2020): Rename option `disableColonTypes` that was mistakenly named `disableSemicolonTypes`. Fix typos in README.
+ * *3.0.0* (Sep 06, 2020): Improve types (PR #105) and remove parsing options (PR #104). The type system with `:type` suffixes, `data-value-type` attributes, and a combination of the options `customTypes`, `disableColonTypes` and `defaultType`, are safer and easier to use than the previous options `parseNumbers`, `parseAll`, etc. Thanks [Laykou](https://github.com/Laykou) for suggesting [PR #102] that pointed the problems of inputs with colons in their names.
  * *2.9.0* (Jan 12, 2018): Overrides to `customTypes.string` function now also apply to fields with no type, because `:string` is the default implicit type. Thanks [JocaPC](https://github.com/JocaPC) for reporting the [issue #83](https://github.com/marioizquierdo/jquery.serializeJSON/issues/83).
  * *2.8.1* (Dec 09, 2016): Identify issue #67 and throw a descriptive error with a link to the issue, that explains why nested arrays of objects with checkboxes with unchecked values are not supported.
  * *2.8.0* (Dec 09, 2016): Add options `skipFalsyValuesForFields`, `skipFalsyValuesForTypes` and attr `data-skip-falsy` to easily skip falsy values (which includes empty strings). Thanks to [milkaknap](https://github.com/milkaknap).
