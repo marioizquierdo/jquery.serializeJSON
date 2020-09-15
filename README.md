@@ -20,9 +20,9 @@ Usage Example
 HTML form:
 ```html
 <form>
-  <input type="text" name="title" value="Finding Loot"/>
-  <input type="text" name="author[name]" value="John Smith"/>
-  <input type="text" name="author[job]"  value="Legendary Pirate"/>
+  <input type="text" name="title" value="Dune"/>
+  <input type="text" name="author[name]" value="Frank Herbert"/>
+  <input type="text" name="author[period]" value="1945–1986"/>
 </form>
 ```
 
@@ -32,10 +32,10 @@ $('form').serializeJSON();
 
 // returns =>
 {
-  title: "Finding Loot",
+  title: "Dune",
   author: {
-    name: "John Smith",
-    job: "Legendary Pirate"
+    name: "Frank Herbert",
+    period: "1945–1986"
   }
 }
 ```
@@ -46,7 +46,7 @@ HTML form:
 ```html
 <form id="my-profile">
   <!-- simple attribute -->
-  <input type="text" name="fullName"              value="Mario Izquierdo" />
+  <input type="text" name="name" value="Mario" />
 
   <!-- nested attributes -->
   <input type="text" name="address[city]"         value="San Francisco" />
@@ -92,7 +92,7 @@ $('#my-profile').serializeJSON();
 
 // returns =>
 {
-  fullName: "Mario Izquierdo",
+  fullName: "Mario",
 
   address: {
     city: "San Francisco",
@@ -131,7 +131,7 @@ This means that it only serializes the inputs supported by `.serializeArray()`, 
 Parse values with :types
 ------------------------
 
-Fields values are **string** by default. But can be parsed with types by appending the `:type` suffix to the field name:
+Fields values are `:string` by default. But can be parsed with types by appending a `:type` suffix to the field name:
 
 ```html
 <form>
@@ -208,7 +208,7 @@ If your field names contain colons (e.g. `name="article[my::key][active]"`) the 
 
 ### Custom Types
 
-You can define your own types or override the defaults with the `customTypes` option. For example:
+Use the `customTypes` option to provide your own type functions. For example:
 
 ```html
 <form>
@@ -221,24 +221,37 @@ You can define your own types or override the defaults with the `customTypes` op
 ```javascript
 $('form').serializeJSON({
   customTypes: {
-    alwaysBoo: function(str) {
-      return "boo";
-    },
-    string: function(str) {
-      return str + "-override";
-    }
+    alwaysBoo: (str) => { return "boo"; },
   }
 });
 
 // returns =>
 {
-  "scary": "boo",        // <-- parsed with "alwaysBoo" function type
-  "str": "str-override", // <-- parsed with "string" function override (instead of the default)
-  "five": 5,             // <-- parsed with "number" function, one of the default types
+  "scary": "boo",  // <-- parsed with custom type "alwaysBoo"
+  "str": "str",    // <-- parsed with default type "string"
+  "five": 5,       // <-- parsed with default type "number"
 }
 ```
 
-The default types are defined in `$.serializeJSON.defaultOptions.defaultTypes`. If you want to define your own set of types, you could also re-define that option (it will not override the types, but define a new set of types).
+The `customTypes` option can also include one of the `detaultTypes`, in which case it will override the default type:
+
+```javascript
+$('form').serializeJSON({
+  customTypes: {
+    alwaysBoo: (str) => { return "boo"; },
+    string: (str) => { return str + "-OVERDRIVE"; },
+  }
+});
+
+// returns =>
+{
+  "scary": "boo",         // <-- parsed with custom type "alwaysBoo"
+  "str": "str-OVERDRIVE", // <-- parsed with custom override "string"
+  "five": 5,              // <-- parsed with default type "number"
+}
+```
+
+The default types are defined in `$.serializeJSON.defaultOptions.defaultTypes`.
 
 
 Options
@@ -253,12 +266,13 @@ With no options, `.serializeJSON()` returns the same as a regular HTML form subm
 
 Available options:
 
-  * **checkboxUncheckedValue: string**, string value used on unchecked checkboxes (otherwise those values are ignored). For example `{checkboxUncheckedValue: ""}`. If the value needs to be parsed (i.e. to a Boolean or Null) use a parse option (i.e. `parseBooleans: true`) or define the input with the `:boolean` or `:null` types.
+  * **checkboxUncheckedValue: string**, return this value on checkboxes that are not checked. Without this option, they would be ignored. For example: `{checkboxUncheckedValue: ""}` returns an empty string. If the field has a `:type`, the returned value will be properly parsed; for example if the field type is `:boolean`, it returns `false` instead of an empty string.
   * **useIntKeysAsArrayIndex: true**, when using integers as keys (i.e. `<input name="foods[0]" value="banana">`), serialize as an array (`{"foods": ["banana"]}`) instead of an object (`{"foods": {"0": "banana"}`).
   * **skipFalsyValuesForFields: []**, skip given fields (by name) with falsy values. You can use `data-skip-falsy="true"` input attribute as well. Falsy values are determined after converting to a given type, note that `"0"` as `:string` (default) is still truthy, but `0` as `:number` is falsy.
   * **skipFalsyValuesForTypes: []**, skip given fields (by :type) with falsy values (i.e. `skipFalsyValuesForTypes: ["string", "number"]` would skip `""` for `:string` fields, and `0` for `:number` fields).
-  * **customTypes: {}**, define your own `:type` functions. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`. Custom types extend the **defaultTypes**.
-  * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default. This can be changed to use a different type like "number", or even a custom type function if defined in `customTypes`.
+  * **customTypes: {}**, define your own `:type` functions. Defined as an object like `{ type: function(value){...} }`. For example: `{customTypes: {nullable: function(str){ return str || null; }}`. Custom types extend defaultTypes.
+  * **defaultTypes: {defaults}**, contains the orignal type functions `string`, `number`, `boolean`, `null`, `array`, `object` and `skip`.
+  * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default, but it could be changed to use a different type function instead.
   * **disableColonTypes: true**, do not parse input names as types, allowing field names to use colons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
 
 More details about these options in the sections below.
@@ -305,57 +319,54 @@ $('form').serializeJSON({checkboxUncheckedValue: "false"});
 {check1: "true", check2: "false", check3: "false"}
 ```
 
-The `data-unchecked-value` HTML attribute can be used instead:
+The `data-unchecked-value` HTML attribute can be used to targed specific values per field:
 
 ```html
 <form id="checkboxes">
-  <input type="checkbox" name="checked[bool]"  value="true" data-unchecked-value="false" checked/>
-  <input type="checkbox" name="checked[bin]"   value="1"    data-unchecked-value="0"     checked/>
-  <input type="checkbox" name="checked[cool]"  value="YUP"                               checked/>
+  <input type="checkbox" name="checked[b]:boolean"   value="true" data-unchecked-value="false" checked/>
+  <input type="checkbox" name="checked[numb]"        value="1"    data-unchecked-value="0"     checked/>
+  <input type="checkbox" name="checked[cool]"        value="YUP"                               checked/>
 
-  <input type="checkbox" name="unchecked[bool]"  value="true" data-unchecked-value="false" />
-  <input type="checkbox" name="unchecked[bin]"   value="1"    data-unchecked-value="0" />
-  <input type="checkbox" name="unchecked[cool]"  value="YUP" /> <!-- No unchecked value specified -->
+  <input type="checkbox" name="unchecked[b]:boolean" value="true" data-unchecked-value="false" />
+  <input type="checkbox" name="unchecked[numb]"      value="1"    data-unchecked-value="0" />
+  <input type="checkbox" name="unchecked[cool]"      value="YUP" /> <!-- No unchecked value specified -->
 </form>
 ```
 
-Serializes including unchecked values. No option is needed in this case:
-
 ```javascript
-$('form#checkboxes').serializeJSON(); // Note no option is used
+$('form#checkboxes').serializeJSON(); // No option is needed if the data attribute is used
 
 // returns =>
 {
   'checked': {
-    'bool':  'true',
-    'bin':   '1',
+    'b':     true,
+    'numb':  '1',
     'cool':  'YUP'
   },
   'unchecked': {
-    'bool': 'false',
+    'bool': false,
     'bin':  '0'
-    // Note that unchecked cool does not appear, because it doesn't use data-unchecked-value
+    // 'cool' is not included, because it doesn't use data-unchecked-value
   }
 }
 ```
 
-You can use both the option `checkboxUncheckedValue` and the attribute `data-unchecked-value` at the same time, in which case the attribute has precedence over the option.
-And remember that you can combine it with other options to parse values as well.
+You can use both the option `checkboxUncheckedValue` and the attribute `data-unchecked-value` at the same time, in which case the option is used as default value (the data attribute has precedence).
 
 ```javascript
-$('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE', parseBooleans: true, parseNumbers: true});
+$('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE'});
 
 // returns =>
 {
   'checked': {
-    'bool':  true,
-    'bin':   1,
+    'b':     true,
+    'numb':  '1',
     'cool':  'YUP'
   },
   'unchecked': {
-    'bool': false, // value from data-unchecked-value attribute, and parsed with parseBooleans
-    'bin':  0,     // value from data-unchecked-value attribute, and parsed with parseNumbers
-    'cool': 'NOPE' // value from checkboxUncheckedValue option
+    'bool': false,   // value from data-unchecked-value attribute, and parsed with type "boolean"
+    'bin':  '0',     // value from data-unchecked-value attribute
+    'cool': 'NOPE'   // value from checkboxUncheckedValue option
   }
 }
 ```
