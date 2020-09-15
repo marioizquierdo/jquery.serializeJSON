@@ -226,6 +226,9 @@ $('form').serializeJSON({
     },
     string: function(str) {
       return str + "-override";
+    },
+    number: function(str) {
+      return Number(str);
     }
   }
 });
