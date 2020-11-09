@@ -244,52 +244,65 @@
 
             var key = keys[0];
 
-            // Only one key, then it's not a deepSet, just assign the value.
+            // Only one key, then it's not a deepSet, just assign the value in the object or add it to the array.
             if (keys.length === 1) {
-                if (key === "") {
-                    o.push(value); // '' is used to push values into the array (assume o is an array)
+                if (key === "") { // push values into an array (o must be an array)
+                    o.push(value);
                 } else {
-                    o[key] = value; // other keys can be used as object keys or array indexes
+                    o[key] = value; // keys can be object keys (strings) or array indexes (numbers)
                 }
-
-                // With more keys is a deepSet. Apply recursively.
-            } else {
-                var nextKey = keys[1];
-
-                // "" is used to push values into the array,
-                // with nextKey, set the value into the same object, in object[nextKey].
-                // Covers the case of ["", "foo"] and ["", "var"] to push the object {foo, var}, and the case of nested arrays.
-                if (key === "") {
-                    var lastIdx = o.length - 1; // asume o is array
-                    var lastVal = o[lastIdx];
-                    if (isObject(lastVal) && (isUndefined(lastVal[nextKey]) || keys.length > 2)) { // if nextKey is not present in the last object element, or there are more keys to deep set
-                        key = lastIdx; // then set the new value in the same object element
-                    } else {
-                        key = lastIdx + 1; // otherwise, point to set the next index in the array
-                    }
-                }
-
-                // "" is used to push values into the array "array[]"
-                if (nextKey === "") {
-                    if (isUndefined(o[key]) || !$.isArray(o[key])) {
-                        o[key] = []; // define (or override) as array to push values
-                    }
-                } else {
-                    if (opts.useIntKeysAsArrayIndex && isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
-                        if (isUndefined(o[key]) || !$.isArray(o[key])) {
-                            o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
-                        }
-                    } else { // for anything else, use an object, where nextKey is going to be the attribute name
-                        if (isUndefined(o[key]) || !isObject(o[key])) {
-                            o[key] = {}; // define (or override) as object, to set nested properties
-                        }
-                    }
-                }
-
-                // Recursively set the inner object
-                var tail = keys.slice(1);
-                f.deepSet(o[key], tail, value, opts);
+                return;
             }
+
+            var nextKey = keys[1]; // nested key
+            var tailKeys = keys.slice(1); // list of all other nested keys (nextKey is first)
+
+            if (key === "") { // push nested objects into an array (o must be an array)
+                var lastIdx = o.length - 1;
+                var lastVal = o[lastIdx];
+
+                // if the last value is an object or array, and the new key is not set yet
+                if (isObject(lastVal) && isUndefined(f.deepGet(lastVal, tailKeys))) {
+                    key = lastIdx; // then set the new value as a new attribute of the same object
+                } else {
+                    key = lastIdx + 1; // otherwise, add a new element in the array
+                }
+            }
+
+            if (nextKey === "") { // "" is used to push values into the nested array "array[]"
+                if (isUndefined(o[key]) || !$.isArray(o[key])) {
+                    o[key] = []; // define (or override) as array to push values
+                }
+            } else {
+                if (opts.useIntKeysAsArrayIndex && isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
+                    if (isUndefined(o[key]) || !$.isArray(o[key])) {
+                        o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
+                    }
+                } else { // nextKey is going to be the nested object's attribute
+                    if (isUndefined(o[key]) || !isObject(o[key])) {
+                        o[key] = {}; // define (or override) as object, to set nested properties
+                    }
+                }
+            }
+
+            // Recursively set the inner object
+            f.deepSet(o[key], tailKeys, value, opts);
+        },
+
+        deepGet: function (o, keys) {
+            var f = $.serializeJSON;
+            if (isUndefined(o) || isUndefined(keys) || keys.length === 0 || (!isObject(o) && !$.isArray(o))) {
+                return o;
+            }
+            var key = keys[0];
+            if (key === "") { // "" means next array index (used by deepSet)
+                return undefined;
+            }
+            if (keys.length === 1) {
+                return o[key];
+            }
+            var tailKeys = keys.slice(1);
+            return f.deepGet(o[key], tailKeys);
         }
     };
 
@@ -304,7 +317,7 @@
         }
     };
 
-    var isObject =          function(obj) { return obj === Object(obj); };
+    var isObject =          function(obj) { return obj === Object(obj); }; // true for Objects and Arrays
     var isUndefined =       function(obj) { return obj === void 0; }; // safe check for undefined values
     var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
 }));

@@ -1,6 +1,6 @@
 // serializeJSON
 /* eslint-env jasmine, jquery */
-describe("$.serializeJSON", function () {
+describe("$.serializeJSON", function() {
     var obj, $form;
 
     it("accepts a jQuery or Zepto object with a form", function() {
@@ -66,44 +66,6 @@ describe("$.serializeJSON", function () {
         });
     });
 
-    it("serializes unindexed-arrays by adding elements to the array", function() {
-        $form = form([
-            inputText("jobbies[]", "code"),
-            inputText("jobbies[]", "climbing"),
-        ]);
-
-        obj = $form.serializeJSON();
-        expect(obj).toEqual({
-            jobbies: ["code", "climbing"]
-        });
-    });
-
-    it("serializes unindexed-arrays with nested objects by adding new elements when a nested key is already existing in the nested object", function() {
-        $form = form([
-            inputText("projects[][name]",     "serializeJSON"),
-            inputText("projects[][language]", "javascript"),
-
-            inputText("projects[][name]",     "bettertabs"),
-            inputText("projects[][language]", "ruby"),
-
-            inputText("projects[][name]",     "formwell"),
-            inputText("projects[][morelanguages][]", "coffeescript"),
-            inputText("projects[][morelanguages][]", "javascript"),
-        ]);
-
-        obj = $form.serializeJSON();
-        expect(obj).toEqual({
-            projects: [
-                { name: "serializeJSON", language: "javascript" },
-                { name: "bettertabs",    language: "ruby" },
-                { name: "formwell",      morelanguages: ["coffeescript", "javascript"] },
-            ]
-        });
-    });
-
-    // arrays with no index and nested objects
-    // ... TODO
-
     it("serializes attribute names that look like integers as string object keys by default", function() {
         $form = form([
             inputText("foo[0]",    "zero"),
@@ -122,6 +84,55 @@ describe("$.serializeJSON", function () {
                     "1": "two-one"
                 }
             }
+        });
+    });
+
+    describe("unindexed arrays ([])", function() {
+        it("pushes elements into the array", function() {
+            $form = form([
+                inputText("jobbies[]", "code"),
+                inputText("jobbies[]", "climbing"),
+            ]);
+
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({
+                jobbies: ["code", "climbing"]
+            });
+        });
+
+        it("pushes nested objects if nested keys are repeated", function() {
+            $form = form([
+                inputText("projects[][name]",     "serializeJSON"),
+                inputText("projects[][language]", "javascript"),
+
+                inputText("projects[][name]",     "bettertabs"),
+                inputText("projects[][language]", "ruby"),
+
+                inputText("projects[][name]",     "formwell"),
+                inputText("projects[][morelanguages][]", "coffeescript"),
+                inputText("projects[][morelanguages][]", "javascript"),
+
+                inputText("people[][name][first]", "Bruce"),
+                inputText("people[][name][last]",  "Lee"),
+                inputText("people[][age]:number", "33"),
+
+                inputText("people[][name][first]", "Morihei"),
+                inputText("people[][name][last]", "Ueshiba"),
+                inputText("people[][age]:number", "86"),
+            ]);
+
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({
+                projects: [
+                    { name: "serializeJSON", language: "javascript" },
+                    { name: "bettertabs",    language: "ruby" },
+                    { name: "formwell",      morelanguages: ["coffeescript", "javascript"] },
+                ],
+                people: [
+                    { name: {first: "Bruce", last: "Lee"}, age: 33 },
+                    { name: {first: "Morihei", last: "Ueshiba"}, age: 86 }
+                ],
+            });
         });
     });
 
@@ -507,7 +518,7 @@ describe("$.serializeJSON", function () {
         });
 
         if ($.fn.jquery) { // not supported on Zepto
-            it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
+            it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function() {
                 var $inputs = $(
                     "<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>" +
                     "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
@@ -1198,52 +1209,52 @@ describe("$.serializeJSON.splitInputNameIntoKeysArray", function() {
 });
 
 // deepSet
-// used to assign nested keys like "address[state][abbr]" to an object
-describe("$.serializeJSON.deepSet", function () {
+// Assigns nested keys like "address[state][abbr]" to an object
+describe("$.serializeJSON.deepSet", function() {
     var deepSet = $.serializeJSON.deepSet;
     var arr, obj, v, v2;
 
-    beforeEach(function () {
+    beforeEach(function() {
         obj = {};
         arr = [];
         v = "v";
         v2 = "v2";
     });
 
-    it("simple attr ['foo']", function () {
+    it("simple attr ['foo']", function() {
         deepSet(obj, ["foo"], v);
         expect(obj).toEqual({foo: v});
     });
 
-    it("simple attr ['foo'] twice should set the last value", function () {
+    it("simple attr ['foo'] twice should set the last value", function() {
         deepSet(obj, ["foo"], v);
         deepSet(obj, ["foo"], v2);
         expect(obj).toEqual({foo: v2});
     });
 
-    it("nested attr ['inn', 'foo']", function () {
+    it("nested attr ['inn', 'foo']", function() {
         deepSet(obj, ["inn", "foo"], v);
         expect(obj).toEqual({inn: {foo: v}});
     });
 
-    it("nested attr ['inn', 'foo'] twice should set the last value", function () {
+    it("nested attr ['inn', 'foo'] twice should set the last value", function() {
         deepSet(obj, ["inn", "foo"], v);
         deepSet(obj, ["inn", "foo"], v2);
         expect(obj).toEqual({inn: {foo: v2}});
     });
 
-    it("multiple assign attr ['foo'] and ['inn', 'foo']", function () {
+    it("multiple assign attr ['foo'] and ['inn', 'foo']", function() {
         deepSet(obj, ["foo"], v);
         deepSet(obj, ["inn", "foo"], v);
         expect(obj).toEqual({foo: v, inn: {foo: v}});
     });
 
-    it("very nested attr ['inn', 'inn', 'inn', 'foo']", function () {
+    it("very nested attr ['inn', 'inn', 'inn', 'foo']", function() {
         deepSet(obj, ["inn", "inn", "inn", "foo"], v);
         expect(obj).toEqual({inn: {inn: {inn: {foo: v}}}});
     });
 
-    it("array push with empty index, if repeat same object element key then it creates a new element", function () {
+    it("array push with empty index, if repeat same object element key then it creates a new element", function() {
         deepSet(arr, [""], v);        //=> arr === [v]
         deepSet(arr, ["", "foo"], v); //=> arr === [v, {foo: v}]
         deepSet(arr, ["", "bar"], v); //=> arr === [v, {foo: v, bar: v}]
@@ -1251,7 +1262,7 @@ describe("$.serializeJSON.deepSet", function () {
         expect(arr).toEqual([v, {foo: v, bar: v}, {bar: v}]);
     });
 
-    it("array push with empty index and empty value, also creates a new element", function () {
+    it("array push with empty index and empty value, also creates a new element", function() {
         deepSet(arr, ["", "foo"], ""); //=> arr === [{foo: ''}]
         deepSet(arr, ["", "foo"], ""); //=> arr === [{foo: ''}, {foo: ''}, {foo: v}]
         deepSet(arr, ["", "foo"], v);  //=> arr === [{foo: ''}, {foo: ''}, {foo: v}]
@@ -1259,31 +1270,62 @@ describe("$.serializeJSON.deepSet", function () {
         expect(arr).toEqual([{foo: ""}, {foo: ""}, {foo: v}, {foo: ""}]);
     });
 
-    it("array assign with empty index should push the element", function () {
+    it("array assign with empty index should push the element", function() {
         deepSet(arr, [""], 1);
         deepSet(arr, [""], 2);
         deepSet(arr, [""], 3);
         expect(arr).toEqual([1,2,3]);
     });
 
-    it("nested array assign with empty index should push the element", function () {
+    it("nested array assign with empty index should push the element", function() {
         deepSet(obj, ["arr", ""], 1);
         deepSet(obj, ["arr", ""], 2);
         deepSet(obj, ["arr", ""], 3);
         expect(obj).toEqual({arr: [1,2,3]});
     });
 
-    it("nested arrays with empty indexes should push the elements to the most deep array", function () {
+    it("nested arrays with empty indexes should push the elements to the most deep array", function() {
         deepSet(arr, ["", "", ""], 1);
         deepSet(arr, ["", "", ""], 2);
         deepSet(arr, ["", "", ""], 3);
         expect(arr).toEqual([[[1, 2, 3]]]);
     });
 
+    it("nested arrays with nested objects shuold push new objects only when the nested key already exists", function() {
+        deepSet(arr, ["", "name", "first"], "Bruce");
+        expect(arr).toEqual([
+            {name: {first: "Bruce"}}
+        ]);
+        deepSet(arr, ["", "name", "last"], "Lee");
+        expect(arr).toEqual([
+            {name: {first: "Bruce", last: "Lee"}}
+        ]);
+        deepSet(arr, ["", "age"], 33);
+        expect(arr).toEqual([
+            {name: {first: "Bruce", last: "Lee"}, age: 33}
+        ]);
+
+        deepSet(arr, ["", "name", "first"], "Morihei");
+        expect(arr).toEqual([
+            {name: {first: "Bruce", last: "Lee"}, age: 33},
+            {name: {first: "Morihei"}}
+        ]);
+        deepSet(arr, ["", "name", "last"], "Ueshiba");
+        expect(arr).toEqual([
+            {name: {first: "Bruce", last: "Lee"}, age: 33},
+            {name: {first: "Morihei", last: "Ueshiba"}}
+        ]);
+        deepSet(arr, ["", "age"], 86);
+        expect(arr).toEqual([
+            {name: {first: "Bruce", last: "Lee"}, age: 33},
+            {name: {first: "Morihei", last: "Ueshiba"}, age: 86}
+        ]);
+    });
+
     describe("with useIntKeysAsArrayIndex option", function(){
         var intIndx = {useIntKeysAsArrayIndex: true};
 
-        it("simple array ['0']", function () {
+        it("simple array ['0']", function() {
             arr = [];
             deepSet(arr, ["0"], v);
             expect(arr).toEqual([v]); // still sets the value in the array because the 1st argument is an array
@@ -1293,7 +1335,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(arr).toEqual([v]);
         });
 
-        it("nested simple array ['arr', '0']", function () {
+        it("nested simple array ['arr', '0']", function() {
             obj = {};
             deepSet(obj, ["arr", "0"], v);
             expect(obj).toEqual({"arr": {"0": v}});
@@ -1303,7 +1345,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(obj).toEqual({"arr": [v]});
         });
 
-        it("nested simple array multiple values", function () {
+        it("nested simple array multiple values", function() {
             obj = {};
             deepSet(obj, ["arr", "1"], v2);
             deepSet(obj, ["arr", "0"], v);
@@ -1315,7 +1357,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(obj).toEqual({"arr": [v, v2]});
         });
 
-        it("nested arrays with indexes should create a matrix", function () {
+        it("nested arrays with indexes should create a matrix", function() {
             arr = [];
             deepSet(arr, ["0", "0", "0"], 1);
             deepSet(arr, ["0", "0", "1"], 2);
@@ -1339,7 +1381,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(arr).toEqual([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
         });
 
-        it("nested object as array element ['arr', '0', 'foo']", function () {
+        it("nested object as array element ['arr', '0', 'foo']", function() {
             obj = {};
             deepSet(obj, ["arr", "0", "foo"], v);
             expect(obj).toEqual({arr: {"0": {foo: v}}});
@@ -1349,7 +1391,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(obj).toEqual({arr: [{foo: v}]});
         });
 
-        it("array of objects", function (){
+        it("array of objects", function(){
             obj = {};
             deepSet(obj, ["arr", "0", "foo"], v);
             deepSet(obj, ["arr", "0", "bar"], v);
@@ -1365,7 +1407,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(obj).toEqual({"arr": [{foo: v, bar: v}, {foo: v2, bar: v2}]});
         });
 
-        it("nested arrays mixing empty indexes with numeric indexes should push when using empty but assign when using numeric", function () {
+        it("nested arrays mixing empty indexes with numeric indexes should push when using empty but assign when using numeric", function() {
             obj = {};
             deepSet(obj, ["arr", "", "0", ""], 1);
             deepSet(obj, ["arr", "", "1", ""], 2);
@@ -1381,7 +1423,7 @@ describe("$.serializeJSON.deepSet", function () {
             expect(obj).toEqual({"arr": [[[1, 3], [2, 4]]]});
         });
 
-        it("should set all different nested values", function () {
+        it("should set all different nested values", function() {
             deepSet(obj, ["foo"], v, intIndx);
             deepSet(obj, ["inn", "foo"], v, intIndx);
             deepSet(obj, ["inn", "arr", "0"], v, intIndx);
