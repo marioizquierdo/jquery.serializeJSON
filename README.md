@@ -471,6 +471,7 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
+ * *3.1.1* (Nov 09, 2020): Bugfix #110 (Allow unindexed arrays with multiple levels of nested objects).
  * *3.1.0* (Sep 13, 2020): Rename option `disableColonTypes` that was mistakenly named `disableSemicolonTypes`. Fix typos in README.
  * *3.0.0* (Sep 06, 2020): Improve types (PR #105) and remove parsing options (PR #104). The type system with `:type` suffixes, `data-value-type` attributes, and a combination of the options `customTypes`, `disableColonTypes` and `defaultType`, are safer and easier to use than the previous options `parseNumbers`, `parseAll`, etc. Thanks [Laykou](https://github.com/Laykou) for suggesting [PR #102] that pointed the problems of inputs with colons in their names.
  * *2.9.0* (Jan 12, 2018): Overrides to `customTypes.string` function now also apply to fields with no type, because `:string` is the default implicit type. Thanks [JocaPC](https://github.com/JocaPC) for reporting the [issue #83](https://github.com/marioizquierdo/jquery.serializeJSON/issues/83).
