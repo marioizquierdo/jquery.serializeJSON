@@ -4,15 +4,16 @@ describe("$.serializeJSON", function () {
     var obj, $form;
 
     it("accepts a jQuery or Zepto object with a form", function() {
-        $form = $("<form>");
-        $form.append($("<input type=\"text\" name=\"1\" value=\"1\"/>"));
-        $form.append($("<input type=\"text\" name=\"2\" value=\"2\"/>"));
+        $form = form([
+            inputText("1", "1"),
+            inputText("2", "2"),
+        ]);
         obj = $form.serializeJSON();
         expect(obj).toEqual({"1": "1", "2": "2"});
     });
 
-    if ($.fn.jquery) { // not supported on Zepto
-
+    // Features only in jQuery (not supported in Zepto)
+    if ($.fn.jquery) {
         it("accepts a jQuery object with inputs", function() {
             var $inputs = $("<input type=\"text\" name=\"1\" value=\"1\"/>").add($("<input type=\"text\" name=\"2\" value=\"2\"/>"));
             obj = $inputs.serializeJSON();
@@ -20,196 +21,199 @@ describe("$.serializeJSON", function () {
         });
 
         it("accepts a jQuery object with forms and inputs", function() {
-            var $form1 = $("<form>");
-            $form1.append($("<input type=\"text\" name=\"1\" value=\"1\"/>"));
-            $form1.append($("<input type=\"text\" name=\"2\" value=\"2\"/>"));
-            var $form2 = $("<form>");
-            $form2.append($("<input type=\"text\" name=\"3\" value=\"3\"/>"));
-            $form2.append($("<input type=\"text\" name=\"4\" value=\"4\"/>"));
-            var $inputs = $("<input type=\"text\" name=\"5\" value=\"5\"/>").add($("<input type=\"text\" name=\"6\" value=\"6\"/>"));
+            var $form1 = form([
+                inputText("1", "1"),
+                inputText("2", "2")
+            ]);
+            var $form2 = form([
+                inputText("3", "3"),
+                inputText("4", "4")
+            ]);
+            var $inputs = inputText("5", "5").add(inputText("6", "6"));
             var $els = $form1.add($form2).add($inputs);
+
             obj = $els.serializeJSON();
             expect(obj).toEqual({"1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6"});
         });
     }
 
-    describe("with simple one-level attributes", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"  name=\"firstName\" value=\"Mario\"/>"));
-            $form.append($("<input type=\"text\"  name=\"lastName\"  value=\"Izquierdo\"/>"));
-        });
+    it("serializes simple one-level attributes", function() {
+        $form = form([
+            inputText("firstName", "Mario"),
+            inputText("lastName", "Izquierdo"),
+        ]);
 
-        it("serializes into plain attributes", function() {
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                firstName: "Mario",
-                lastName: "Izquierdo"
-            });
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            firstName: "Mario",
+            lastName: "Izquierdo"
         });
     });
 
-    describe("with nested object attributes", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"  name=\"address[city]\"         value=\"San Francisco\"/>"));
-            $form.append($("<input type=\"text\"  name=\"address[state][name]\"  value=\"California\"/>"));
-            $form.append($("<input type=\"text\"  name=\"address[state][abbr]\"  value=\"CA\"/>"));
-        });
+    it("serializes nested object attributes", function() {
+        $form = form([
+            inputText("address[city]",        "San Francisco"),
+            inputText("address[state][name]", "California"),
+            inputText("address[state][abbr]", "CA"),
+        ]);
 
-        it("serializes into nested object attributes", function() {
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                address: {
-                    city: "San Francisco",
-                    state: {
-                        name: "California",
-                        abbr: "CA"
-                    }
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            address: {
+                city: "San Francisco",
+                state: { name: "California", abbr: "CA" }
+            }
+        });
+    });
+
+    it("serializes unindexed-arrays by adding elements to the array", function() {
+        $form = form([
+            inputText("jobbies[]", "code"),
+            inputText("jobbies[]", "climbing"),
+        ]);
+
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            jobbies: ["code", "climbing"]
+        });
+    });
+
+    it("serializes unindexed-arrays with nested objects by adding new elements when a nested key is already existing in the nested object", function() {
+        $form = form([
+            inputText("projects[][name]",     "serializeJSON"),
+            inputText("projects[][language]", "javascript"),
+
+            inputText("projects[][name]",     "bettertabs"),
+            inputText("projects[][language]", "ruby"),
+
+            inputText("projects[][name]",     "formwell"),
+            inputText("projects[][morelanguages][]", "coffeescript"),
+            inputText("projects[][morelanguages][]", "javascript"),
+        ]);
+
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            projects: [
+                { name: "serializeJSON", language: "javascript" },
+                { name: "bettertabs",    language: "ruby" },
+                { name: "formwell",      morelanguages: ["coffeescript", "javascript"] },
+            ]
+        });
+    });
+
+    // arrays with no index and nested objects
+    // ... TODO
+
+    it("serializes attribute names that look like integers as string object keys by default", function() {
+        $form = form([
+            inputText("foo[0]",    "zero"),
+            inputText("foo[1]",    "one"),
+            inputText("foo[2][0]", "two-zero"),
+            inputText("foo[2][1]", "two-one"),
+        ]);
+
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            "foo": {
+                "0": "zero",
+                "1": "one",
+                "2": {
+                    "0": "two-zero",
+                    "1": "two-one"
                 }
-            });
+            }
         });
     });
 
-    describe("with empty brackets (arrays)", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"  name=\"jobbies[]\" value=\"code\"/>"));
-            $form.append($("<input type=\"text\"  name=\"jobbies[]\" value=\"climbing\"/>"));
-        });
-
-        it("pushes elements into an array", function() {
+    describe("select multiple", function() {
+        it("serializes all the selected elements as an array", function() {
+            $form = form([
+                inputSelectMultiple("camels[]", [
+                    selectOption("1").prop("selected", true),
+                    selectOption("2"),
+                    selectOption("3").prop("selected", true),
+                ]),
+            ]);
             obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                jobbies: ["code", "climbing"]
-            });
-        });
-    });
-
-    describe("with attribute names that are integers", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"  name=\"foo[0]\"    value=\"zero\"/>"));
-            $form.append($("<input type=\"text\"  name=\"foo[1]\"    value=\"one\"/>"));
-            $form.append($("<input type=\"text\"  name=\"foo[2][0]\" value=\"two-zero\"/>"));
-            $form.append($("<input type=\"text\"  name=\"foo[2][1]\" value=\"two-one\"/>"));
-        });
-
-        it("still creates objects with keys that are strings", function() {
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                "foo": {
-                    "0": "zero",
-                    "1": "one",
-                    "2": {
-                        "0": "two-zero",
-                        "1": "two-one"
-                    }
-                }
-            });
-        });
-    });
-
-    describe("with a select multiple", function() {
-        it("serializes all the selected elements", function() {
-            $form = $("<form>");
-            $form.append($("<select name=\"camels[]\" multiple><option value=\"1\" selected>1</option><option value=\"2\">2</option><option value=\"3\" selected>3</option></select>"));
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({camels: ["1","3"]}); // selected elements included as an array
+            expect(obj).toEqual({camels: ["1", "3"]});
         });
         it("ignores the field if nothing is selected", function() {
-            $form = $("<form>");
-            $form.append($("<select name=\"camels[]\" multiple><option value=\"1\">1</option><option value=\"2\">2</option><option value=\"3\">3</option></select>"));
+            $form = form([
+                inputSelectMultiple("camels[]", [
+                    selectOption("1"),
+                    selectOption("2"),
+                    selectOption("3"),
+                ]),
+            ]);
             obj = $form.serializeJSON();
-            expect(obj).toEqual({ }); // nothing is serialized
+            expect(obj).toEqual({}); // nothing serialized
         });
-        it("can be set to empty string using a hidden field", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"hidden\" name=\"camels:array\" value=\"[]\" />"));
-            $form.append($("<select name=\"camels[]\" multiple><option value=\"1\">1</option><option value=\"2\">2</option><option value=\"3\">3</option></select>"));
+        it("can be set to empty array if using a hidden field", function() {
+            $form = form([
+                inputHidden("camels:array", "[]"),
+                inputSelectMultiple("camels[]", [
+                    selectOption("1"),
+                    selectOption("2"),
+                    selectOption("3"),
+                ]),
+            ]);
             obj = $form.serializeJSON();
-            expect(obj).toEqual({camels: []}); // empty list
+            expect(obj).toEqual({camels: []}); // empty array from the hidden field
         });
     });
 
-    describe("with complext array of objects", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"  name=\"projects[][name]\"        value=\"serializeJSON\" />"));
-            $form.append($("<input type=\"text\"  name=\"projects[][language]\"    value=\"javascript\" />"));
+    it("overrides existing properties and keeps the last property value only", function() {
+        $form = form([
+            inputText("str", "String"),
+            inputText("str", "String Override"),
 
-            $form.append($("<input type=\"text\"  name=\"projects[][name]\"        value=\"bettertabs\" />"));
-            $form.append($("<input type=\"text\"  name=\"projects[][language]\"    value=\"ruby\" />"));
+            inputText("array", "a string that was there before"),
+            inputText("array[]", "one"),
+            inputText("array[]", "two"),
 
-            $form.append($("<input type=\"text\"  name=\"projects[][name]\"        value=\"formwell\" />"));
-            $form.append($("<input type=\"text\"  name=\"projects[][languages][]\" value=\"coffeescript\" />"));
-            $form.append($("<input type=\"text\"  name=\"projects[][languages][]\" value=\"javascript\" />"));
-        });
+            inputText("crosstype",         "str"),
+            inputText("crosstype:number",  "2"),
+            inputText("crosstype:boolean", "true"),
 
-        it("serializes into array of objects", function() {
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                projects: [
-                    { name: "serializeJSON", language: "javascript" },
-                    { name: "bettertabs",    language: "ruby" },
-                    { name: "formwell",      languages: ["coffeescript", "javascript"] },
-                ]
-            });
-        });
-    });
+            inputHidden("object", ""),
+            inputText("object[nested]",         "blabla"),
+            inputText("object[nested][nested]", "final value"),
+        ]);
 
-    describe("with existing properties", function() {
-        beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\"   name=\"str\" value=\"String\" />"));
-            $form.append($("<input type=\"text\"   name=\"str\" value=\"String Override\" />"));
-
-            $form.append($("<input type=\"text\"   name=\"array\" value=\"a string that was there before\" />"));
-            $form.append($("<input type=\"text\"   name=\"array[]\" value=\"one\" />"));
-            $form.append($("<input type=\"text\"   name=\"array[]\" value=\"two\" />"));
-
-            $form.append($("<input type=\"text\"   name=\"crosstype\"         value=\"str\" />"));
-            $form.append($("<input type=\"text\"   name=\"crosstype:number\"  value=\"2\" />"));
-            $form.append($("<input type=\"text\"   name=\"crosstype:boolean\" value=\"true\" />"));
-
-            $form.append($("<input type=\"hidden\" name=\"object\"                 value=\"\"/>"));
-            $form.append($("<input type=\"text\"   name=\"object[nested]\"         value=\"blabla\" />"));
-            $form.append($("<input type=\"text\"   name=\"object[nested][nested]\" value=\"final value\" />"));
-        });
-
-        it("overrides to keep the last property value", function() {
-            obj = $form.serializeJSON();
-            expect(obj).toEqual({
-                str: "String Override",
-                array: ["one", "two"],
-                crosstype: true,
-                object: { nested: { nested: "final value" }}
-            });
+        obj = $form.serializeJSON();
+        expect(obj).toEqual({
+            str: "String Override",
+            array: ["one", "two"],
+            crosstype: true,
+            object: { nested: { nested: "final value" }}
         });
     });
 
     describe("unchecked checkboxes", function() {
-        it("are ignored by default (same as regural HTML forms and the jQuery.serializeArray function)", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\"/>"));
+        it("are ignored by default like in regural HTML forms and the jQuery.serializeArray function", function() {
+            $form = form([
+                inputCheckbox("check1", "yes"),
+                inputCheckbox("check2", "yes"),
+            ]);
             obj = $form.serializeJSON();
             expect(obj).toEqual({}); // empty because unchecked checkboxes are ignored
         });
 
         it("are ignored also in arrays", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"green\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"red\"/>"));
+            $form = form([
+                inputCheckbox("flags[]", "green"),
+                inputCheckbox("flags[]", "red"),
+            ]);
             obj = $form.serializeJSON();
             expect(obj).toEqual({});
         });
 
         it("could use a hidden field with type :array to force an empty array in an array of unchecked checkboxes", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"hidden\"   name=\"flags:array\" value=\"[]\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"green\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"flags[]\" value=\"red\"/>"));
+            $form = form([
+                inputHidden("flags:array", "[]"),
+                inputCheckbox("flags[]", "green"),
+                inputCheckbox("flags[]", "red"),
+            ]);
             obj = $form.serializeJSON();
             expect(obj).toEqual({"flags": []});
 
@@ -219,11 +223,12 @@ describe("$.serializeJSON", function () {
         });
 
         it("can be combined with hidden fields to set the false value", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"hidden\"    name=\"truthy\" value=\"0\"/>"));
-            $form.append($("<input type=\"checkbox\"  name=\"truthy\" value=\"1\" checked=\"checked\"/>")); // should keep "1"
-            $form.append($("<input type=\"hidden\"    name=\"falsy\"  value=\"0\"/>"));
-            $form.append($("<input type=\"checkbox\"  name=\"falsy\"  value=\"1\"/>")); // should keep "0", from the hidden field
+            $form = form([
+                inputHidden("truthy", "0"),
+                inputCheckbox("truthy", "1").prop("checked", true), // should keep "1"
+                inputHidden("falsy", "0"),
+                inputCheckbox("falsy", "1"), // should keep "0", from the hidden field
+            ]);
             obj = $form.serializeJSON();
             expect(obj).toEqual({
                 truthy: "1", // from the checkbok
@@ -231,394 +236,413 @@ describe("$.serializeJSON", function () {
             });
         });
 
-        it("should be ignored if they have no name", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"checkbox\" value=\"yes\"/>"));
-            $form.append($("<input type=\"checkbox\" value=\"yes\"/>"));
+        it("are ignored if they have no name attribute", function() {
+            $form = form([
+                $("<input type=\"checkbox\" value=\"yes\"/>"),
+                $("<input type=\"checkbox\" value=\"yes\"/>"),
+            ]);
             obj = $form.serializeJSON({checkboxUncheckedValue: "NOPE"});
             expect(obj).toEqual({});
         });
 
         it("use the checkboxUncheckedValue option if defined", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>"));
-            $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\"/>"));
+            $form = form([
+                inputCheckbox("check1", "yes"),
+                inputCheckbox("check2", "yes"),
+            ]);
             obj = $form.serializeJSON({checkboxUncheckedValue: "NOPE"});
             expect(obj).toEqual({check1: "NOPE", check2: "NOPE"});
         });
 
         it("use the attr data-unchecked-value if defined", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>")); // ignored
-            $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\" data-unchecked-value=\"NOPE\"/>")); // with data-unchecked-value uses that value
+            $form = form([
+                inputCheckbox("check1", "yes"), // ignored
+                inputCheckbox("check2", "yes").attr("data-unchecked-value", "NOPE"),
+            ]);
             obj = $form.serializeJSON(); // NOTE: no checkboxUncheckedValue used
             expect(obj).toEqual({check2: "NOPE"});
         });
     });
 
-    describe("value types", function() {
-        describe(":number", function() {
-            it("parses numbers", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"i1:number\" value=\"10\"/>"));
-                $form.append($("<input type=\"text\" name=\"i2:number\" value=\"10.5\"/>"));
-                $form.append($("<input type=\"text\" name=\"un\"        value=\"10\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({i1: 10, i2: 10.5, un: "10"});
+    describe(":number type", function() {
+        it("parses numbers", function() {
+            $form = form([
+                inputText("i1:number", "10"),
+                inputText("i2:number", "10.5"),
+                inputText("un",        "10"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({i1: 10, i2: 10.5, un: "10"});
+        });
+        it("parses non numbers to NaN", function(){
+            $form = form([
+                inputText("i1:number", "text"),
+                inputText("i2:number", "null"),
+                inputText("i3:number", "false"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({i1: NaN, i2: NaN, i3: NaN});
+        });
+    });
+
+    describe(":boolean type", function() {
+        it("parses anything that looks truthy to true", function() {
+            $form = form([
+                inputText("b1:boolean", "true"),
+                inputText("b2:boolean", "TRUE"),
+                inputText("b3:boolean", "yes"),
+                inputText("b4:boolean", "[1,2,3]"),
+                inputText("b5:boolean", "Bla bla bla bla ..."),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: true, b2: true, b3: true, b4: true, b5: true});
+        });
+        it("parses anything that looks falsy to false", function() {
+            $form = form([
+                inputText("b1:boolean", "false"),
+                inputText("b2:boolean", "null"),
+                inputText("b3:boolean", "undefined"),
+                inputText("b4:boolean", ""),
+                inputText("b5:boolean", "0"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: false, b2: false, b3: false, b4: false, b5: false});
+        });
+    });
+    describe(":null type", function() {
+        it("parses anything that looks falsy to null", function() {
+            $form = form([
+                inputText("b1:null", "false"),
+                inputText("b2:null", "null"),
+                inputText("b3:null", "undefined"),
+                inputText("b4:null", ""),
+                inputText("b5:null", "0"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: null, b2: null, b3: null, b4: null, b5: null});
+        });
+        it("keeps anything that looks truthy as string", function() {
+            $form = form([
+                inputText("b1:null", "true"),
+                inputText("b2:null", "TRUE"),
+                inputText("b3:null", "yes"),
+                inputText("b4:null", "[1,2,3]"),
+                inputText("b5:null", "Bla bla bla bla ..."),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: "true", b2: "TRUE", b3: "yes", b4: "[1,2,3]", b5: "Bla bla bla bla ..."});
+        });
+    });
+    describe(":string type", function() {
+        it("keeps everything as string", function() {
+            $form = form([
+                inputText("b1:string", "true"),
+                inputText("b2:string", "TRUE"),
+                inputText("b3:string", "yes"),
+                inputText("b4:string", "[1,2,3]"),
+                inputText("b5:string", "Bla bla bla bla ..."),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: "true", b2: "TRUE", b3: "yes", b4: "[1,2,3]", b5: "Bla bla bla bla ..."});
+        });
+    });
+    describe(":array type", function() {
+        it("parses arrays with JSON.parse", function() {
+            $form = form([
+                inputText("b1:array", "[]"),
+                inputText("b2:array", "[\"my\", \"stuff\"]"),
+                inputText("b3:array", "[1,2,3]"),
+                inputText("b4:array", "[1,[2,[3]]]"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: [], b2: ["my", "stuff"], b3: [1,2,3], b4: [1,[2,[3]]]});
+        });
+        it("raises an error if the array can not be parsed", function() {
+            $form = form([
+                inputText("b1:array", "<NOT_AN_ARRAY>"),
+            ]);
+            expect(function(){$form.serializeJSON();}).toThrow();
+        });
+    });
+    describe(":object type", function() {
+        it("parses objects with JSON.parse", function() {
+            $form = form([
+                inputText("b1:object", "{}"),
+                inputText("b2:object", "{\"my\": \"stuff\"}"),
+                inputText("b3:object", "{\"my\": {\"nested\": \"stuff\"}}"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: {}, b2: {"my": "stuff"}, b3: {"my": {"nested": "stuff"}}});
+        });
+        it("raises an error if the obejct can not be parsed", function() {
+            $form = form([
+                inputText("b1:object", "<NOT_AN_OBJECT>"),
+            ]);
+            expect(function(){$form.serializeJSON();}).toThrow();
+        });
+    });
+    describe(":skip type", function() {
+        it("removes the field from the parsed result", function() {
+            $form = form([
+                inputText("b1",           "Im in"),
+                inputText("b2:skip",      "Im out"),
+                inputText("b3[out]:skip", "Im out"),
+            ]);
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({b1: "Im in"});
+        });
+        it("raises an error if the obejct can not be parsed", function() {
+            $form = form([
+                inputText("b1:object", "<NOT_A_JSON_OBJECT>"),
+            ]);
+            expect(function(){$form.serializeJSON();}).toThrow();
+        });
+    });
+    describe("invalid types", function() {
+        it("raises an error if the type is not known", function() {
+            $form = form([
+                inputText("b1:kaka", "not a valid type"),
+            ]);
+            expect(function(){ $form.serializeJSON(); })
+                .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip"));
+        });
+    });
+    describe("form with multiple types", function() {
+        it("parses every type as expected", function() { // EXAMPLE from the README file
+            $form = form([
+                inputText("notype",           "default type is :string"),
+                inputText("string:string",    ":string type overrides parsing options"),
+                inputText("excludes:skip",    "Use :skip to not include this field in the result"),
+
+                inputText("number[1]:number",           "1"),
+                inputText("number[1.1]:number",         "1.1"),
+                inputText("number[other stuff]:number", "other stuff"),
+
+                inputText("boolean[true]:boolean",      "true"),
+                inputText("boolean[false]:boolean",     "false"),
+                inputText("boolean[0]:boolean",         "0"),
+
+                inputText("null[null]:null",            "null"),
+                inputText("null[other stuff]:null",     "other stuff"),
+
+                inputText("array[empty]:array",         "[]"),
+                inputText("array[not empty]:array",     "[1, 2, 3]"),
+
+                inputText("object[empty]:object",       "{}"),
+                inputText("object[not empty]:object",   "{\"my\": \"stuff\"}"),
+            ]);
+
+            obj = $form.serializeJSON();
+            expect(obj).toEqual({
+                "notype": "default type is :string",
+                "string": ":string type overrides parsing options",
+                // :skip type removes the field from the output
+                "number": {
+                    "1": 1,
+                    "1.1": 1.1,
+                    "other stuff": NaN, // <-- Other stuff parses as NaN (Not a Number)
+                },
+                "boolean": {
+                    "true": true,
+                    "false": false,
+                    "0": false, // <-- "false", "null", "undefined", "", "0" parse as false
+                },
+                "null": {
+                    "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
+                    "other stuff": "other stuff"
+                },
+                "array": { // <-- works using JSON.parse
+                    "empty": [],
+                    "not empty": [1,2,3]
+                },
+                "object": { // <-- works using JSON.parse
+                    "empty": {},
+                    "not empty": {"my": "stuff"}
+                }
             });
-            it("parses non numbers to NaN", function(){
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"i1:number\" value=\"text\"/>"));
-                $form.append($("<input type=\"text\" name=\"i2:number\" value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"i3:number\" value=\"false\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({i1: NaN, i2: NaN, i3: NaN});
+        });
+    });
+
+    describe("data-value-type attribute", function() {
+        it("should set type and have precedence over the :type suffix", function() {
+            $form = form([
+                inputText("fooData", "0").attr("data-value-type", "alwaysBoo"),
+                inputText("fooDataWithBrackets[kokoszka]", "0").attr("data-value-type", "alwaysBoo"),
+                inputText("fooDataWithBrackets[kokoszka i cos innego]", "0").attr("data-value-type", "alwaysBoo"),
+                inputText("foo:alwaysBoo", "string from data attr").attr("data-value-type", "string"),
+                inputText("override::string", "boolean prevails").attr("data-value-type", "boolean"),
+                inputText("notype", "default type is :string"),
+                inputText("excludes", "Use :skip to not include this field in the result").attr("data-value-type", "skip"),
+                inputText("numberData", "1").attr("data-value-type", "number"),
+                inputText("numberData[A]", "1").attr("data-value-type", "number"),
+                inputText("numberData[B][C]", "2").attr("data-value-type", "number"),
+                inputText("numberData[D][E][F]", "3").attr("data-value-type", "number"),
+                inputText("number", "1").attr("data-value-type", "number"),
+                inputSelect("selectNumber", [
+                    selectOption("1"),
+                    selectOption("2").prop("selected", true),
+                ]).attr("data-value-type", "number"),
+            ]);
+
+            obj = $form.serializeJSON({
+                customTypes: {
+                    alwaysBoo: function() { return "Boo"; }
+                }
+            });
+
+            expect(obj).toEqual({
+                "fooDataWithBrackets": {
+                    kokoszka: "Boo",
+                    "kokoszka i cos innego": "Boo"
+                },
+                "fooData": "Boo",
+                "foo:alwaysBoo": "string from data attr",
+                "override::string": true,
+                "notype": "default type is :string",
+                // excludes was excluded because of type "skip"
+                "numberData": { A: 1, B: { C: 2 }, D: { E: { F: 3 } } },
+                "number": 1,
+                "selectNumber": 2
             });
         });
 
-        describe(":boolean", function() {
-            it("parses anything that looks truthy to true", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:boolean\" value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:boolean\" value=\"TRUE\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:boolean\" value=\"yes\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:boolean\" value=\"[1,2,3]\"/>"));
-                $form.append($("<input type=\"text\" name=\"b5:boolean\" value=\"Bla bla bla bla ...\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: true, b2: true, b3: true, b4: true, b5: true});
-            });
-            it("parses anything that looks falsy to false", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:boolean\" value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:boolean\" value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:boolean\" value=\"undefined\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:boolean\" value=\"\"/>"));
-                $form.append($("<input type=\"text\" name=\"b5:boolean\" value=\"0\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: false, b2: false, b3: false, b4: false, b5: false});
-            });
-        });
-        describe(":null", function() {
-            it("parses anything that looks falsy to null", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:null\" value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:null\" value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:null\" value=\"undefined\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:null\" value=\"\"/>"));
-                $form.append($("<input type=\"text\" name=\"b5:null\" value=\"0\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: null, b2: null, b3: null, b4: null, b5: null});
-            });
-            it("keeps anything that looks truthy as string", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:null\" value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:null\" value=\"TRUE\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:null\" value=\"yes\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:null\" value=\"[1,2,3]\"/>"));
-                $form.append($("<input type=\"text\" name=\"b5:null\" value=\"Bla bla bla bla ...\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: "true", b2: "TRUE", b3: "yes", b4: "[1,2,3]", b5: "Bla bla bla bla ..."});
-            });
-        });
-        describe(":string", function() {
-            it("keeps everything as string", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:string\" value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:string\" value=\"TRUE\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3:string\" value=\"yes\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:string\" value=\"[1,2,3]\"/>"));
-                $form.append($("<input type=\"text\" name=\"b5:string\" value=\"Bla bla bla bla ...\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: "true", b2: "TRUE", b3: "yes", b4: "[1,2,3]", b5: "Bla bla bla bla ..."});
-            });
-        });
-        describe(":array", function() {
-            it("parses arrays with JSON.parse", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:array\" value=\"[]\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:array\" value='[\"my\", \"stuff\"]'/>"));
-                $form.append($("<input type=\"text\" name=\"b3:array\" value=\"[1,2,3]\"/>"));
-                $form.append($("<input type=\"text\" name=\"b4:array\" value=\"[1,[2,[3]]]\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: [], b2: ["my", "stuff"], b3: [1,2,3], b4: [1,[2,[3]]]});
-            });
-            it("raises an error if the array can not be parsed", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:array\" value=\"<NOT_AN_ARRAY>\"/>"));
-                expect(function(){$form.serializeJSON();}).toThrow();
-            });
-        });
-        describe(":object", function() {
-            it("parses objects with JSON.parse", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:object\" value=\"{}\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:object\" value='{\"my\": \"stuff\"}'/>"));
-                $form.append($("<input type=\"text\" name=\"b3:object\" value='{\"my\": {\"nested\": \"stuff\"}}'/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: {}, b2: {"my": "stuff"}, b3: {"my": {"nested": "stuff"}}});
-            });
-            it("raises an error if the obejct can not be parsed", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:object\" value=\"<NOT_AN_OBJECT>\"/>"));
-                expect(function(){$form.serializeJSON();}).toThrow();
-            });
-        });
-        describe(":skip", function() {
-            it("removes the field from the parsed result", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1\"           value=\"Im in\"/>"));
-                $form.append($("<input type=\"text\" name=\"b2:skip\"      value=\"Im out\"/>"));
-                $form.append($("<input type=\"text\" name=\"b3[out]:skip\" value=\"Im out\"/>"));
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({b1: "Im in"});
-            });
-            it("raises an error if the obejct can not be parsed", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:object\" value=\"<NOT_AN_OBJECT>\"/>"));
-                expect(function(){$form.serializeJSON();}).toThrow();
-            });
-        });
-        describe("invalid types", function() {
-            it("raises an error if the type is not known", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"b1:kaka\" value=\"not a valid type\"/>"));
-                expect(function(){ $form.serializeJSON(); })
-                    .toThrow(new Error("serializeJSON ERROR: Invalid type kaka found in input name 'b1:kaka', please use one of string, number, boolean, null, array, object, skip"));
-            });
-        });
-        describe("form with multiple types", function() {
-            it("parses every type as expected", function() { // EXAMPLE from the README file
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"notype\"           value=\"default type is :string\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string type overrides parsing options\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"Use :skip to not include this field in the result\"/>"));
+        if ($.fn.jquery) { // not supported on Zepto
+            it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
+                var $inputs = $(
+                    "<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>" +
+                    "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
+                    "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
+                    "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
+                );
 
-                $form.append($("<input type=\"text\" name=\"number[1]:number\"           value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"number[1.1]:number\"         value=\"1.1\"/>"));
-                $form.append($("<input type=\"text\" name=\"number[other stuff]:number\" value=\"other stuff\"/>"));
-
-                $form.append($("<input type=\"text\" name=\"boolean[true]:boolean\"      value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"boolean[false]:boolean\"     value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"boolean[0]:boolean\"         value=\"0\"/>"));
-
-                $form.append($("<input type=\"text\" name=\"null[null]:null\"            value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"null[other stuff]:null\"     value=\"other stuff\"/>"));
-
-                $form.append($("<input type=\"text\" name=\"array[empty]:array\"         value=\"[]\"/>"));
-                $form.append($("<input type=\"text\" name=\"array[not empty]:array\"     value=\"[1, 2, 3]\"/>"));
-
-                $form.append($("<input type=\"text\" name=\"object[empty]:object\"       value=\"{}\"/>"));
-                $form.append($("<input type=\"text\" name=\"object[not empty]:object\"   value='{\"my\": \"stuff\"}'/>"));
-
-                obj = $form.serializeJSON();
-                expect(obj).toEqual({
-                    "notype": "default type is :string",
-                    "string": ":string type overrides parsing options",
-                    // :skip type removes the field from the output
-                    "number": {
-                        "1": 1,
-                        "1.1": 1.1,
-                        "other stuff": NaN, // <-- Other stuff parses as NaN (Not a Number)
-                    },
-                    "boolean": {
-                        "true": true,
-                        "false": false,
-                        "0": false, // <-- "false", "null", "undefined", "", "0" parse as false
-                    },
-                    "null": {
-                        "null": null, // <-- "false", "null", "undefined", "", "0" parse as null
-                        "other stuff": "other stuff"
-                    },
-                    "array": { // <-- works using JSON.parse
-                        "empty": [],
-                        "not empty": [1,2,3]
-                    },
-                    "object": { // <-- works using JSON.parse
-                        "empty": {},
-                        "not empty": {"my": "stuff"}
-                    }
-                });
-            });
-        });
-
-        describe("data-value-type attribute", function() {
-            it("should set type and have precedence over the :type suffix", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"fooDataWithBrackets[kokoszka]\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"fooDataWithBrackets[kokoszka i cos innego]\" data-value-type=\"alwaysBoo\"   value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"string from data attr\"/>"));
-                $form.append($("<input type=\"text\" name=\"override::string\" data-value-type=\"boolean\"  value=\"boolean prevails\"/>"));
-                $form.append($("<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes\" data-value-type=\"skip\"   value=\"Use :skip to not include this field in the result\"/>"));
-                $form.append($("<input type=\"text\" name=\"numberData\" data-value-type=\"number\"   value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"numberData[A]\" data-value-type=\"number\"        value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"numberData[B][C]\" data-value-type=\"number\"     value=\"2\"/>"));
-                $form.append($("<input type=\"text\" name=\"numberData[D][E][F]\" data-value-type=\"number\"  value=\"3\"/>"));
-                $form.append($("<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"));
-                $form.append($("<select name=\"selectNumber\" data-value-type=\"number\"><option value=\"1\">Value 1</option><option selected value=\"2\">Value 2</option></select>"));
-
-                obj = $form.serializeJSON({
+                obj = $inputs.serializeJSON({
                     customTypes: {
                         alwaysBoo: function() { return "Boo"; }
                     }
                 });
-
                 expect(obj).toEqual({
-                    "fooDataWithBrackets": {
-                        kokoszka: "Boo",
-                        "kokoszka i cos innego": "Boo"
-                    },
                     "fooData": "Boo",
-                    "foo:alwaysBoo": "string from data attr",
-                    "override::string": true,
+                    "foo:alwaysBoo": "0",
                     "notype": "default type is :string",
-                    // excludes was excluded because of type "skip"
-                    "numberData": { A: 1, B: { C: 2 }, D: { E: { F: 3 } } },
-                    "number": 1,
-                    "selectNumber": 2
+                    "number": 1
                 });
             });
+        }
+    });
 
-            if ($.fn.jquery) { // not supported on Zepto
-                it("also works for matched inputs (not just forms) if they have the data-value-type attribute", function () {
-                    var $inputs = $(
-                        "<input type=\"text\" name=\"fooData\" data-value-type=\"alwaysBoo\"   value=\"0\"/>" +
-                        "<input type=\"text\" name=\"foo:alwaysBoo\" data-value-type=\"string\"   value=\"0\"/>" +
-                        "<input type=\"text\" name=\"notype\" value=\"default type is :string\"/>" +
-                        "<input type=\"text\" name=\"number\" data-value-type=\"number\"   value=\"1\"/>"
-                    );
+    describe("data-skip-falsy attribute", function() {
+        it("allows to skip faily fields, just like with the option skipFalsyValuesForFields", function() {
+            var $form2 = form([
+                inputText("skipFalsyZero:number",    "0"    ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFalse:boolean",  "false").attr("data-skip-falsy", "true"),
+                inputText("skipFalsyNull:null",      "null" ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyEmpty:string",   ""     ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFoo:string",     "foo"  ).attr("data-skip-falsy", "true"),
+                inputText("zero:number",  "0"),
+                inputText("foo:string",   "foo"),
+                inputText("empty:string", ""),
+            ]);
 
-                    obj = $inputs.serializeJSON({
-                        customTypes: {
-                            alwaysBoo: function() { return "Boo"; }
-                        }
-                    });
-
-                    expect(obj).toEqual({
-                        "fooData": "Boo",
-                        "foo:alwaysBoo": "0",
-                        "notype": "default type is :string",
-                        "number": 1
-                    });
-                });
-            }
+            obj = $form2.serializeJSON();
+            expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip
+            expect(obj["skipFalsyFalse"]).toEqual(undefined); // skip
+            expect(obj["skipFalsyNull"]).toEqual(undefined);  // skip
+            expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip
+            expect(obj["skipFalsyFoo"]).toEqual("foo");
+            expect(obj["zero"]).toEqual(0);
+            expect(obj["foo"]).toEqual("foo");
+            expect(obj["empty"]).toEqual("");
         });
 
-        describe("data-skip-falsy attribute", function() {
-            it("allows to skip faily fields, just like with the option skipFalsyValuesForFields", function() {
-                var $form2 = $("<form>");
-                $form2.append($("<input type=\"text\" name=\"skipFalsyZero:number\"    data-skip-falsy=\"true\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFalse:boolean\"  data-skip-falsy=\"true\"  value=\"false\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyNull:null\"      data-skip-falsy=\"true\"  value=\"null\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyEmpty:string\"   data-skip-falsy=\"true\"  value=\"\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFoo:string\"     data-skip-falsy=\"true\"  value=\"foo\"/>"));
-                $form2.append($("<input type=\"text\" name=\"zero:number\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"foo:string\"   value=\"foo\"/>"));
-                $form2.append($("<input type=\"text\" name=\"empty:string\" value=\"\"/>"));
+        it("overrides the option skipFalsyValuesForFields", function() {
+            var $form2 = form([
+                inputText("skipFalsyZero:number",   "0"    ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFalse:boolean", "false").attr("data-skip-falsy", "false"),
+                inputText("skipFalsyNull:null",     "null" ).attr("data-skip-falsy", "false"),
+                inputText("skipFalsyEmpty:string",  ""     ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFoo:string",    "foo"  ).attr("data-skip-falsy", "true"),
+                inputText("zero:number", "0"),
+                inputText("empty:string", ""),
+            ]);
 
-                obj = $form2.serializeJSON();
-                expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip
-                expect(obj["skipFalsyFalse"]).toEqual(undefined); // skip
-                expect(obj["skipFalsyNull"]).toEqual(undefined);  // skip
-                expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip
-                expect(obj["skipFalsyFoo"]).toEqual("foo");
-                expect(obj["zero"]).toEqual(0);
-                expect(obj["foo"]).toEqual("foo");
-                expect(obj["empty"]).toEqual("");
-            });
+            obj = $form2.serializeJSON({ skipFalsyValuesForFields: [ // using skipFalsyValuesForFields option
+                "skipFalsyZero",
+                "skipFalsyFalse",
+                "skipFalsyNull",
+                "zero"
+            ]});
+            expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip from attr and opt
+            expect(obj["skipFalsyFalse"]).toEqual(false); // not skip (attr override)
+            expect(obj["skipFalsyNull"]).toEqual(null);  // not skip (attr override)
+            expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip from attr
+            expect(obj["skipFalsyFoo"]).toEqual("foo");
+            expect(obj["zero"]).toEqual(undefined); // skip from opt
+            expect(obj["empty"]).toEqual("");
+        });
 
-            it("overrides the option skipFalsyValuesForFields", function() {
-                var $form2 = $("<form>");
-                $form2.append($("<input type=\"text\" name=\"skipFalsyZero:number\"    data-skip-falsy=\"true\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFalse:boolean\"  data-skip-falsy=\"false\" value=\"false\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyNull:null\"      data-skip-falsy=\"false\" value=\"null\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyEmpty:string\"   data-skip-falsy=\"true\"  value=\"\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFoo:string\"     data-skip-falsy=\"true\"  value=\"foo\"/>"));
-                $form2.append($("<input type=\"text\" name=\"zero:number\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"empty:string\" value=\"\"/>"));
+        it("overrides the option skipFalsyValuesForTypes", function() {
+            var $form2 = form([
+                inputText("skipFalsyZero:number",    "0"    ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFalse:boolean",  "false").attr("data-skip-falsy", "false"),
+                inputText("skipFalsyNull:null",      "null" ).attr("data-skip-falsy", "false"),
+                inputText("skipFalsyEmpty:string",   ""     ).attr("data-skip-falsy", "true"),
+                inputText("skipFalsyFoo:string",     "foo"  ).attr("data-skip-falsy", "true"),
+                inputText("zero:number",  "0"),
+                inputText("empty:string", ""),
+                inputText("null:null",    "null"),
+            ]);
 
-                obj = $form2.serializeJSON({ skipFalsyValuesForFields: [ // using skipFalsyValuesForFields option
-                    "skipFalsyZero",
-                    "skipFalsyFalse",
-                    "skipFalsyNull",
-                    "zero"
-                ]});
-                expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip from attr and opt
-                expect(obj["skipFalsyFalse"]).toEqual(false); // not skip (attr override)
-                expect(obj["skipFalsyNull"]).toEqual(null);  // not skip (attr override)
-                expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip from attr
-                expect(obj["skipFalsyFoo"]).toEqual("foo");
-                expect(obj["zero"]).toEqual(undefined); // skip from opt
-                expect(obj["empty"]).toEqual("");
-            });
-
-            it("overrides the option skipFalsyValuesForTypes", function() {
-                var $form2 = $("<form>");
-                $form2.append($("<input type=\"text\" name=\"skipFalsyZero:number\"    data-skip-falsy=\"true\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFalse:boolean\"  data-skip-falsy=\"false\" value=\"false\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyNull:null\"      data-skip-falsy=\"false\" value=\"null\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyEmpty:string\"   data-skip-falsy=\"true\"  value=\"\"/>"));
-                $form2.append($("<input type=\"text\" name=\"skipFalsyFoo:string\"     data-skip-falsy=\"true\"  value=\"foo\"/>"));
-                $form2.append($("<input type=\"text\" name=\"zero:number\"  value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"empty:string\" value=\"\"/>"));
-                $form2.append($("<input type=\"text\" name=\"null:null\"    value=\"null\"/>"));
-
-
-                obj = $form2.serializeJSON({ skipFalsyValuesForTypes: [ // using skipFalsyValuesForFields option
-                    "number",
-                    "boolean",
-                    "null"
-                ]});
-                expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip from attr and opt
-                expect(obj["skipFalsyFalse"]).toEqual(false); // not skip (attr override)
-                expect(obj["skipFalsyNull"]).toEqual(null);  // not skip (attr override)
-                expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip from attr
-                expect(obj["skipFalsyFoo"]).toEqual("foo");
-                expect(obj["zero"]).toEqual(undefined); // skip from opt
-                expect(obj["empty"]).toEqual("");
-                expect(obj["null"]).toEqual(undefined); // skip from opt
-            });
+            obj = $form2.serializeJSON({ skipFalsyValuesForTypes: [ // using skipFalsyValuesForFields option
+                "number",
+                "boolean",
+                "null"
+            ]});
+            expect(obj["skipFalsyZero"]).toEqual(undefined);  // skip from attr and opt
+            expect(obj["skipFalsyFalse"]).toEqual(false); // not skip (attr override)
+            expect(obj["skipFalsyNull"]).toEqual(null);  // not skip (attr override)
+            expect(obj["skipFalsyEmpty"]).toEqual(undefined); // skip from attr
+            expect(obj["skipFalsyFoo"]).toEqual("foo");
+            expect(obj["zero"]).toEqual(undefined); // skip from opt
+            expect(obj["empty"]).toEqual("");
+            expect(obj["null"]).toEqual(undefined); // skip from opt
         });
     });
 
     // options
     describe("options", function() {
+        var $form;
         beforeEach(function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\" name=\"Numeric 0\"     value=\"0\"/>"));
-            $form.append($("<input type=\"text\" name=\"Numeric 1\"     value=\"1\"/>"));
-            $form.append($("<input type=\"text\" name=\"Numeric 2.2\"   value=\"2.2\"/>"));
-            $form.append($("<input type=\"text\" name=\"Numeric -2.25\" value=\"-2.25\"/>"));
-            $form.append($("<input type=\"text\" name=\"Bool true\"     value=\"true\"/>"));
-            $form.append($("<input type=\"text\" name=\"Bool false\"    value=\"false\"/>"));
-            $form.append($("<input type=\"text\" name=\"Null\"          value=\"null\"/>"));
-            $form.append($("<input type=\"text\" name=\"String\"        value=\"text is always string\"/>"));
-            $form.append($("<input type=\"text\" name=\"Empty\"         value=\"\"/>"));
+            $form = form([
+                inputText("Numeric 0",     "0"),
+                inputText("Numeric 1",     "1"),
+                inputText("Numeric 2.2",   "2.2"),
+                inputText("Numeric -2.25", "-2.25"),
+                inputText("Bool true",     "true"),
+                inputText("Bool false",    "false"),
+                inputText("Null",          "null"),
+                inputText("String",        "text is always string"),
+                inputText("Empty",         ""),
+            ]);
         });
 
-        describe("defaults (defaultOptions)", function() {
-            it("returns strings", function() {
-                obj = $form.serializeJSON({}); // empty object should be translated to default options
-                expect(obj).toEqual({
-                    "Numeric 0":     "0",
-                    "Numeric 1":     "1",
-                    "Numeric 2.2":   "2.2",
-                    "Numeric -2.25": "-2.25",
-                    "Bool true":     "true",
-                    "Bool false":    "false",
-                    "Null":          "null",
-                    "String":        "text is always string",
-                    "Empty":         ""
-                });
+        it("with no options returns strings by default", function() {
+            obj = $form.serializeJSON({}); // empty object should be translated to default options
+            expect(obj).toEqual({
+                "Numeric 0":     "0",
+                "Numeric 1":     "1",
+                "Numeric 2.2":   "2.2",
+                "Numeric -2.25": "-2.25",
+                "Bool true":     "true",
+                "Bool false":    "false",
+                "Null":          "null",
+                "String":        "text is always string",
+                "Empty":         ""
             });
         });
 
-        describe("validateOptions", function() {
-            it("should raise an error if the option is not one of the valid options", function() {
-                expect(function(){ $form.serializeJSON({invalidOption: true}); })
-                    .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, disableColonTypes, customTypes, defaultTypes, defaultType"));
-            });
+        it("raises a descriptive error if the option is invalid", function() {
+            expect(function(){ $form.serializeJSON({invalidOption: true}); })
+                .toThrow(new Error("serializeJSON ERROR: invalid option 'invalidOption'. Please use one of checkboxUncheckedValue, useIntKeysAsArrayIndex, skipFalsyValuesForTypes, skipFalsyValuesForFields, disableColonTypes, customTypes, defaultTypes, defaultType"));
         });
 
         describe("skipFalsyValuesForFields", function() {
@@ -640,20 +664,21 @@ describe("$.serializeJSON", function () {
 
         describe("skipFalsyValuesForTypes", function() {
             it("skips serialization of falsy values for on inputs of the given types", function() {
-                var $form2 = $("<form>");
-                $form2.append($("<input type=\"text\" name=\"Num0:number\"         value=\"0\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Num1:number\"         value=\"1\"/>"));
-                $form2.append($("<input type=\"text\" name=\"NaN:number\"          value=\"wololoo\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Num0attr\"            value=\"0\" data-value-type=\"number\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Num1attr\"            value=\"1\" data-value-type=\"number\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Bool true:boolean\"   value=\"true\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Bool false:boolean\"  value=\"false\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Text:string\"         value=\"text is always string\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Empty String:string\" value=\"\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Empty Implicit\"      value=\"\"/>")); // :string type is implicit
-                $form2.append($("<input type=\"text\" name=\"Array:array\"         value=\"[1, 2]\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Empty Array:array\"   value=\"[]\"/>"));
-                $form2.append($("<input type=\"text\" name=\"Null:null\"           value=\"null\"/>"));
+                var $form2 = form([
+                    inputText("Num0:number",         "0"),
+                    inputText("Num1:number",         "1"),
+                    inputText("NaN:number",          "wololoo"),
+                    inputText("Num0attr",            "0").attr("data-value-type", "number"),
+                    inputText("Num1attr",            "1").attr("data-value-type", "number"),
+                    inputText("Bool true:boolean",   "true"),
+                    inputText("Bool false:boolean",  "false"),
+                    inputText("Text:string",         "text is always string"),
+                    inputText("Empty String:string", ""),
+                    inputText("Empty Implicit",      ""), // :string type is implicit
+                    inputText("Array:array",         "[1, 2]"),
+                    inputText("Empty Array:array",   "[]"),
+                    inputText("Null:null",           "null"),
+                ]);
 
                 obj = $form2.serializeJSON({skipFalsyValuesForTypes: ["number", "boolean", "string", "array", "null"]});
                 expect(obj["Num0"]).toEqual(undefined); // skip
@@ -669,7 +694,6 @@ describe("$.serializeJSON", function () {
                 expect(obj["Array"]).toEqual([1, 2]);
                 expect(obj["Empty Array"]).toEqual([]); // Not skip! empty arrays are not falsy
                 expect(obj["Null"]).toEqual(undefined); // skip
-
 
                 obj = $form2.serializeJSON({skipFalsyValuesForTypes: ["number"]}); // skip only falsy numbers
                 expect(obj["Num0"]).toEqual(undefined); // skip
@@ -688,23 +712,24 @@ describe("$.serializeJSON", function () {
             });
         });
 
-
         describe("checkboxUncheckedValue", function() {
             it("uses that value for unchecked checkboxes", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check3\" value=\"yes\" checked/>"));
+                $form = form([
+                    inputCheckbox("check1", "yes"),
+                    inputCheckbox("check2", "yes"),
+                    inputCheckbox("check3", "yes").prop("checked", true),
+                ]);
 
                 obj = $form.serializeJSON({checkboxUncheckedValue: "NOPE"});
                 expect(obj).toEqual({check1: "NOPE", check2: "NOPE", check3: "yes"});
             });
 
             it("is overriden by data-unchecked-value attribute", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"check1\" value=\"yes\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check2\" value=\"yes\" data-unchecked-value=\"OVERRIDE\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"check3\" value=\"yes\" checked/>"));
+                $form = form([
+                    inputCheckbox("check1", "yes"),
+                    inputCheckbox("check2", "yes").attr("data-unchecked-value", "OVERRIDE"),
+                    inputCheckbox("check3", "yes").prop("checked", true),
+                ]);
 
                 obj = $form.serializeJSON({checkboxUncheckedValue: "NOPE"});
                 expect(obj).toEqual({check1: "NOPE", check2: "OVERRIDE", check3: "yes"});
@@ -713,19 +738,21 @@ describe("$.serializeJSON", function () {
             if ($.fn.jquery) { // not supported on Zepto
                 it("works on multiple forms and inputs", function() {
                     var $form1, $form2, $els;
-                    $form1 = $("<form>");
-                    $form1.append($("<input type=\"text\"     name=\"form1[title]\"  value=\"form1\"/>"));
-                    $form1.append($("<input type=\"checkbox\" name=\"form1[check1]\" value=\"true\"/>"));
-                    $form1.append($("<input type=\"checkbox\" name=\"form1[check2]\" value=\"true\" data-unchecked-value=\"NOPE\"/>"));
-                    $form2 = $("<form>");
-                    $form1.append($("<input type=\"text\"     name=\"form2[title]\"  value=\"form2\"/>"));
-                    $form2.append($("<input type=\"checkbox\" name=\"form2[check1]\" value=\"true\" checked=\"checked\"/>"));
-                    $form2.append($("<input type=\"checkbox\" name=\"form2[check2]\" value=\"true\" />"));
+                    $form1 = form([
+                        inputText("form1[title]", "form1"),
+                        inputCheckbox("form1[check1]", "true"),
+                        inputCheckbox("form1[check2]", "true").attr("data-unchecked-value", "NOPE"),
+                    ]);
+                    $form2 = form([
+                        inputText("form2[title]", "form2"),
+                        inputCheckbox("form2[check1]", "true").prop("checked", true),
+                        inputCheckbox("form2[check2]", "true"),
+                    ]);
                     var $inputs = $()
-                        .add($("<input type=\"text\"      name=\"inputs[title]\"  value=\"inputs\"/>"))
-                        .add($("<input type=\"checkbox\"  name=\"inputs[check1]\" value=\"true\" checked=\"checked\"/>"))
-                        .add($("<input type=\"checkbox\"  name=\"inputs[check2]\" value=\"true\"/>"))
-                        .add($("<input type=\"checkbox\"  name=\"inputs[check3]\" value=\"true\" data-unchecked-value=\"NOPE\"/>"));
+                        .add(inputText("inputs[title]",  "inputs"))
+                        .add(inputCheckbox("inputs[check1]", "true").prop("checked", true))
+                        .add(inputCheckbox("inputs[check2]", "true"))
+                        .add(inputCheckbox("inputs[check3]", "true").attr("data-unchecked-value", "NOPE"));
                     $els = $form1.add($form2).add($inputs);
 
                     obj = $els.serializeJSON({checkboxUncheckedValue: "false"});
@@ -772,11 +799,12 @@ describe("$.serializeJSON", function () {
             });
 
             it("works on a nested list of checkboxes", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\"     name=\"form[title]\"   value=\"list of checkboxes\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"form[check][]\" value=\"true\" checked/>"));
-                $form.append($("<input type=\"checkbox\" name=\"form[check][]\" value=\"true\"/>"));
-                $form.append($("<input type=\"checkbox\" name=\"form[check][]\" value=\"true\" data-unchecked-value=\"NOPE\"/>"));
+                $form = form([
+                    inputText("form[title]",   "list of checkboxes"),
+                    inputCheckbox("form[check][]", "true").prop("checked", true),
+                    inputCheckbox("form[check][]", "true"),
+                    inputCheckbox("form[check][]", "true").attr("data-unchecked-value" ,"NOPE"),
+                ]);
                 obj = $form.serializeJSON({checkboxUncheckedValue: "false"});
                 expect(obj).toEqual({
                     form: {
@@ -787,20 +815,22 @@ describe("$.serializeJSON", function () {
             });
 
             it("does not work on a nested list of objects", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"answers[][correct]:boolean\" value=\"true\" data-unchecked-value=\"false\">"));
-                $form.append($("<input type=\"text\"     name=\"answers[][text]\" value=\"Blue\">"));
+                $form = form([
+                    inputCheckbox("answers[][correct]:boolean", "true").attr("data-unchecked-value", "false"),
+                    inputText("answers[][text]", "Blue"),
 
-                $form.append($("<input type=\"checkbox\" name=\"answers[][correct]:boolean\" value=\"true\" data-unchecked-value=\"false\">"));
-                $form.append($("<input type=\"text\"     name=\"answers[][text]\" value=\"Green\">"));
+                    inputCheckbox("answers[][correct]:boolean", "true").attr("data-unchecked-value", "false"),
+                    inputText("answers[][text]", "Green"),
+                ]);
 
                 expect(function(){$form.serializeJSON();}).toThrow(); // it throws a descriptive error for the user
             });
 
             it("does not serialize disabled checkboxes", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"checkbox\" name=\"checkDisabled1\" value=\"true\" disabled/>"));
-                $form.append($("<input type=\"checkbox\" name=\"checkDisabled2\" value=\"true\" disabled data-unchecked-value=\"NOPE\"/>"));
+                $form = form([
+                    inputCheckbox("checkDisabled1", "true").prop("disabled", true),
+                    inputCheckbox("checkDisabled2", "true").prop("disabled", true).attr("data-unchecked-value", "NOPE"),
+                ]);
                 obj = $form.serializeJSON({checkboxUncheckedValue: "false"});
                 expect(obj).toEqual({});
             });
@@ -808,10 +838,11 @@ describe("$.serializeJSON", function () {
 
         describe("useIntKeysAsArrayIndex", function() {
             it("uses int keys as array indexes instead of object properties", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"foo[0]\" value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo[1]\" value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo[5]\" value=\"5\"/>"));
+                $form = form([
+                    inputText("foo[0]", "0"),
+                    inputText("foo[1]", "1"),
+                    inputText("foo[5]", "5"),
+                ]);
 
                 obj = $form.serializeJSON({useIntKeysAsArrayIndex: false}); // default
                 expect(obj).toEqual({"foo": {"0": "0", "1": "1", "5": "5"}});
@@ -820,23 +851,34 @@ describe("$.serializeJSON", function () {
                 expect(obj).toEqual({"foo": ["0", "1", undefined, undefined, undefined, "5"]});
             });
 
-            it("does not get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
-                $form = $("<form>");
-                $form.append($("<input type=\"text\"  name=\"drinks[1st]\" value=\"coffee\"/>"));
-                $form.append($("<input type=\"text\"  name=\"drinks[2nd]\" value=\"beer\"/>"));
+            it("works with nested arrays", function() {
+                $form = form([
+                    inputText("foo[0][bar][0]", "foo0bar0"),
+                    inputText("foo[1][bar][0]", "foo1bar0"),
+                    inputText("foo[1][bar][1]", "foo1bar1"),
+                ]);
 
                 obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
-                expect(obj).toEqual({
-                    drinks: {
-                        "1st": "coffee",
-                        "2nd": "beer"
-                    }
-                });
+                expect(obj).toEqual({"foo": [
+                    {"bar": ["foo0bar0"]},
+                    {"bar": ["foo1bar0", "foo1bar1"]},
+                ]});
+            });
+
+            it("does not get confused by attribute names that are similar to integers, but not valid array indexes", function() { // only integers are mapped to an array
+                $form = form([
+                    inputText("drinks[1st]", "coffee"),
+                    inputText("drinks[2nd]", "beer"),
+                ]);
+
+                obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
+                expect(obj).toEqual({ drinks: {"1st": "coffee", "2nd": "beer"} });
             });
 
             it("regresion for github issue #69", function() {
-                $form = $("<form>");
-                $form.append($("<input name=\"array[0][value]\" value=\"value\">"));
+                $form = form([
+                    $("<input name=\"array[0][value]\" value=\"value\">"),
+                ]);
                 obj = $form.serializeJSON({useIntKeysAsArrayIndex: true});
                 expect(obj).toEqual({"array": [{"value": "value"}]});
             });
@@ -844,28 +886,29 @@ describe("$.serializeJSON", function () {
 
         describe("customTypes", function() {
             it("serializes value according to custom function without disturbing default types", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\"    value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"notype\"           value=\"default type is :string\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string type overrides parsing options\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"Use :skip to not include this field in the result\"/>"));
+                $form = form([
+                    inputText("foo:alwaysBoo",    "0"),
+                    inputText("notype",           "default type is :string"),
+                    inputText("string:string",    ":string type overrides parsing options"),
+                    inputText("excludes:skip",    "Use :skip to not include this field in the result"),
 
-                $form.append($("<input type=\"text\" name=\"number[1]:number\"           value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"number[1.1]:number\"         value=\"1.1\"/>"));
-                $form.append($("<input type=\"text\" name=\"number[other stuff]:number\" value=\"other stuff\"/>"));
+                    inputText("number[1]:number",           "1"),
+                    inputText("number[1.1]:number",         "1.1"),
+                    inputText("number[other stuff]:number", "other stuff"),
 
-                $form.append($("<input type=\"text\" name=\"boolean[true]:boolean\"      value=\"true\"/>"));
-                $form.append($("<input type=\"text\" name=\"boolean[false]:boolean\"     value=\"false\"/>"));
-                $form.append($("<input type=\"text\" name=\"boolean[0]:boolean\"         value=\"0\"/>"));
+                    inputText("boolean[true]:boolean",      "true"),
+                    inputText("boolean[false]:boolean",     "false"),
+                    inputText("boolean[0]:boolean",         "0"),
 
-                $form.append($("<input type=\"text\" name=\"null[null]:null\"            value=\"null\"/>"));
-                $form.append($("<input type=\"text\" name=\"null[other stuff]:null\"     value=\"other stuff\"/>"));
+                    inputText("null[null]:null",            "null"),
+                    inputText("null[other stuff]:null",     "other stuff"),
 
-                $form.append($("<input type=\"text\" name=\"array[empty]:array\"         value=\"[]\"/>"));
-                $form.append($("<input type=\"text\" name=\"array[not empty]:array\"     value=\"[1, 2, 3]\"/>"));
+                    inputText("array[empty]:array",         "[]"),
+                    inputText("array[not empty]:array",     "[1, 2, 3]"),
 
-                $form.append($("<input type=\"text\" name=\"object[empty]:object\"       value=\"{}\"/>"));
-                $form.append($("<input type=\"text\" name=\"object[not empty]:object\"   value='{\"my\": \"stuff\"}'/>"));
+                    inputText("object[empty]:object",       "{}"),
+                    inputText("object[not empty]:object",   "{\"my\": \"stuff\"}"),
+                ]);
 
                 obj = $form.serializeJSON({
                     customTypes: {
@@ -904,8 +947,9 @@ describe("$.serializeJSON", function () {
             });
 
             it("overrides defaultTypes", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"incremented:number\" value=\"0\"/>"));
+                $form = form([
+                    inputText("incremented:number", "0"),
+                ]);
                 obj = $form.serializeJSON({
                     customTypes: {
                         number: function(str) { return Number(str) + 1; }
@@ -915,8 +959,9 @@ describe("$.serializeJSON", function () {
             });
 
             it("overrides defaultTypes even if they are re-defined", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"num:number\" value=\"0\"/>"));
+                $form = form([
+                    inputText("num:number", "0"),
+                ]);
 
                 obj = $form.serializeJSON({
                     defaultTypes: {
@@ -938,9 +983,10 @@ describe("$.serializeJSON", function () {
         });
 
         it("can override :string type to change the default parsing function", function() {
-            $form = $("<form>");
-            $form.append($("<input type=\"text\" name=\"foo\" value=\"var\"/>"));
-            $form.append($("<input type=\"text\" name=\"empty\" value=\"\"/>"));
+            $form = form([
+                inputText("foo", "var"),
+                inputText("empty", ""),
+            ]);
 
             // default
             obj = $form.serializeJSON();
@@ -957,13 +1003,14 @@ describe("$.serializeJSON", function () {
 
         describe("defaultType", function() {
             it("uses the specified type as default if no other type is defined", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\"    value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string overrides default option\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"Use :skip to not include this field in the result\"/>"));
-                $form.append($("<input type=\"text\" name=\"fooData\"       data-value-type=\"alwaysBoo\"  value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foostr::kaka\"  data-value-type=\"string\"     value=\"string from data attr\"/>"));
+                $form = form([
+                    inputText("notype",         "0"),
+                    inputText("foo:alwaysBoo",  "0"),
+                    inputText("string:string",  ":string overrides default option"),
+                    inputText("excludes:skip",  "Use :skip to not include this field in the result"),
+                    inputText("fooData",        "0").attr("data-value-type", "alwaysBoo"),
+                    inputText("foostr::kaka",   "string from data attr").attr("data-value-type", "string"),
+                ]);
 
                 obj = $form.serializeJSON({
                     defaultType: "number",
@@ -983,9 +1030,10 @@ describe("$.serializeJSON", function () {
             });
 
             it("can be specified to be a custom type function", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\":string overrides default option\"/>"));
+                $form = form([
+                    inputText("notype",           "0"),
+                    inputText("string:string",    ":string overrides default option"),
+                ]);
 
                 obj = $form.serializeJSON({
                     defaultType: "alwaysBoo",
@@ -993,7 +1041,6 @@ describe("$.serializeJSON", function () {
                         alwaysBoo: function() { return "Boo"; }
                     }
                 });
-
                 expect(obj).toEqual({
                     "notype": "Boo", // parsed with "alwaysBoo", used as default type
                     "string": ":string overrides default option",
@@ -1001,8 +1048,9 @@ describe("$.serializeJSON", function () {
             });
 
             it("raises an error if the type function is not specified", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"fookey\" value=\"fooval\"/>"));
+                $form = form([
+                    inputText("fookey", "fooval"),
+                ]);
                 expect(function(){
                     $form.serializeJSON({ defaultType: "not_a_valid_type" });
                 }).toThrow(new Error("serializeJSON ERROR: Invalid type not_a_valid_type found in input name 'fookey', please use one of string, number, boolean, null, array, object, skip"));
@@ -1012,14 +1060,14 @@ describe("$.serializeJSON", function () {
 
         describe("disableColonTypes", function() {
             it("ignores type suffixes from input names", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"foo\"              value=\"bar\"/>"));
-                $form.append($("<input type=\"text\" name=\"notype::foobar\"   value=\"foobar\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\"keeps full input name\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"not skip because is not parsed as a type\"/>"));
+                $form = form([
+                    inputText("foo",              "bar"),
+                    inputText("notype::foobar",   "foobar"),
+                    inputText("string:string",    "keeps full input name"),
+                    inputText("excludes:skip",    "not skip because is not parsed as a type"),
+                ]);
 
                 obj = $form.serializeJSON({ disableColonTypes: true });
-
                 expect(obj).toEqual({
                     "foo": "bar", // nothing special over here
                     "notype::foobar": "foobar", // colons are no special now
@@ -1028,13 +1076,14 @@ describe("$.serializeJSON", function () {
                 });
             });
             it("still respects default type function and data-value-type attributes if specified", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"notype\"           value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foo:alwaysBoo\"    value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"string:string\"    value=\"99\"/>"));
-                $form.append($("<input type=\"text\" name=\"excludes:skip\"    value=\"666\"/>"));
-                $form.append($("<input type=\"text\" name=\"fooData\"       data-value-type=\"alwaysBoo\"  value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"foostr::kaka\"  data-value-type=\"string\"     value=\"string from data attr\"/>"));
+                $form = form([
+                    inputText("notype",           "0"),
+                    inputText("foo:alwaysBoo",    "0"),
+                    inputText("string:string",    "99"),
+                    inputText("excludes:skip",    "666"),
+                    inputText("fooData",          "0").attr("data-value-type", "alwaysBoo"),
+                    inputText("foostr::kaka",     "string from data attr").attr("data-value-type", "string"),
+                ]);
 
                 obj = $form.serializeJSON({
                     disableColonTypes: true,
@@ -1043,7 +1092,6 @@ describe("$.serializeJSON", function () {
                         alwaysBoo: function() { return "Boo"; }
                     }
                 });
-
                 expect(obj).toEqual({
                     "notype": 0, // parsed with "number", used as default type
                     "foo:alwaysBoo": 0,
@@ -1063,10 +1111,11 @@ describe("$.serializeJSON", function () {
             });
 
             it("can be overriden with different options", function() {
-                $form = $("<form>");
-                $form.append($("<input type=\"text\" name=\"num0:number\" value=\"0\"/>"));
-                $form.append($("<input type=\"text\" name=\"num1:number\" value=\"1\"/>"));
-                $form.append($("<input type=\"text\" name=\"empty\" value=\"\"/>"));
+                $form = form([
+                    inputText("num0:number", "0"),
+                    inputText("num1:number", "1"),
+                    inputText("empty", ""),
+                ]);
 
                 $.serializeJSON.defaultOptions = {skipFalsyValuesForFields: ["num0", "num1", "empty"]};
                 obj = $form.serializeJSON();
@@ -1085,10 +1134,11 @@ describe("$.serializeJSON", function () {
             });
 
             it("allows to set default for checkboxUncheckedValue", function() {
-                var $checkForm = $("<form>");
-                $checkForm.append($("<input type=\"checkbox\" name=\"check1\" value=\"true\" checked/>"));
-                $checkForm.append($("<input type=\"checkbox\" name=\"check2\" value=\"true\"/>"));
-                $checkForm.append($("<input type=\"checkbox\" name=\"check3\" value=\"true\" data-unchecked-value=\"unchecked_from_data_attr\"/>"));
+                var $checkForm = form([
+                    inputCheckbox("check1", "true").prop("checked", true),
+                    inputCheckbox("check2", "true"),
+                    inputCheckbox("check3", "true").attr("data-unchecked-value", "unchecked_from_data_attr"),
+                ]);
 
                 $.serializeJSON.defaultOptions = {checkboxUncheckedValue: "unchecked_from_defaults"};
                 obj = $checkForm.serializeJSON(); // with defaults
@@ -1347,3 +1397,41 @@ describe("$.serializeJSON.deepSet", function () {
         });
     });
 });
+
+
+// Test helpers
+
+function form(inputs) {
+    return withAppended($("<form>"), inputs);
+}
+
+function withAppended($el, innerEls) {
+    innerEls.forEach(function($nestedEl){
+        $el.append($nestedEl);
+    });
+    return $el;
+}
+
+function inputText(name, value) {
+    return $("<input>").attr({type: "text", name: name, value: value});
+}
+
+function inputHidden(name, value) {
+    return $("<input>").attr({type: "hidden", name: name, value: value});
+}
+
+function inputCheckbox(name, value) {
+    return $("<input>").attr({type: "checkbox", name: name, value: value});
+}
+
+function inputSelect(name, options) {
+    return withAppended($("<select>").attr("name", name), options);
+}
+
+function inputSelectMultiple(name, options) {
+    return withAppended($("<select multiple>").attr("name", name), options);
+}
+
+function selectOption(value) {
+    return $("<option>").attr("value", value).text(value);
+}
