@@ -825,16 +825,25 @@ describe("$.serializeJSON", function() {
                 });
             });
 
-            it("does not work on a nested list of objects", function() {
+            it("works on a nested list of objects", function() {
                 $form = form([
                     inputCheckbox("answers[][correct]:boolean", "true").attr("data-unchecked-value", "false"),
                     inputText("answers[][text]", "Blue"),
 
                     inputCheckbox("answers[][correct]:boolean", "true").attr("data-unchecked-value", "false"),
                     inputText("answers[][text]", "Green"),
-                ]);
 
-                expect(function(){$form.serializeJSON();}).toThrow(); // it throws a descriptive error for the user
+                    inputCheckbox("answers[][correct]:boolean", "true").attr("data-unchecked-value", "false").prop("checked", true),
+                    inputText("answers[][text]", "Red"),
+                ]);
+                obj = $form.serializeJSON({checkboxUncheckedValue: "false"});
+                expect(obj).toEqual({
+                    answers: [
+                        {correct: false, text: "Blue"},
+                        {correct: false, text: "Green"},
+                        {correct: true, text: "Red"},
+                    ],
+                });
             });
 
             it("does not serialize disabled checkboxes", function() {

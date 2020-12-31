@@ -33,12 +33,11 @@
         var typeFunctions = $.extend({}, opts.defaultTypes, opts.customTypes);
 
         // Make a list with {name, value, el} for each matched element.
-        var formAsArray = f.serializeArray($form);
-        f.readCheckboxUncheckedValues(formAsArray, opts, $form); // add objects to the array from unchecked checkboxes if needed
+        var serializedArray = f.serializeArray($form, opts);
 
-        // Convert the formAsArray into a serializedObject with nested keys
+        // Convert the serializedArray into a serializedObject with nested keys
         var serializedObject = {};
-        $.each(formAsArray, function (_i, obj) {
+        $.each(serializedArray, function (_i, obj) {
             var ogName  = obj.name; // original input name
             var ogValue = obj.value; // original input value
 
@@ -123,24 +122,37 @@
             return $.extend({}, f.defaultBaseOptions, f.defaultOptions, options);
         },
 
-        // Similar to jQuery serializeArray, returns an array of objects with name and value,
-        // but in addition has the dom element, so it can be referenced later for configuration data attrs.
-        serializeArray: function($form) {
+        // Just like jQuery's serializeArray method, returns an array of objects with name and value.
+        // but also includes the dom element (el) and is handles unchecked checkboxes if the option or data attribute are provided.
+        serializeArray: function($form, opts) {
+            if (opts == null) { opts = {}; }
+            var f = $.serializeJSON;
+
             return $form.map(function() {
                 var elements = $.prop(this, "elements"); // handle propHook "elements" to filter or add form elements
                 return elements ? $.makeArray(elements) : this;
 
             }).filter(function() {
+                var $el = $(this);
                 var type = this.type;
-                return this.name &&
-                    !$( this ).is(":disabled") && // .is(":disabled") so that fieldset[disabled] works
-                    rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && // only form fields
-                    (this.checked || !rcheckableType.test(type)); // remove unchecked checkboxes
+
+                // Filter with the standard W3C rules for successful controls: http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
+                return this.name && // must contain a name attribute
+                    !$el.is(":disabled") && // must not be disable (use .is(":disabled") so that fieldset[disabled] works)
+                    rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && // only serialize submittable fields (and not buttons)
+                    (this.checked || !rcheckableType.test(type) || f.getCheckboxUncheckedValue($el, opts) != null); // skip unchecked checkboxes (unless using opts)
 
             }).map(function(_i, el) {
-                var val = $(this).val();
+                var $el = $(this);
+                var val = $el.val();
+                var type = this.type;
+
                 if (val == null) {
                     return null;
+                }
+
+                if (rcheckableType.test(type) && !this.checked) {
+                    val = f.getCheckboxUncheckedValue($el, opts);
                 }
 
                 if (isArray(val)) {
@@ -154,6 +166,14 @@
             }).get();
         },
 
+        getCheckboxUncheckedValue: function($el, opts) {
+            var val = $el.attr("data-unchecked-value");
+            if (val == null) {
+                val = opts.checkboxUncheckedValue;
+            }
+            return val
+        },
+
         // Parse value with type function
         applyTypeFunc: function(name, valStr, type, typeFunctions) {
             var typeFunc = typeFunctions[type];
@@ -161,33 +181,6 @@
                 throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + objectKeys(typeFunctions).join(", "));
             }
             return typeFunc(valStr);
-        },
-
-        // Fill the formAsArray object with values for the unchecked checkbox inputs,
-        // using the same format as the jquery.serializeArray function.
-        // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
-        // and/or the data-unchecked-value attribute of the inputs.
-        readCheckboxUncheckedValues: function (formAsArray, opts, $form) {
-            if (opts == null) { opts = {}; }
-
-            var selector = "input[type=checkbox][name]:not(:checked):not([disabled])";
-            var $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
-            $uncheckedCheckboxes.each(function (_i, el) {
-                // Check data attr first, then the option
-                var $el = $(el);
-                var uncheckedValue = $el.attr("data-unchecked-value");
-                if (uncheckedValue == null) {
-                    uncheckedValue = opts.checkboxUncheckedValue;
-                }
-
-                // If there's an uncheckedValue, push it into the serialized formAsArray
-                if (uncheckedValue != null) {
-                    if (el.name && el.name.indexOf("[][") !== -1) { // identify a non-supported
-                        throw new Error("serializeJSON ERROR: checkbox unchecked values are not supported on nested arrays of objects like '"+el.name+"'. See https://github.com/marioizquierdo/jquery.serializeJSON/issues/67");
-                    }
-                    formAsArray.push({name: el.name, value: uncheckedValue});
-                }
-            });
         },
 
         // Splits a field name into the name and the type. Examples:

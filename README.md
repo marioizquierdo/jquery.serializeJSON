@@ -40,7 +40,7 @@ $('form').serializeJSON();
 }
 ```
 
-Form input, textarea and select tags are supported. Nested attributes and arrays can be specified by using the `attr[nested][nested]` syntax.
+Form input, textarea and select tags are supported. Nested attributes and arrays can be specified by naming fields with the syntax: `name="attr[nested][nested]"`.
 
 HTML form:
 ```html
@@ -114,7 +114,7 @@ $('#my-profile').serializeJSON();
 }
 ```
 
-The `serializeJSON` function returns a JavaScript object, not a JSON String. The plugin should probably have been called `serializeObject` or similar, but those plugins already existed.
+The `serializeJSON` function returns a JavaScript object, not a JSON String. The plugin should probably have been called `serializeObject` or similar, but that plugin name was already taken.
 
 To convert into a JSON String, use the `JSON.stringify` method, that is available on all major [new browsers](http://caniuse.com/json).
 If you need to support very old browsers, just include the [json2.js](https://github.com/douglascrockford/JSON-js) polyfill (as described on [stackoverfow](http://stackoverflow.com/questions/191881/serializing-to-json-in-jquery)).
@@ -471,7 +471,8 @@ Contributions are awesome. Feature branch *pull requests* are the preferred meth
 Changelog
 ---------
 
- * *3.1.1* (Dev 30, 2020): Update #114 (Allow to use new versions of jQuery by avoiding calls to the deprecated method `jQuery.isArray`).
+ * *3.2.0* (draft): ... TODO: update comment: https://github.com/marioizquierdo/jquery.serializeJSON/issues/67
+ * *3.1.1* (Dec 30, 2020): Update #114 (Allow to use new versions of jQuery by avoiding calls to the deprecated method `jQuery.isArray`).
  * *3.1.1* (Nov 09, 2020): Bugfix #110 (Allow unindexed arrays with multiple levels of nested objects).
  * *3.1.0* (Sep 13, 2020): Rename option `disableColonTypes` that was mistakenly named `disableSemicolonTypes`. Fix typos in README.
  * *3.0.0* (Sep 06, 2020): Improve types (PR #105) and remove parsing options (PR #104). The type system with `:type` suffixes, `data-value-type` attributes, and a combination of the options `customTypes`, `disableColonTypes` and `defaultType`, are safer and easier to use than the previous options `parseNumbers`, `parseAll`, etc. Thanks [Laykou](https://github.com/Laykou) for suggesting [PR #102] that pointed the problems of inputs with colons in their names.
