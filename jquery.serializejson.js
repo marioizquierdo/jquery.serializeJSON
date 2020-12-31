@@ -21,27 +21,32 @@
 }(function ($) {
     "use strict";
 
+    var rCRLF = /\r?\n/g;
+    var rsubmitterTypes = /^(?:submit|button|image|reset|file)$/i;
+    var rsubmittable = /^(?:input|select|textarea|keygen)/i;
+    var rcheckableType = /^(?:checkbox|radio)$/i;
+
     $.fn.serializeJSON = function (options) {
         var f = $.serializeJSON;
         var $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
         var opts = f.setupOpts(options); // validate and apply defaults
         var typeFunctions = $.extend({}, opts.defaultTypes, opts.customTypes);
 
-        // Use native `serializeArray` function to get an array of {name, value} objects.
-        var formAsArray = $form.serializeArray();
+        // Make a list with {name, value, el} for each matched element.
+        var formAsArray = f.serializeArray($form);
         f.readCheckboxUncheckedValues(formAsArray, opts, $form); // add objects to the array from unchecked checkboxes if needed
 
         // Convert the formAsArray into a serializedObject with nested keys
         var serializedObject = {};
         $.each(formAsArray, function (_i, obj) {
-            var rawName  = obj.name; // original input name
-            var rawValue = obj.value; // input value
+            var ogName  = obj.name; // original input name
+            var ogValue = obj.value; // original input value
 
-            // Parse type
-            var name = rawName;
-            var type = f.attrFromInputWithName($form, rawName, "data-value-type");
+            // Parse name and type
+            var name = ogName;
+            var type = f.attrFromInputWithName($form, ogName, "data-value-type");
             if (!type && !opts.disableColonTypes) {
-                var p = f.splitType(rawName); // "foo:string" => ["foo", "string"]
+                var p = f.splitType(ogName); // "foo:string" => ["foo", "string"]
                 name = p[0];
                 type = p[1];
             }
@@ -52,9 +57,9 @@
                 type = opts.defaultType; // "string" by default
             }
 
-            var typedValue = f.applyTypeFunc(rawName, rawValue, type, typeFunctions); // Parse type as string, number, etc.
+            var typedValue = f.applyTypeFunc(ogName, ogValue, type, typeFunctions); // Parse type as string, number, etc.
 
-            if (!typedValue && f.shouldSkipFalsy($form, rawName, name, type, opts)) {
+            if (!typedValue && f.shouldSkipFalsy($form, ogName, name, type, opts)) {
                 return; // ignore falsy inputs if specified in the options
             }
 
@@ -116,6 +121,37 @@
 
             // Helper to get options or defaults
             return $.extend({}, f.defaultBaseOptions, f.defaultOptions, options);
+        },
+
+        // Similar to jQuery serializeArray, returns an array of objects with name and value,
+        // but in addition has the dom element, so it can be referenced later for configuration data attrs.
+        serializeArray: function($form) {
+            return $form.map(function() {
+                var elements = $.prop(this, "elements"); // handle propHook "elements" to filter or add form elements
+                return elements ? $.makeArray(elements) : this;
+
+            }).filter(function() {
+                var type = this.type;
+                return this.name &&
+                    !$( this ).is(":disabled") && // .is(":disabled") so that fieldset[disabled] works
+                    rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && // only form fields
+                    (this.checked || !rcheckableType.test(type)); // remove unchecked checkboxes
+
+            }).map(function(_i, el) {
+                var val = $(this).val();
+                if (val == null) {
+                    return null;
+                }
+
+                if (isArray(val)) {
+                    return $.map(val, function(val) {
+                        return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
+                    } );
+                }
+
+                return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
+
+            }).get();
         },
 
         // Parse value with type function
