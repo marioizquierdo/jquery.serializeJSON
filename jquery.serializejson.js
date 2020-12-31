@@ -270,12 +270,12 @@
             }
 
             if (nextKey === "") { // "" is used to push values into the nested array "array[]"
-                if (isUndefined(o[key]) || !$.isArray(o[key])) {
+                if (isUndefined(o[key]) || !isArray(o[key])) {
                     o[key] = []; // define (or override) as array to push values
                 }
             } else {
                 if (opts.useIntKeysAsArrayIndex && isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
-                    if (isUndefined(o[key]) || !$.isArray(o[key])) {
+                    if (isUndefined(o[key]) || !isArray(o[key])) {
                         o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
                     }
                 } else { // nextKey is going to be the nested object's attribute
@@ -291,7 +291,7 @@
 
         deepGet: function (o, keys) {
             var f = $.serializeJSON;
-            if (isUndefined(o) || isUndefined(keys) || keys.length === 0 || (!isObject(o) && !$.isArray(o))) {
+            if (isUndefined(o) || isUndefined(keys) || keys.length === 0 || (!isObject(o) && !isArray(o))) {
                 return o;
             }
             var key = keys[0];
@@ -320,4 +320,5 @@
     var isObject =          function(obj) { return obj === Object(obj); }; // true for Objects and Arrays
     var isUndefined =       function(obj) { return obj === void 0; }; // safe check for undefined values
     var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
+    var isArray =           Array.isArray || function(obj) { return Object.prototype.toString.call(obj) === "[object Array]"; };
 }));
