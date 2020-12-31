@@ -29,10 +29,10 @@
     $.fn.serializeJSON = function (options) {
         var f = $.serializeJSON;
         var $form = this; // NOTE: the set of matched elements is most likely a form, but it could also be a group of inputs
-        var opts = f.setupOpts(options); // validate and apply defaults
+        var opts = f.setupOpts(options); // validate options and apply defaults
         var typeFunctions = $.extend({}, opts.defaultTypes, opts.customTypes);
 
-        // Make a list with {name, value, el} for each input element.
+        // Make a list with {name, value, el} for each input element
         var serializedArray = f.serializeArray($form, opts);
 
         // Convert the serializedArray into a serializedObject with nested keys
@@ -169,7 +169,7 @@
             if (val == null) {
                 val = opts.checkboxUncheckedValue;
             }
-            return val
+            return val;
         },
 
         // Parse value with type function
@@ -193,14 +193,11 @@
             } else {
                 return [name, ""];
             }
-            return typeFunc(valStr, el);
         },
 
         // Check if this input should be skipped when it has a falsy value,
         // depending on the options to skip values by name or type, and the data-skip-falsy attribute.
         shouldSkipFalsy: function(name, nameSansType, type, el, opts) {
-            var f = $.serializeJSON;
-
             var skipFromDataAttr = $(el).attr("data-skip-falsy");
             if (skipFromDataAttr != null) {
                 return skipFromDataAttr !== "false"; // any value is true, except the string "false"

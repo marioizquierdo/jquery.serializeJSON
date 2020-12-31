@@ -907,7 +907,8 @@ describe("$.serializeJSON", function() {
         describe("customTypes", function() {
             it("serializes value according to custom function without disturbing default types", function() {
                 $form = form([
-                    inputText("foo:alwaysBoo",    "0"),
+                    inputText("foo:alwaysBoo",   "0"),
+
                     inputText("notype",           "default type is :string"),
                     inputText("string:string",    ":string type overrides parsing options"),
                     inputText("excludes:skip",    "Use :skip to not include this field in the result"),
@@ -938,6 +939,7 @@ describe("$.serializeJSON", function() {
 
                 expect(obj).toEqual({
                     "foo": "Boo",
+
                     "notype": "default type is :string",
                     "string": ":string type overrides parsing options",
                     // :skip type removes the field from the output
@@ -963,6 +965,31 @@ describe("$.serializeJSON", function() {
                         "empty": {},
                         "not empty": {"my": "stuff"}
                     }
+                });
+            });
+
+            it("type functions receive the value and the DOM element of the field that is being parsed", function() {
+                $form = form([
+                    inputText("foo1:withXoxo", "luv"),
+                    inputText("foo2:withXoxo", "luv").attr("data-Xoxo", "CustomPassedXoxo"),
+                    inputText("foo3:multiply", "3").attr("data-multiply", "5"),
+                ]);
+                obj = $form.serializeJSON({
+                    customTypes: {
+                        withXoxo: function(val, el) {
+                            var xoxo = $(el).attr("data-Xoxo") || "Xoxo";
+                            return val + xoxo;
+                        },
+                        multiply: function(val, el) {
+                            var mult = $(el).attr("data-multiply");
+                            return Number(val) * Number(mult);
+                        },
+                    }
+                });
+                expect(obj).toEqual({
+                    "foo1": "luvXoxo",
+                    "foo2": "luvCustomPassedXoxo",
+                    "foo3": 15 // 3 * 5
                 });
             });
 
