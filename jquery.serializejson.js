@@ -32,21 +32,19 @@
         var opts = f.setupOpts(options); // validate and apply defaults
         var typeFunctions = $.extend({}, opts.defaultTypes, opts.customTypes);
 
-        // Make a list with {name, value, el} for each matched element.
+        // Make a list with {name, value, el} for each input element.
         var serializedArray = f.serializeArray($form, opts);
 
         // Convert the serializedArray into a serializedObject with nested keys
         var serializedObject = {};
         $.each(serializedArray, function (_i, obj) {
-            var ogName  = obj.name; // original input name
-            var ogValue = obj.value; // original input value
 
-            // Parse name and type
-            var name = ogName;
-            var type = f.attrFromInputWithName($form, ogName, "data-value-type");
-            if (!type && !opts.disableColonTypes) {
-                var p = f.splitType(ogName); // "foo:string" => ["foo", "string"]
-                name = p[0];
+            var nameSansType = obj.name;
+            var type = $(obj.el).attr("data-value-type");
+
+            if (!type && !opts.disableColonTypes) { // try getting the type from the input name
+                var p = f.splitType(obj.name); // "foo:string" => ["foo", "string"]
+                nameSansType = p[0];
                 type = p[1];
             }
             if (type === "skip") {
@@ -56,13 +54,13 @@
                 type = opts.defaultType; // "string" by default
             }
 
-            var typedValue = f.applyTypeFunc(ogName, ogValue, type, typeFunctions); // Parse type as string, number, etc.
+            var typedValue = f.applyTypeFunc(obj.name, obj.value, type, obj.el, typeFunctions); // Parse type as string, number, etc.
 
-            if (!typedValue && f.shouldSkipFalsy($form, ogName, name, type, opts)) {
+            if (!typedValue && f.shouldSkipFalsy(obj.name, nameSansType, type, obj.el, opts)) {
                 return; // ignore falsy inputs if specified in the options
             }
 
-            var keys = f.splitInputNameIntoKeysArray(name);
+            var keys = f.splitInputNameIntoKeysArray(nameSansType);
             f.deepSet(serializedObject, keys, typedValue, opts);
         });
         return serializedObject;
@@ -145,7 +143,7 @@
             }).map(function(_i, el) {
                 var $el = $(this);
                 var val = $el.val();
-                var type = this.type;
+                var type = this.type; // "input", "select", "textarea", "checkbox", etc.
 
                 if (val == null) {
                     return null;
@@ -175,12 +173,12 @@
         },
 
         // Parse value with type function
-        applyTypeFunc: function(name, valStr, type, typeFunctions) {
+        applyTypeFunc: function(name, valStr, type, el, typeFunctions) {
             var typeFunc = typeFunctions[type];
             if (!typeFunc) { // quick feedback to user if there is a typo or missconfiguration
                 throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + objectKeys(typeFunctions).join(", "));
             }
-            return typeFunc(valStr);
+            return typeFunc(valStr, el);
         },
 
         // Splits a field name into the name and the type. Examples:
@@ -195,40 +193,30 @@
             } else {
                 return [name, ""];
             }
+            return typeFunc(valStr, el);
         },
-
 
         // Check if this input should be skipped when it has a falsy value,
         // depending on the options to skip values by name or type, and the data-skip-falsy attribute.
-        shouldSkipFalsy: function($form, name, nameWithNoType, type, opts) {
+        shouldSkipFalsy: function(name, nameSansType, type, el, opts) {
             var f = $.serializeJSON;
 
-            var skipFromDataAttr = f.attrFromInputWithName($form, name, "data-skip-falsy");
+            var skipFromDataAttr = $(el).attr("data-skip-falsy");
             if (skipFromDataAttr != null) {
-                return skipFromDataAttr !== "false"; // any value is true, except if explicitly using 'false'
+                return skipFromDataAttr !== "false"; // any value is true, except the string "false"
             }
 
             var optForFields = opts.skipFalsyValuesForFields;
-            if (optForFields && (optForFields.indexOf(nameWithNoType) !== -1 || optForFields.indexOf(name) !== -1)) {
+            if (optForFields && (optForFields.indexOf(nameSansType) !== -1 || optForFields.indexOf(name) !== -1)) {
                 return true;
             }
 
             var optForTypes = opts.skipFalsyValuesForTypes;
-            if (type == null) type = "string"; // assume fields with no type are targeted as string
             if (optForTypes && optForTypes.indexOf(type) !== -1) {
                 return true;
             }
 
             return false;
-        },
-
-        // Finds the first input in $form with this name, and get the given attr from it.
-        // Returns undefined if no input or no attribute was found.
-        attrFromInputWithName: function($form, name, attrName) {
-            var escapedName = name.replace(/(:|\.|\[|\]|\s)/g, "\\$1"); // every non-standard character need to be escaped by \\
-            var selector = "[name=\"" + escapedName + "\"]";
-            var $input = $form.find(selector).add($form.filter(selector)); // NOTE: this returns only the first $input element if multiple are matched with the same name (i.e. an "array[]"). So, arrays with different element types specified through the data-value-type attr is not supported.
-            return $input.attr(attrName);
         },
 
         // Split the input name in programatically readable keys.
