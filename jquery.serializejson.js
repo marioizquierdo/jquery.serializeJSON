@@ -1,7 +1,7 @@
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 3.1.2 (Nov, 2020)
+  version 3.2.0 (Feb, 2021)
 
   Copyright (c) 2012-2021 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -173,12 +173,12 @@
         },
 
         // Parse value with type function
-        applyTypeFunc: function(name, valStr, type, el, typeFunctions) {
+        applyTypeFunc: function(name, strVal, type, el, typeFunctions) {
             var typeFunc = typeFunctions[type];
             if (!typeFunc) { // quick feedback to user if there is a typo or missconfiguration
                 throw new Error("serializeJSON ERROR: Invalid type " + type + " found in input name '" + name + "', please use one of " + objectKeys(typeFunctions).join(", "));
             }
-            return typeFunc(valStr, el);
+            return typeFunc(strVal, el);
         },
 
         // Splits a field name into the name and the type. Examples:
