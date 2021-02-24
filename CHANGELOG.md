@@ -1,6 +1,7 @@
 Changelog
 ---------
 
+ * *3.2.1* (Feb 24, 2021): Fix sync issue between Github tag and npm.
  * *3.2.0* (Feb 24, 2021): Reimplement jQuery's serializeArray function, with the ability to include unchecked checkboxes, and returning the DOM element. This allows to simplify the code, fixing an issue with repeated input names used for arrays (Fixes #67), and allows custom type functions to receive the DOM elemnt (Fixes #109).
  * *3.1.1* (Dec 30, 2020): Update #114 (Allow to use new versions of jQuery by avoiding calls to the deprecated method `jQuery.isArray`).
  * *3.1.1* (Nov 09, 2020): Bugfix #110 (Allow unindexed arrays with multiple levels of nested objects).
