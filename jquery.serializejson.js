@@ -108,7 +108,8 @@
                 "disableColonTypes",
                 "customTypes",
                 "defaultTypes",
-                "defaultType"
+                "defaultType",
+                "includeDisabled"
             ];
             for (var opt in options) {
                 if (validOpts.indexOf(opt) === -1) {
@@ -136,7 +137,7 @@
 
                 // Filter with the standard W3C rules for successful controls: http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
                 return this.name && // must contain a name attribute
-                    !$el.is(":disabled") && // must not be disable (use .is(":disabled") so that fieldset[disabled] works)
+                    (!$el.is(":disabled") || $el.is(":disabled") && opts.includeDisabled) && // must not be disable (use .is(":disabled") so that fieldset[disabled] works)
                     rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && // only serialize submittable fields (and not buttons)
                     (this.checked || !rcheckableType.test(type) || f.getCheckboxUncheckedValue($el, opts) != null); // skip unchecked checkboxes (unless using opts)
 
