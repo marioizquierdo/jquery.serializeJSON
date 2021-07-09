@@ -152,13 +152,9 @@
                     val = f.getCheckboxUncheckedValue($el, opts);
                 }
 
-                if (isArray(val)) {
-                    return $.map(val, function(val) {
-                        return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
-                    } );
-                }
-
-                return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
+                return $.map(isArray(val) ? val : [val], function(val) {
+                    return { name: el.name, value: isString(val) ? val.replace(rCRLF, "\r\n") : val, el: el };
+                } );
 
             }).get();
         },
@@ -333,5 +329,6 @@
     var isObject =          function(obj) { return obj === Object(obj); }; // true for Objects and Arrays
     var isUndefined =       function(obj) { return obj === void 0; }; // safe check for undefined values
     var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
+    var isString          = function(val) { return typeof val === 'string'; };
     var isArray =           Array.isArray || function(obj) { return Object.prototype.toString.call(obj) === "[object Array]"; };
 }));
