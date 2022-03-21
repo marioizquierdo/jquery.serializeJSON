@@ -1,7 +1,8 @@
+/*   --- */
 /*!
   SerializeJSON jQuery plugin.
   https://github.com/marioizquierdo/jquery.serializeJSON
-  version 3.2.1 (Feb, 2021)
+  version 3.2.2 (Mar, 2021)
 
   Copyright (c) 2012-2021 Mario Izquierdo
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -50,6 +51,10 @@
             if (type === "skip") {
                 return; // ignore fields with type skip
             }
+            if(obj.multiple) {
+                type = 'array';
+            }
+
             if (!type) {
                 type = opts.defaultType; // "string" by default
             }
@@ -134,7 +139,6 @@
             }).filter(function() {
                 var $el = $(this);
                 var type = this.type;
-
                 // Filter with the standard W3C rules for successful controls: http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
                 return this.name && // must contain a name attribute
                     (!$el.is(":disabled") || $el.is(":disabled") && opts.includeDisabled) && // must not be disable (use .is(":disabled") so that fieldset[disabled] works)
@@ -155,13 +159,14 @@
                 }
 
                 if (isArray(val)) {
-                    return $.map(val, function(val) {
-                        return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
-                    } );
+                  if(!val.length) {
+                      return { name: el.name, el: el }
+                  }
+                  return $.map(val, function(val) {
+                      return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el};
+                  } );
                 }
-
                 return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
-
             }).get();
         },
 
@@ -337,3 +342,5 @@
     var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
     var isArray =           Array.isArray || function(obj) { return Object.prototype.toString.call(obj) === "[object Array]"; };
 }));
+
+
