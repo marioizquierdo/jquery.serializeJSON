@@ -381,7 +381,7 @@ You can use the option `.serializeJSON(skipFalsyValuesForTypes: ["string"])`, wh
 Another option, since `serializeJSON()` is called on a jQuery object, is to just use the proper jQuery selector to skip empty values (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
 
 ```javascript
-// Select only imputs that have a non-empty value
+// Select only inputs that have a non-empty value
 $('form :input[value!=""]').serializeJSON();
 
 // Or filter them from the form
