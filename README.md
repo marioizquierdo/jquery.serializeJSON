@@ -376,7 +376,7 @@ $('form#checkboxes').serializeJSON({checkboxUncheckedValue: 'NOPE'});
 
 ## Ignore Empty Form Fields
 
-You can use the option `.serializeJSON(skipFalsyValuesForTypes: ["string"])`, which ignores any string field with an empty value (default type is :string, and empty strings are falsy).
+You can use the option `.serializeJSON({skipFalsyValuesForTypes: ["string"]})`, which ignores any string field with an empty value (default type is :string, and empty strings are falsy).
 
 Another option, since `serializeJSON()` is called on a jQuery object, is to just use the proper jQuery selector to skip empty values (see [Issue #28](https://github.com/marioizquierdo/jquery.serializeJSON/issues/28) for more info):
 
