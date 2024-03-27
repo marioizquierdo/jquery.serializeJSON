@@ -24,7 +24,6 @@
     var rCRLF = /\r?\n/g;
     var rsubmitterTypes = /^(?:submit|button|image|reset|file)$/i;
     var rsubmittable = /^(?:input|select|textarea|keygen)/i;
-    var rcheckableType = /^(?:checkbox|radio)$/i;
 
     $.fn.serializeJSON = function (options) {
         var f = $.serializeJSON;
@@ -138,7 +137,7 @@
                 return this.name && // must contain a name attribute
                     !$el.is(":disabled") && // must not be disable (use .is(":disabled") so that fieldset[disabled] works)
                     rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && // only serialize submittable fields (and not buttons)
-                    (this.checked || !rcheckableType.test(type) || f.getCheckboxUncheckedValue($el, opts) != null); // skip unchecked checkboxes (unless using opts)
+                    (this.checked || type !== 'checkbox' || f.getCheckboxUncheckedValue($el, opts) != null); // skip unchecked checkboxes (unless using opts)
 
             }).map(function(_i, el) {
                 var $el = $(this);
@@ -149,17 +148,13 @@
                     return null;
                 }
 
-                if (rcheckableType.test(type) && !this.checked) {
+                if (type === 'checkbox' && !this.checked) {
                     val = f.getCheckboxUncheckedValue($el, opts);
                 }
 
-                if (isArray(val)) {
-                    return $.map(val, function(val) {
-                        return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
-                    } );
-                }
-
-                return { name: el.name, value: val.replace(rCRLF, "\r\n"), el: el };
+                return $.map(isArray(val) ? val : [val], function(val) {
+                    return { name: el.name, value: isString(val) ? val.replace(rCRLF, "\r\n") : val, el: el };
+                } );
 
             }).get();
         },
@@ -334,5 +329,6 @@
     var isObject =          function(obj) { return obj === Object(obj); }; // true for Objects and Arrays
     var isUndefined =       function(obj) { return obj === void 0; }; // safe check for undefined values
     var isValidArrayIndex = function(val) { return /^[0-9]+$/.test(String(val)); }; // 1,2,3,4 ... are valid array indexes
+    var isString          = function(val) { return typeof val === 'string'; };
     var isArray =           Array.isArray || function(obj) { return Object.prototype.toString.call(obj) === "[object Array]"; };
 }));
