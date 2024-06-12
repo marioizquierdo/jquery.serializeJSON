@@ -277,6 +277,7 @@ Available options:
   * **defaultTypes: {defaults}**, contains the orignal type functions `string`, `number`, `boolean`, `null`, `array`, `object` and `skip`.
   * **defaultType: "string"**, fields that have no `:type` suffix and no `data-value-type` attribute are parsed with the `string` type function by default, but it could be changed to use a different type function instead.
   * **disableColonTypes: true**, do not parse input names as types, allowing field names to use colons. If this option is used, types can still be specified with the `data-value-type` attribute. For example `<input name="foo::bar" value="1" data-value-type="number">` will be parsed as a number.
+  * **includeDisabled: false**, if true, disabled :input's included.
 
 More details about these options in the sections below.
 
